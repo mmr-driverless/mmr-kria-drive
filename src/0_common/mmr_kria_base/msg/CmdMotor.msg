@@ -10,7 +10,10 @@ bool homing
 # target torque for the brake - leave empty if the cmd is for steer or clutch
 float64 brake_torque
 
-# target position for the steer and clutch - leave empty if the cmd is for brake
+# target position for the steer and clutch - leave empty if the cmd is for brake or clutch
 float64 wheel_angle
 
 bool disable
+
+# disengage (aka pull) clutch - leave empty if the cmd is for brake or steer
+bool clutch_disengage
