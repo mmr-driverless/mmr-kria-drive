@@ -1,4 +1,4 @@
 [submodule "src/2_safety/as_manager"]
 	path = src/2_safety/as_manager
 	url = https://github.com/mc-cat-tty/as_manager
-	branch = ros
+	branch = test_30_07
