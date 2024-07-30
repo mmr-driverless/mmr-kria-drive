@@ -14,7 +14,7 @@ include_directories(include)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 add_library(${PROJECT_NAME} SHARED
-  src/edf_node.cpp
+  src/mmr_edf.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
