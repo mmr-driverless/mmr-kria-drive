@@ -11,3 +11,5 @@
     topic:
       canTxTopic: "/canbus/tx/msg"
       canRxTopic: "/canbus/rx/msg"
+      ecuStatusTopic: "/status/ecu"
+      resStatusTopic: "/status/res"

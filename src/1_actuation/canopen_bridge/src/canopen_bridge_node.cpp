@@ -1,4 +1,4 @@
-#include <canbus_bridge/canbus_bridge.hpp>
+#include <canopen_bridge/canopen_bridge.hpp>
 
 void handleSignal(int signal) {
     if (signal == SIGINT) {
@@ -18,15 +18,12 @@ int main(int argc, char * argv[])
   try
   {
     rclcpp::executors::StaticSingleThreadedExecutor executor;
-    auto node = std::make_shared<CANBusBridge>();
+    auto node = std::make_shared<CANOpenBridge>();
     executor.add_node(node);
     
     while (true)
     {
       executor.spin_all(10s);
-      node->readMsgFromCANBus();
-      node->sendStatusEcu();
-      node->sendStatusRes();
       sched_yield();
     }
 
@@ -39,3 +36,6 @@ int main(int argc, char * argv[])
 
   return 0;
 }
+
+
+
