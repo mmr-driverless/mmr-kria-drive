@@ -17,4 +17,4 @@ bool disable
 
 # disengage (aka pull) clutch - leave empty if the cmd is for brake or steer
 # Beware that if not disengaged is engaged
-bool clutch_disengage
+bool disengaged
