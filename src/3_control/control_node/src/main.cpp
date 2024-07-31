@@ -34,7 +34,7 @@ public:
     m_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>("/Odometry", 1, std::bind(&ControlNode::odom_cb, this, std::placeholders::_1));
     m_centerline_sub = this->create_subscription<visualization_msgs::msg::Marker>("/planning/center_line", 1, std::bind(&ControlNode::centerline_cb, this, std::placeholders::_1));
     m_centerline_cmpl_sub = this->create_subscription<visualization_msgs::msg::Marker>("/planning/center_line_completed", qos, std::bind(&ControlNode::centerline_completed_cb, this, std::placeholders::_1));
-    m_viz_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/control/viz", 1);
+    m_viz_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/control/viz", 2);
   }
 
   void centerline_completed_cb(visualization_msgs::msg::Marker::SharedPtr msg) { path_cb(true, msg); }
@@ -73,7 +73,13 @@ public:
     else
       RCLCPP_WARN(this->get_logger(), "No position");
 
-    visualize(projection, car_position);
+    std::optional<PointT> lookforward;
+    if (projection) {
+      ReferencePath::PointRef r = m_path.advance_point(projection->closest_point, 5);
+      lookforward = m_path.get_position(r);
+    }
+
+    visualize(projection, car_position, lookforward);
   }
 
   geometry_msgs::msg::Point eigen_vec2_to_msg(PointT pt) {
@@ -106,7 +112,7 @@ public:
     return m;
   }
 
-  void visualize(std::optional<ReferencePath::ProjectionResult> projection, PointT car_position) {
+  void visualize(std::optional<ReferencePath::ProjectionResult> projection, PointT car_position, std::optional<PointT> lookforward) {
     auto stamp = this->get_clock()->now();
 
     visualization_msgs::msg::MarkerArray msg;
@@ -121,7 +127,7 @@ public:
 
     {
       // The threshold area drawn around the vehicle.
-      auto m = create_empty_marker(stamp, 0, visualization_msgs::msg::Marker::CYLINDER, {1.0, 1.0, 1.0, 0.5});
+      auto m = create_empty_marker(stamp, 0, visualization_msgs::msg::Marker::CYLINDER, {1.0f, 1.0f, 1.0f, 0.5f});
       SET_XYZ(m.scale, THRESHOLD / 2, THRESHOLD / 2, 0.1);
       SET_XY(m.pose.position, car_position.x(), car_position.y());
       msg.markers.push_back(m);
@@ -129,20 +135,26 @@ public:
 
     {
       // The closest position.
-      auto m = create_empty_marker(stamp, 1, visualization_msgs::msg::Marker::CYLINDER, {1.0, 0.0, 0.0, 1.0});
+      auto m = create_empty_marker(stamp, 1, visualization_msgs::msg::Marker::CYLINDER, {1.0f, 0.0f, 0.0f, projection.has_value()? 1.0f : 0.0f});
       SET_XY(m.pose.position, closest_position.x(), closest_position.y());
       msg.markers.push_back(m);
     }
 
     {
       // The subpath which was traversed in this iteration
-      auto m = create_empty_marker(stamp, 2, visualization_msgs::msg::Marker::LINE_STRIP, {0.0, 0.0, 1.0, 1.0});
+      auto m = create_empty_marker(stamp, 2, visualization_msgs::msg::Marker::LINE_STRIP, {0.0f, 0.0f, 1.0f, 1.0f});
       SET_XYZ(m.scale, 0.2, 0.2, 0.2);
 
       for (auto span : waypoints)
         for (auto pt : span)
           m.points.push_back(eigen_vec2_to_msg(pt));
 
+      msg.markers.push_back(m);
+    }
+
+    {
+      auto m = create_empty_marker(stamp, 3, visualization_msgs::msg::Marker::CYLINDER, {0.0f, 1.0f, 0.0f, lookforward.has_value()? 1.0f : 0.0f});
+      SET_XY(m.pose.position, lookforward->x(), lookforward->y());
       msg.markers.push_back(m);
     }
 

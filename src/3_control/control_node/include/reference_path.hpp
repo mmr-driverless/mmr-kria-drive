@@ -237,8 +237,12 @@ public:
       if (!seg.has_value())
         break;
 
+      auto start = get_position(PointRef(seg->start));
+      auto end = get_position(PointRef(seg->end));
+
       // Compute the distance between the current position and the next waypoint
-      double ds = (get_position(PointRef(seg->end)) - get_position(cur)).norm();
+      double seg_len = (end - start).norm();
+      double ds = (1 - cur.t) * seg_len;
 
       // If we would consume more space than needed by advancing to the next waypoint
       if (ds > delta_s) {
@@ -247,7 +251,7 @@ public:
             Addition is required only for the start reference (nonzero start t),
             while for the rest (if we've advanced by even just one waypoint) this is equivalent to setting it directly (t is zero).
         */
-        cur.t += (delta_s / ds);
+        cur.t += (delta_s / seg_len);
         break;
       }
       
