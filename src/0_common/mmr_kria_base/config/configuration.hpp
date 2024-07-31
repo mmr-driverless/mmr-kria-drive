@@ -72,7 +72,6 @@ namespace COCKPIT {
 };
 
 namespace MOTOR {
-
     enum MMR_CAN_ID_BASE {
         REQUEST_SDO = 0x600,
         RESPONSE_SDO = 580,
@@ -95,4 +94,15 @@ namespace MOTOR {
         CST = 0x0A,
     };
 
+};
+
+namespace AS {
+  enum STATE {
+    OFF = 0,
+    CHECKING,
+    READY,
+    DRIVING,
+    FINISHED,
+    EMERGENCY
+  };
 };
