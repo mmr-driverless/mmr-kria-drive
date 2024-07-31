@@ -47,13 +47,13 @@ private:
   int compute_index(int start, int offset) const {
     int idx = start + offset;
 
-    // If the trajectory is closed, we can loop around
+    // If the path is closed, we can loop around
     if (is_closed())
       return idx % n_waypoints();
 
-    // Otherwise, if the trajectory is open, we don't loop around
+    // Otherwise, if the path is open, we don't loop around
     else if (idx < n_waypoints())
-        return idx;
+      return idx;
 
     // Invalid index
     return -1;
