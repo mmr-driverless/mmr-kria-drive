@@ -74,7 +74,7 @@ namespace COCKPIT {
 namespace MOTOR {
     enum MMR_CAN_ID_BASE {
         REQUEST_SDO = 0x600,
-        RESPONSE_SDO = 580,
+        RESPONSE_SDO = 0x580,
     };
 
     enum ACTUATOR_STATUS {
@@ -93,6 +93,27 @@ namespace MOTOR {
         CSV = 0x09,
         CST = 0x0A,
     };
+
+};
+
+namespace AS {
+  enum STATE {
+    OFF = 0,
+    CHECKING,
+    READY,
+    DRIVING,
+    FINISHED,
+    EMERGENCY
+  };
+
+  const inline std::unordered_map<STATE, std::string_view> AsStateStringLookup {
+    { STATE::OFF, "OFF" },
+    { STATE::CHECKING, "CHECKING"},
+    { STATE::READY, "READY" },
+    { STATE::DRIVING, "DRIVING" },
+    { STATE::FINISHED, "FINISHED" },
+    { STATE::EMERGENCY, "EMERGENCY" }
+  };
 
 };
 
