@@ -8,8 +8,9 @@ using DataT = Eigen::Vector3d;
 
 static inline std::pair<double, PointT> pt_segment_projection(PointT pt, PointT start, PointT end) {
   auto delta = (end - start);
-  double t = std::clamp(delta.dot(pt), 0.0, 1.0);
-  return { t, start + delta * t };
+  double t = (pt - start).dot(delta) / delta.squaredNorm();
+  t = std::clamp(t, 0.0, 1.0);
+  return { t, start + t * delta };
 }
 
 class ReferencePath {
@@ -86,10 +87,18 @@ private:
   int m_waypoints_size;
   inline int n_waypoints() const { return m_waypoints_size; }
 
+  int compute_waypoint_count(int start, int end) {
+    if (end < start) {
+      return (n_waypoints() - start) + end;
+    } else {
+      return end - start;
+    }
+  }
+
 public:
 
   // Passing spans around because it must be readily apparent that ReferencePath is a stateless object.
-  ReferencePath(std::span<PointT> waypoints, std::span<DataT> data) : m_waypoints(waypoints), m_data(data) {
+  ReferencePath(std::span<PointT> waypoints, std::span<DataT> data, bool closed) : m_waypoints(waypoints), m_data(data), m_is_closed(closed) {
     assert (waypoints.size() == data.size() && "The waypoints and data views must have the same size.");
     m_waypoints_size = (int)waypoints.size();
   }
@@ -122,7 +131,7 @@ public:
    * @param position The current vehicle position [m, m]
    * @param last_ref The last known path point.
    */
-  std::optional<ProjectionResult> project_vehicle(PointT position, PointRef last_ref) const {
+  std::optional<ProjectionResult> project_vehicle(PointT position, std::optional<PointRef> last_ref, double threshold) const {
     /*
       Find the closest point on the path.
 
@@ -143,12 +152,11 @@ public:
     if (n_waypoints() == 1)
       return ProjectionResult(PointRef(0));
 
-    assert(last_ref.prev_waypoint_idx >= 0 && last_ref.prev_waypoint_idx < n_waypoints() && "last_window_start must be a valid reference.");
 
-    constexpr double threshold = 10.0;
     bool inside_thresh_region = false;
 
-    const int start_waypoint_idx = last_ref.prev_waypoint_idx;
+    assert((!last_ref.has_value() || (last_ref->prev_waypoint_idx >= 0 && last_ref->prev_waypoint_idx < n_waypoints())) && "last_window_start must be a valid reference.");
+    const int start_waypoint_idx = last_ref.has_value()? last_ref->prev_waypoint_idx : 0;
 
     // At this point it is guaranteed that we find a closest point. Keep it optional so that we can assert this assumption later.
     std::optional<PointRef> closest_point;
@@ -161,46 +169,44 @@ public:
       if (start_idx < 0)
         break; // end of path reached
       
-      auto start = m_waypoints[start_idx];
       last_waypoint_idx = start_idx;
+
+      auto start = m_waypoints[start_idx];
 
       // Compute the locally closest point and its distance.
       // - either the current waypoint or the closest point on the segment which starts at this waypoint.
       PointRef locally_closest_pt(start_idx);
       double d;
-
-      int end_idx = compute_index(start_idx, 1);
-      if (end_idx < 0) {
-        // This is the last waypoint in the path.
-        d = (position - start).squaredNorm();
-      } else {
+      if (auto seg = compute_segment(start_idx)) {
         // This waypoint is the start of a segment - compute the point-segment distance.
-        auto end = m_waypoints[end_idx];
+        auto end = m_waypoints[seg->end];
 
         auto [t, pt] = pt_segment_projection(position, start, end);
         d = (pt - position).squaredNorm();
         
         // Store the projection parameter.
         locally_closest_pt.t = t;
-      }
-
-      // Evaluate whether this is the new closest point.
-      if (d <= min_dist) {
-        min_dist = d;
-        closest_point = locally_closest_pt;
+      } else {
+        // This is the last waypoint in the path.
+        d = (position - start).squaredNorm();
       }
 
       // Perform the threshold logic.
       // If we already entered the threshold region,
       if (inside_thresh_region) {
         // If we're now leaving it, then stop traversing the path
-        if (d > threshold) {
+        if (d > threshold)
           break;
-        }
       } else {
         // Otherwise, if we're now entering it
         if (d <= threshold)
           inside_thresh_region = true;
+      }
+
+      // Evaluate whether this is the new closest point.
+      if (d <= min_dist) {
+        min_dist = d;
+        closest_point = locally_closest_pt;
       }
     }
 
@@ -285,6 +291,23 @@ public:
     return PointData(
       m_data[seg->start] + at.t * (m_data[seg->end] - m_data[seg->start])
     );
+  }
+
+  std::array<std::span<PointT>, 2> get_subpath(const PointRef& start, const PointRef& end) {
+    int start_idx = start.prev_waypoint_idx;
+    int end_idx = end.prev_waypoint_idx;
+
+    // Supporting looping around (without copies) in any other way would require a custom iterator. Just return two spans.
+    if (start_idx <= end_idx)
+      return {
+        m_waypoints.subspan(start_idx, end_idx - start_idx),
+        std::span<PointT>()
+      };
+    else 
+      return {
+        m_waypoints.subspan(start_idx, n_waypoints() - start_idx),
+        m_waypoints.subspan(0, end_idx)
+      };
   }
 
   bool is_closed() const { return m_is_closed; } 
