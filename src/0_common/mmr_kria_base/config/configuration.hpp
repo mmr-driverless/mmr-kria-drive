@@ -116,24 +116,3 @@ namespace AS {
   };
 
 };
-
-namespace AS {
-  enum STATE {
-    OFF = 0,
-    CHECKING,
-    READY,
-    DRIVING,
-    FINISHED,
-    EMERGENCY
-  };
-
-  const inline std::unordered_map<STATE, std::string_view> AsStateStringLookup {
-    { STATE::OFF, "OFF" },
-    { STATE::CHECKING, "CHECKING"},
-    { STATE::READY, "READY" },
-    { STATE::DRIVING, "DRIVING" },
-    { STATE::FINISHED, "FINISHED" },
-    { STATE::EMERGENCY, "EMERGENCY" }
-  };
-
-};
