@@ -5,8 +5,11 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <Eigen/Geometry>
+#include <ackermann_msgs/msg/ackermann_drive.hpp>
 
 #include "msg_helpers.hpp"
+#include "pure_pursuit.hpp"
 
 static constexpr double THRESHOLD = 4.0 * 4.0;
 
@@ -25,6 +28,8 @@ class ControlNode : public rclcpp::Node {
   rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr m_centerline_sub;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
 
+  rclcpp::Publisher<ackermann_msgs::msg::AckermannDrive>::SharedPtr m_car_target_pub;
+
 public:
   ControlNode() : rclcpp::Node("control_node"), m_ignore_path_updates(false) {
     rclcpp::QoS qos(rclcpp::KeepLast(1));
@@ -35,6 +40,7 @@ public:
     m_centerline_sub = this->create_subscription<visualization_msgs::msg::Marker>("/planning/center_line", 1, std::bind(&ControlNode::centerline_cb, this, std::placeholders::_1));
     m_centerline_cmpl_sub = this->create_subscription<visualization_msgs::msg::Marker>("/planning/center_line_completed", qos, std::bind(&ControlNode::centerline_completed_cb, this, std::placeholders::_1));
     m_viz_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/control/viz", 2);
+    m_car_target_pub = this->create_publisher<ackermann_msgs::msg::AckermannDrive>("sim/drive_parameters", 1);
   }
 
   void centerline_completed_cb(visualization_msgs::msg::Marker::SharedPtr msg) { path_cb(true, msg); }
@@ -64,6 +70,15 @@ public:
 
   void odom_cb(nav_msgs::msg::Odometry::SharedPtr msg) {
     PointT car_position = PointT(msg->pose.pose.position.x, msg->pose.pose.position.y);
+    Eigen::Quaterniond q(
+      msg->pose.pose.orientation.w,
+      msg->pose.pose.orientation.x,
+      msg->pose.pose.orientation.y,
+      msg->pose.pose.orientation.z
+    );
+    auto rpy = q.toRotationMatrix().eulerAngles(0,1,2);
+    double car_yaw = rpy.z();
+
     auto projection = m_path.project_vehicle(car_position, m_last_path_ref, THRESHOLD);
 
     if (projection) {
@@ -77,6 +92,13 @@ public:
     if (projection) {
       ReferencePath::PointRef r = m_path.advance_point(projection->closest_point, 5);
       lookforward = m_path.get_position(r);
+      
+      ackermann_msgs::msg::AckermannDrive msg;
+      msg.steering_angle = calculateSteeringTarget(*lookforward, car_position, car_yaw, 5, 1);
+      msg.speed = 0.1;
+
+      std::cout << 180 * msg.steering_angle / 3.14 << std::endl;
+      this->m_car_target_pub->publish(msg);
     }
 
     visualize(projection, car_position, lookforward);
