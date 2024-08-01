@@ -89,6 +89,20 @@ namespace MOTOR {
         ERROR,
     };
 
+    enum class STATUS_CLUTCH {
+        CLUTCH_ENGAGED = 0,
+        CLUTCH_DISENGAGED,
+    };
+
+    enum INDEX_CLUTCH {
+        CLUTCH_SET_INIT = 0,
+        CLUTCH_SET_DISENGAGED,
+        CLUTCH_SET_ENGAGED_1,
+        CLUTCH_SET_ENGAGED_2,
+        CLUTCH_SET_ENGAGED_3,
+        CLUTCH_SET_ENGAGED_4,
+    };
+
     enum MODE_OF_OPERATION {
         HMM = 0x06,
         PPM = 0x01,
@@ -96,6 +110,11 @@ namespace MOTOR {
         CSP = 0x08,
         CSV = 0x09,
         CST = 0x0A,
+    };
+
+    enum class IDX_TOGGLE_NEW_POS {
+        IDX_WRITE_ABS_POS = 0,
+        IDX_WRITE_REL_POS,
     };
 
 };
