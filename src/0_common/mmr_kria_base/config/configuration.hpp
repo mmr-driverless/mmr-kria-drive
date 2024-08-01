@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 namespace RES {
 
     enum MMR_CAN_MSG_ID {
@@ -93,6 +95,28 @@ namespace MOTOR {
         CSP = 0x08,
         CSV = 0x09,
         CST = 0x0A,
+    };
+
+};
+
+namespace AS {
+
+    enum STATE {
+        OFF = 0,
+        CHECKING,
+        READY,
+        DRIVING,
+        FINISHED,
+        EMERGENCY
+    };
+
+    const inline std::unordered_map<STATE, std::string_view> AsStateStringLookup {
+        { STATE::OFF, "OFF" },
+        { STATE::CHECKING, "CHECKING"},
+        { STATE::READY, "READY" },
+        { STATE::DRIVING, "DRIVING" },
+        { STATE::FINISHED, "FINISHED" },
+        { STATE::EMERGENCY, "EMERGENCY" }
     };
 
 };
