@@ -11,7 +11,7 @@
 #include "msg_helpers.hpp"
 #include "pure_pursuit.hpp"
 
-static constexpr double THRESHOLD = 4.0 * 4.0;
+static constexpr double THRESHOLD = 6.0 * 6.0;
 
 class ControlNode : public rclcpp::Node {
   ReferencePath m_path;
@@ -65,7 +65,11 @@ public:
     for (size_t i = 0; i < msg->points.size(); ++i)
       m_waypoints[i] = PointT(msg->points[i].x, msg->points[i].y);
     m_last_path_ref = std::nullopt;
-    m_path = ReferencePath(std::span<PointT>(m_waypoints), std::span<DataT>(m_path_data), completed);
+    m_path = ReferencePath(std::span<PointT>(m_waypoints), std::span<DataT>(m_path_data), completed, false);
+
+    m_path.compute_data();
+    static int i = 0;
+    m_path.dump("path" + std::to_string(i++) + ".csv");
   }
 
   void odom_cb(nav_msgs::msg::Odometry::SharedPtr msg) {

@@ -2,16 +2,12 @@
 #include <algorithm>
 #include <eigen3/Eigen/Dense>
 #include <span>
+#include <fstream>
+
+#include <geometry_helpers.hpp>
 
 using PointT = Eigen::Vector2d;
 using DataT = Eigen::Vector3d;
-
-static inline std::pair<double, PointT> pt_segment_projection(PointT pt, PointT start, PointT end) {
-  auto delta = (end - start);
-  double t = (pt - start).dot(delta) / delta.squaredNorm();
-  t = std::clamp(t, 0.0, 1.0);
-  return { t, start + t * delta };
-}
 
 class ReferencePath {
 public:
@@ -30,13 +26,20 @@ public:
   };
 
   struct PointData {
-    double yaw;
+    double s;
     double curvature;
     double max_speed;
 
     friend ReferencePath;
+
+    enum {
+      S = 0,
+      Curvature = 1,
+      MaxSpeed = 2
+    };
+
   private:
-    PointData(DataT data) : yaw(data(0)), curvature(data(1)), max_speed(data(2)) {}
+    PointData(DataT data) : s(data(S)), curvature(data(Curvature)), max_speed(data(MaxSpeed)) {}
   };
 
 private:
@@ -44,6 +47,7 @@ private:
   std::span<DataT> m_data;
 
   bool m_is_closed;
+  bool m_is_data_valid;
   
   int compute_index(int start, int offset) const {
     int idx = start + offset;
@@ -87,7 +91,7 @@ private:
   int m_waypoints_size;
   inline int n_waypoints() const { return m_waypoints_size; }
 
-  int compute_waypoint_count(int start, int end) {
+  int compute_waypoint_count(int start, int end) const {
     if (end < start) {
       return (n_waypoints() - start) + end;
     } else {
@@ -98,7 +102,7 @@ private:
 public:
 
   // Passing spans around because it must be readily apparent that ReferencePath is a stateless object.
-  ReferencePath(std::span<PointT> waypoints, std::span<DataT> data, bool closed) : m_waypoints(waypoints), m_data(data), m_is_closed(closed) {
+  ReferencePath(std::span<PointT> waypoints, std::span<DataT> data, bool closed, bool is_data_valid) : m_waypoints(waypoints), m_data(data), m_is_closed(closed), m_is_data_valid(is_data_valid) {
     assert (waypoints.size() == data.size() && "The waypoints and data views must have the same size.");
     m_waypoints_size = (int)waypoints.size();
   }
@@ -181,7 +185,7 @@ public:
         // This waypoint is the start of a segment - compute the point-segment distance.
         auto end = m_waypoints[seg->end];
 
-        auto [t, pt] = pt_segment_projection(position, start, end);
+        auto [t, pt] = geometry_helpers::pt_segment_projection(position, start, end);
         d = (pt - position).squaredNorm();
         
         // Store the projection parameter.
@@ -283,7 +287,10 @@ public:
    * Get the path data at the specified reference.
    * @param at The location.
    */
-  PointData get_data(const PointRef& at) const {
+  std::optional<PointData> get_data(const PointRef& at) const {
+    if (n_waypoints() <= 0 || !is_data_valid())
+      return {};
+
     // prev_waypoint_idx must be a valid waypoint
     assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints());
 
@@ -297,7 +304,7 @@ public:
     );
   }
 
-  std::array<std::span<PointT>, 2> get_subpath(const PointRef& start, const PointRef& end) {
+  std::array<std::span<PointT>, 2> get_subpath(const PointRef& start, const PointRef& end) const {
     int start_idx = start.prev_waypoint_idx;
     int end_idx = end.prev_waypoint_idx;
 
@@ -314,5 +321,44 @@ public:
       };
   }
 
+  void compute_data() {
+    // Compute s
+    double s_acc = 0;
+    m_data[0](PointData::S) = s_acc;
+    for (int i = 1; i < n_waypoints(); ++i) {
+      s_acc += (m_waypoints[i] - m_waypoints[i-1]).norm();
+      m_data[i](PointData::S) = s_acc;
+    }
+  
+    // Compute path curvature
+    m_data[0](PointData::Curvature) = 0;
+    for (int prev_idx = 0; prev_idx < n_waypoints(); ++prev_idx) {
+      int curr_idx = compute_index(prev_idx, 1);
+      if (curr_idx == -1)
+        break;
+
+      int next_idx = compute_index(curr_idx, 1);
+      if (next_idx == -1) {
+        m_data[curr_idx](PointData::Curvature) = 0;
+        break;
+      }
+
+      m_data[curr_idx](PointData::Curvature) = geometry_helpers::menger_curvature(m_waypoints[prev_idx], m_waypoints[curr_idx], m_waypoints[next_idx]);
+    }
+
+    m_is_data_valid = true;
+  }
+
+  void dump(const std::string& path) {
+    Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", ", ");
+    
+    std::ofstream f(path);
+    f << "x,y,s,k,vx_max\n";
+
+    for (int i = 0; i < n_waypoints(); ++i)
+      f << m_waypoints[i].format(CSVFormat) << ", " << m_data[i].format(CSVFormat) << "\n";
+  }
+
+  bool is_data_valid() const { return m_is_data_valid; }
   bool is_closed() const { return m_is_closed; } 
 };
