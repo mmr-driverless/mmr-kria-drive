@@ -11,7 +11,8 @@
 #include "msg_helpers.hpp"
 #include "pure_pursuit.hpp"
 
-static constexpr double THRESHOLD = 6.0 * 6.0;
+static constexpr double LOOKFORWARD = 8.0;
+static constexpr double THRESHOLD = 8.0;
 
 class ControlNode : public rclcpp::Node {
   ReferencePath m_path;
@@ -68,8 +69,8 @@ public:
     m_path = ReferencePath(std::span<PointT>(m_waypoints), std::span<DataT>(m_path_data), completed, false);
 
     m_path.compute_data();
-    static int i = 0;
-    m_path.dump("path" + std::to_string(i++) + ".csv");
+    //static int i = 0;
+    //m_path.dump("path" + std::to_string(i++) + ".csv");
   }
 
   void odom_cb(nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -83,7 +84,7 @@ public:
     auto rpy = q.toRotationMatrix().eulerAngles(0,1,2);
     double car_yaw = rpy.z();
 
-    auto projection = m_path.project_vehicle(car_position, m_last_path_ref, THRESHOLD);
+    auto projection = m_path.project_vehicle(car_position, m_last_path_ref, THRESHOLD * THRESHOLD);
 
     if (projection) {
       m_last_path_ref = projection->closest_point;
@@ -94,11 +95,11 @@ public:
 
     std::optional<PointT> lookforward;
     if (projection) {
-      ReferencePath::PointRef r = m_path.advance_point(projection->closest_point, 5);
+      ReferencePath::PointRef r = m_path.advance_point(projection->closest_point, LOOKFORWARD);
       lookforward = m_path.get_position(r);
       
       ackermann_msgs::msg::AckermannDrive msg;
-      msg.steering_angle = calculateSteeringTarget(*lookforward, car_position, car_yaw, 5, 1);
+      msg.steering_angle = calculateSteeringTarget(*lookforward, car_position, car_yaw, LOOKFORWARD, 1);
       msg.speed = 0.1;
 
       std::cout << 180 * msg.steering_angle / 3.14 << std::endl;
@@ -154,7 +155,7 @@ public:
     {
       // The threshold area drawn around the vehicle.
       auto m = create_empty_marker(stamp, 0, visualization_msgs::msg::Marker::CYLINDER, {1.0f, 1.0f, 1.0f, 0.5f});
-      SET_XYZ(m.scale, THRESHOLD / 2, THRESHOLD / 2, 0.1);
+      SET_XYZ(m.scale, THRESHOLD, THRESHOLD, 0.1);
       SET_XY(m.pose.position, car_position.x(), car_position.y());
       msg.markers.push_back(m);
     }
