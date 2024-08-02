@@ -172,8 +172,8 @@ void CANBusBridge::readEcuStatus(can_frame frame)
 
         case ECU::MMR_ECU_CLUTCH_STEER:
             this->m_msgEcuStatus.clutch_percentage = this->endian_cast<float>(frame.data);
-            this->m_msgEcuStatus.steering_angle = (float)this->endian_cast<uint16_t>(frame.data + 4) / 10;
-            this->m_msgEcuStatus.wheel_angle = (float)this->endian_cast<uint16_t>(frame.data + 6) / 10;
+            this->m_msgEcuStatus.steering_angle = (float)this->endian_cast<int16_t>(frame.data + 4) / 10;
+            this->m_msgEcuStatus.wheel_angle = (float)this->endian_cast<int16_t>(frame.data + 6) / 10;
             break;
 
         case ECU::MMR_ECU_WHEEL_SPEEDS:
