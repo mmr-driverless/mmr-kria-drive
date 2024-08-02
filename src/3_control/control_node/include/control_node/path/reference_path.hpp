@@ -108,7 +108,7 @@ private:
 public:
 
   // Passing spans around because it must be readily apparent that ReferencePath is a stateless object.
-  ReferencePath(std::span<Eigen::Vector2d> waypoints, std::span<PointData::StorageT> data, bool closed, bool is_data_valid, double threshold) : m_waypoints(waypoints), m_data(data), m_is_closed(closed), m_is_data_valid(is_data_valid), m_threshold(threshold) {
+  ReferencePath(std::span<Eigen::Vector2d> waypoints, std::span<PointData::StorageT> data, bool closed, bool is_data_valid, double threshold) : m_waypoints(waypoints), m_data(data), m_is_closed(closed), m_is_data_valid(is_data_valid), m_threshold(threshold * threshold) {
     assert (waypoints.size() == data.size() && "The waypoints and data views must have the same size.");
     m_waypoints_size = (int)waypoints.size();
   }

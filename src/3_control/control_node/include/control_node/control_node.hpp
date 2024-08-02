@@ -18,6 +18,7 @@ class ControlNode : public rclcpp::Node {
   std::unique_ptr<control::IController> m_controller;
   std::vector<std::unique_ptr<actuation::IActuator>> m_actuators;
 
+  std::optional<path::ReferencePath::PointRef> m_last_path_ref;
 
 public:
   ControlNode();
