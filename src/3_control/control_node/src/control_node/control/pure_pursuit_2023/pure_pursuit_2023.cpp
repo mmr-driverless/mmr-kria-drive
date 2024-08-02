@@ -27,31 +27,29 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
 }
 
 PurePursuit2023::PurePursuit2023(const Parameters& p, const VehicleParameters& vp)
-  : m_minLookForward(p.get<double>("minLookForward")),
-    m_steerGain(p.get<double>("steerGain")),
-    m_vp(vp)
+  : m_vp(vp),
+    m_minLookForward(p.get<double>("minLookForward")),
+    m_steerGain(p.get<double>("steerGain"))
 {}
 
 Control PurePursuit2023::control(
   const estimation::VehicleState& state,
-  const path::ReferencePath& reference_path
+  const path::ReferencePath& reference_path,
+  const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
 ) {
   double lookforward = m_minLookForward;
 
-  auto path_closest_ref = reference_path.project_vehicle(state.position(), m_old_path_ref);
-  if (!path_closest_ref.has_value()) {
-    m_old_path_ref = {};
+  if (!vehicle_path_projection.has_value()) {
     // TODO: Choose better safe state
     return Control(0.0, 0.0, 0.0, 0.0, 0);
   }
-  m_old_path_ref = path_closest_ref->closest_point;
 
-  auto target_ref = reference_path.advance_point(path_closest_ref->closest_point, lookforward);
+  auto target_ref = reference_path.advance_point(*vehicle_path_projection, lookforward);
 
   double steering = calculateSteeringTarget(
     reference_path.get_position(target_ref),
-    state.position(),
-    state.yaw(),
+    state.position,
+    state.yaw,
     lookforward,
     m_steerGain,
     m_vp.max_steering_angle(),

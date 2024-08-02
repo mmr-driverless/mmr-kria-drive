@@ -15,10 +15,10 @@ class CANOpenBridge : public IActuator {
 
 public:
   // TODO: Do i seriously want to pass around a reference to a whole ass Node if i just need to create publishers?
-  CANOpenBridge(rclcpp::Node& const, const Parameters& p);
+  CANOpenBridge(rclcpp::Node& node, const Parameters& p);
   ~CANOpenBridge();
   
-  virtual void actuate(const control::Control& control) = 0;
+  virtual void actuate(const control::Control& control) override;
 };
 
 };

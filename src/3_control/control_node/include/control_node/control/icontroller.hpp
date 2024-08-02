@@ -9,12 +9,10 @@ namespace control_node {
 namespace control {
 
 struct IController {
-  constexpr virtual bool is_path_follower() = 0;
-
-  virtual Control control(const estimation::VehicleState& state) = 0;
   virtual Control control(
     const estimation::VehicleState& state,
-    const path::ReferencePath& reference_path
+    const path::ReferencePath& reference_path,
+    const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
   ) = 0;
 };
 

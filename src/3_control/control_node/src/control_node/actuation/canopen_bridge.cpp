@@ -4,7 +4,7 @@ namespace control_node {
 namespace actuation {
 namespace canopen_bridge {
 
-CANOpenBridge::CANOpenBridge(rclcpp::Node& const node, const Parameters& p)
+CANOpenBridge::CANOpenBridge(rclcpp::Node& node, const Parameters& p)
   : m_steer_pub(node.create_publisher<mmr_kria_base::msg::CmdMotor>(p.get<std::string>("steer_topic"), 2))
 {
   // TODO: Enabling the motors here is probably wrong, but whatever

@@ -59,10 +59,10 @@
     vehicle_parameters:
       wheelbase: 1.541 # distance between front and rear axle [m]
       lr: 0.75 # distance between CoM and rear axle [m]
-      max_steer_angle: 0.3979351 # maximum angle at the wheel [rad]
+      max_steering_angle: 0.3979351 # maximum angle at the wheel [rad]
     
     pure_pursuit_2023:
-      minLookForward: 5
+      minLookForward: 5.0
       minLookForwardGain: 0.4
       steerGain: 1.0
       targetVelocity: 3.33 # This gets overwritten after current lap > dynamicTargetSpeed.slowLaps if dynamicTargetSpeed.enabled is true!
