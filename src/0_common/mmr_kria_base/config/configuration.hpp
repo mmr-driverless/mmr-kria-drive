@@ -82,17 +82,13 @@ namespace MOTOR {
         RESPONSE_SDO = 0x580,
     };
 
-    enum ACTUATOR_STATUS {
+    enum class ACTUATOR_STATUS{
         DISABLE = 0,
-        ENABLE,
         POSITION_MODE,
         TORQUE_MODE,
+        ENGAGE,
+        DISENGAGE,
         ERROR,
-    };
-
-    enum class STATUS_CLUTCH {
-        CLUTCH_ENGAGED = 0,
-        CLUTCH_DISENGAGED,
     };
 
     enum INDEX_CLUTCH {
