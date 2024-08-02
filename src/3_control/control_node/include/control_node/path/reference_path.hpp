@@ -1,13 +1,16 @@
+#ifndef REFERENCE_PATH_HPP
+#define REFERENCE_PATH_HPP
+
 #include <optional>
 #include <algorithm>
 #include <eigen3/Eigen/Dense>
 #include <span>
 #include <fstream>
 
-#include <geometry_helpers.hpp>
+#include <control_node/path/geometry_helpers.hpp>
 
-using PointT = Eigen::Vector2d;
-using DataT = Eigen::Vector3d;
+namespace control_node {
+namespace path {
 
 class ReferencePath {
 public:
@@ -26,6 +29,8 @@ public:
   };
 
   struct PointData {
+    using StorageT = Eigen::Vector3d;
+
     double s;
     double curvature;
     double max_speed;
@@ -39,15 +44,16 @@ public:
     };
 
   private:
-    PointData(DataT data) : s(data(S)), curvature(data(Curvature)), max_speed(data(MaxSpeed)) {}
+    PointData(StorageT data) : s(data(S)), curvature(data(Curvature)), max_speed(data(MaxSpeed)) {}
   };
 
 private:
-  std::span<PointT> m_waypoints;
-  std::span<DataT> m_data;
+  std::span<Eigen::Vector2d> m_waypoints;
+  std::span<PointData::StorageT> m_data;
 
   bool m_is_closed;
   bool m_is_data_valid;
+  double m_threshold;
   
   int compute_index(int start, int offset) const {
     int idx = start + offset;
@@ -102,7 +108,7 @@ private:
 public:
 
   // Passing spans around because it must be readily apparent that ReferencePath is a stateless object.
-  ReferencePath(std::span<PointT> waypoints, std::span<DataT> data, bool closed, bool is_data_valid) : m_waypoints(waypoints), m_data(data), m_is_closed(closed), m_is_data_valid(is_data_valid) {
+  ReferencePath(std::span<Eigen::Vector2d> waypoints, std::span<PointData::StorageT> data, bool closed, bool is_data_valid, double threshold) : m_waypoints(waypoints), m_data(data), m_is_closed(closed), m_is_data_valid(is_data_valid), m_threshold(threshold) {
     assert (waypoints.size() == data.size() && "The waypoints and data views must have the same size.");
     m_waypoints_size = (int)waypoints.size();
   }
@@ -135,7 +141,7 @@ public:
    * @param position The current vehicle position [m, m]
    * @param last_ref The last known path point.
    */
-  std::optional<ProjectionResult> project_vehicle(PointT position, std::optional<PointRef> last_ref, double threshold) const {
+  std::optional<ProjectionResult> project_vehicle(Eigen::Vector2d position, std::optional<PointRef> last_ref) const {
     /*
       Find the closest point on the path.
 
@@ -199,11 +205,11 @@ public:
       // If we already entered the threshold region,
       if (inside_thresh_region) {
         // If we're now leaving it, then stop traversing the path
-        if (d > threshold)
+        if (d > m_threshold)
           break;
       } else {
         // Otherwise, if we're now entering it
-        if (d <= threshold)
+        if (d <= m_threshold)
           inside_thresh_region = true;
       }
 
@@ -271,7 +277,7 @@ public:
    * Get the path position at the specified reference.
    * @param at The location.
    */
-  PointT get_position(const PointRef& at) const {
+  Eigen::Vector2d get_position(const PointRef& at) const {
     // prev_waypoint_idx must be a valid waypoint
     assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints());
 
@@ -304,7 +310,7 @@ public:
     );
   }
 
-  std::array<std::span<PointT>, 2> get_subpath(const PointRef& start, const PointRef& end) const {
+  std::array<std::span<Eigen::Vector2d>, 2> get_subpath(const PointRef& start, const PointRef& end) const {
     int start_idx = start.prev_waypoint_idx;
     int end_idx = end.prev_waypoint_idx;
 
@@ -312,7 +318,7 @@ public:
     if (start_idx <= end_idx)
       return {
         m_waypoints.subspan(start_idx, end_idx - start_idx),
-        std::span<PointT>()
+        std::span<Eigen::Vector2d>()
       };
     else 
       return {
@@ -362,3 +368,8 @@ public:
   bool is_data_valid() const { return m_is_data_valid; }
   bool is_closed() const { return m_is_closed; } 
 };
+
+}; // namespace path
+}; // namespace control_node
+
+#endif 
