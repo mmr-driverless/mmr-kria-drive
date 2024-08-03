@@ -65,12 +65,14 @@ void ControlNode::tick() {
 
   control::Control u(0,0,0,0,0);
   auto projection = m_path.project_vehicle(vehicle_state.position, m_last_path_ref);
+  std::optional<path::ReferencePath::PointRef> closest_point;
   std::optional<Eigen::Vector2d> lookforward;
   if (projection.has_value()) {
     lookforward = m_path.get_position(m_path.advance_point(projection->closest_point, m_controller->minLookForward()));
+    closest_point = projection->closest_point;
     m_last_path_ref = projection->closest_point;
   }
-  u = m_controller->control(vehicle_state, m_path, m_last_path_ref);
+  u = m_controller->control(vehicle_state, m_path, closest_point);
 
   auto msg = visualize(*this, m_path, projection, vehicle_state.position, lookforward, 10);
   m_viz_pub->publish(msg);
