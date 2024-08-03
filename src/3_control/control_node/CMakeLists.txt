@@ -19,6 +19,7 @@ add_executable(control_node
   src/main.cpp
   src/control_node/control_node.cpp
   src/control_node/actuation/canopen_bridge.cpp
+  src/control_node/actuation/sim.cpp
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
   src/control_node/estimation/noop_estimator.cpp
 )

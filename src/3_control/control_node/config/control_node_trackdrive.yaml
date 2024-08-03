@@ -26,11 +26,17 @@
 
         _1:
           enabled: true
+          type: sim
+          params:
+            topic: "/sim/drive_parameters"
+        
+        _2:
+          enabled: true
           type: spi_apps
           params:
             dev: "/dev/ur_mom"
 
-        _2:
+        _3:
           enabled: true
           type: print_to_console
 

@@ -353,12 +353,15 @@ public:
 
       int next_idx = compute_index(curr_idx, 1);
       if (next_idx == -1) {
-        m_data[curr_idx](PointData::Curvature) = 0;
+        m_data[curr_idx](PointData::Curvature) = m_data[prev_idx](PointData::Curvature);
         break;
       }
 
       m_data[curr_idx](PointData::Curvature) = geometry_helpers::menger_curvature(m_waypoints[prev_idx], m_waypoints[curr_idx], m_waypoints[next_idx]);
     }
+
+    // Smooth the curvature
+    /* ... */
 
     m_is_data_valid = true;
   }
