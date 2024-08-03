@@ -114,7 +114,14 @@ public:
     m_waypoints_size = (int)waypoints.size();
   }
 
-  ReferencePath() { }
+  ReferencePath()
+    : m_waypoints(std::span<Eigen::Vector2d>()),
+      m_data(std::span<PointData::StorageT>()),
+      m_is_closed(false),
+      m_is_data_valid(false),
+      m_threshold(0),
+      m_waypoints_size(0)
+  {}
 
   std::optional<PointRef> start() const {
     if (n_waypoints() > 0)
@@ -157,7 +164,7 @@ public:
       If we don't find such a region, it means that the vehicle is off course. In that case, we
       take the globally closest point to the vehicle, which is the optimal solution for all events but Skidpad.
     */
-
+   
     if (n_waypoints() <= 0)
       return {};
     if (n_waypoints() == 1)
