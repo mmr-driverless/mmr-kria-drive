@@ -9,7 +9,7 @@
 
 namespace control_node {
 
-ControlNode::ControlNode() : rclcpp::Node("control_node"),
+ControlNode::ControlNode() : EDFNode("control_node"),
   m_tick_interval(std::chrono::milliseconds(this->declare_parameter("tick_interval", rclcpp::PARAMETER_INTEGER).get<int>())),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_estimator(std::make_unique<estimation::noop::NoopEstimator>(*this, Parameters(this, "noop_estimator"))),
@@ -18,6 +18,14 @@ ControlNode::ControlNode() : rclcpp::Node("control_node"),
   m_centerline_cmpl_sub(this->create_subscription<viz_msgs::Marker>("/planning/center_line_completed", 1, std::bind(&ControlNode::center_line_completed_cb, this, std::placeholders::_1))),
   m_viz_pub(this->create_publisher<viz_msgs::MarkerArray>("/control/viz", 2))
 {
+  
+  this->configureEDFScheduler(
+    std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count(),
+    this->declare_parameter("wcet_ns", rclcpp::PARAMETER_INTEGER).get<int>(),
+    std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count()
+  );
+  
+
   m_has_completed_path = false;
   m_actuators.push_back(std::make_unique<actuation::canopen_bridge::CANOpenBridge>(*this, Parameters(this, "actuation.actuators._0.params")));
 }

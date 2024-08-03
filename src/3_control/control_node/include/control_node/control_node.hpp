@@ -9,10 +9,11 @@
 #include <control_node/vehicle_parameters.hpp>
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
 #include <control_node/viz_msgs.hpp>
+#include <mmr_edf/mmr_edf.hpp>
 
 namespace control_node {
 
-class ControlNode : public rclcpp::Node {
+class ControlNode : public EDFNode {
   std::chrono::milliseconds m_tick_interval;
   VehicleParameters m_vp;
 

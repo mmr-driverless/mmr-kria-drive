@@ -1,6 +1,7 @@
 /control_node:
   ros__parameters:
     tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
+    wcet_ns: 5000000 # 5ms
 
     controller: pure_pursuit_2023
     state_estimator: noop_estimator
