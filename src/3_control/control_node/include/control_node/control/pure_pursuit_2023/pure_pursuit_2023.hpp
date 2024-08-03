@@ -16,6 +16,8 @@ class PurePursuit2023 : public IController {
 public:
   PurePursuit2023(const Parameters& p, const VehicleParameters& vp);
   
+  double minLookForward() const { return m_minLookForward; };
+
   virtual Control control(
     const estimation::VehicleState& state,
     const path::ReferencePath& reference_path,

@@ -7,6 +7,7 @@
 #include <control_node/actuation/iactuator.hpp>
 #include <control_node/path/reference_path.hpp>
 #include <control_node/vehicle_parameters.hpp>
+#include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
 #include <control_node/viz_msgs.hpp>
 
 namespace control_node {
@@ -16,7 +17,8 @@ class ControlNode : public rclcpp::Node {
   VehicleParameters m_vp;
 
   std::unique_ptr<estimation::IStateEstimator> m_estimator;
-  std::unique_ptr<control::IController> m_controller;
+  // std::unique_ptr<control::IController> m_controller;
+  std::unique_ptr<control::pure_pursuit_2023::PurePursuit2023> m_controller;
   std::vector<std::unique_ptr<actuation::IActuator>> m_actuators;
 
   std::optional<path::ReferencePath::PointRef> m_last_path_ref;
