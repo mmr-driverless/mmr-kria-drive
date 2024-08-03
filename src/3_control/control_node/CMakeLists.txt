@@ -12,7 +12,7 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
-find_package(mmr_kria_base REQUIRED)
+find_package(mmr_base REQUIRED)
 
 add_executable(control_node 
   src/main.cpp
@@ -24,7 +24,7 @@ add_executable(control_node
 target_include_directories(control_node PUBLIC include)
 set_property(TARGET control_node PROPERTY CXX_STANDARD 20)
 target_link_libraries(control_node Eigen3::Eigen)
-ament_target_dependencies(control_node rclcpp mmr_kria_base nav_msgs ackermann_msgs)
+ament_target_dependencies(control_node rclcpp mmr_base nav_msgs ackermann_msgs)
 
 if (USE_KRIA_MSGS)
   target_compile_definitions(control_node PUBLIC USE_KRIA_MSGS)

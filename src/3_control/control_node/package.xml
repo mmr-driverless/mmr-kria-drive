@@ -13,7 +13,7 @@
   <test_depend>ament_lint_common</test_depend>
 
   <depend>rclcpp</depend>
-  <depend>mmr_kria_base</depend>
+  <depend>mmr_base</depend>
   <depend>visualization_msgs</depend>
 
   <export>
