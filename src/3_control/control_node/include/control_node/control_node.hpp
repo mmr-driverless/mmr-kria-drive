@@ -2,12 +2,12 @@
 #define CONTROLNODE_CONTROLNODE_HPP
 
 #include <rclcpp/rclcpp.hpp>
-#include <mmr_kria_base/msg/marker.hpp>
 #include <control_node/estimation/istate_estimator.hpp>
 #include <control_node/control/icontroller.hpp>
 #include <control_node/actuation/iactuator.hpp>
 #include <control_node/path/reference_path.hpp>
 #include <control_node/vehicle_parameters.hpp>
+#include <control_node/viz_msgs.hpp>
 
 namespace control_node {
 
@@ -25,13 +25,19 @@ class ControlNode : public rclcpp::Node {
   std::vector<Eigen::Vector2d> m_waypoints;
   std::vector<path::ReferencePath::PointData::StorageT> m_path_data;
 
+  rclcpp::Subscription<viz_msgs::Marker>::SharedPtr m_centerline_sub;
+  rclcpp::Subscription<viz_msgs::Marker>::SharedPtr m_centerline_cmpl_sub;
+  rclcpp::Publisher<viz_msgs::MarkerArray>::SharedPtr m_viz_pub;
+
+  bool m_has_completed_path;
+
 public:
   ControlNode();
   void tick();
 
   inline std::chrono::milliseconds tick_interval() const { return m_tick_interval; }
-  void center_line_cb(mmr_kria_base::msg::Marker::SharedPtr msg);
-  void center_line_completed_cb(mmr_kria_base::msg::Marker::SharedPtr msg);
+  void center_line_cb(viz_msgs::Marker::SharedPtr msg);
+  void center_line_completed_cb(viz_msgs::Marker::SharedPtr msg);
 };
 
 };
