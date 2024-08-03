@@ -1,6 +1,6 @@
 #include "bag_adapter/bag_adapter.hpp"
 
-bag_adapter::bag_adapter(rclcpp::Node::SharedPtr nh, rclcpp::Publisher<mmr_kria_base::msg::CmdMotor>::SharedPtr steeringPub){
+bag_adapter::bag_adapter(rclcpp::Node::SharedPtr nh, rclcpp::Publisher<mmr_base::msg::CmdMotor>::SharedPtr steeringPub){
     this->steeringPub = steeringPub;
 
     steeringMsg.wheel_angle = 0.0;

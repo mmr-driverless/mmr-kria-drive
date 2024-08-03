@@ -25,8 +25,8 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
         this->m_sTopicRx, 1, std::bind(&CANBusBridge::msgCANBusRxCallback, this, std::placeholders::_1));
 
     this->m_pubCANBusTx = this->create_publisher<can_msgs::msg::Frame>(this->m_sTopicTx, 1);
-    this->m_pubEcuStatus = this->create_publisher<mmr_kria_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
-    this->m_pubResStatus = this->create_publisher<mmr_kria_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
+    this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
+    this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
 }
 

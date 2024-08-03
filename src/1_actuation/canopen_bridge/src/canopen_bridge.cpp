@@ -6,10 +6,10 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
     this->connectCANBus();
 
-    this->m_subCmdSteer = this->create_subscription<mmr_kria_base::msg::CmdMotor>(
+    this->m_subCmdSteer = this->create_subscription<mmr_base::msg::CmdMotor>(
         this->m_sSteerTopic, 1, std::bind(&CANOpenBridge::msgCmdSteerCallback, this, std::placeholders::_1));
 
-    this->m_subCmdBrake = this->create_subscription<mmr_kria_base::msg::CmdMotor>(
+    this->m_subCmdBrake = this->create_subscription<mmr_base::msg::CmdMotor>(
         this->m_sBrakeTopic, 1, std::bind(&CANOpenBridge::msgCmdBrakeCallback, this, std::placeholders::_1));
 
     
@@ -112,7 +112,7 @@ void CANOpenBridge::connectCANBus()
         return;
 }
 
-void CANOpenBridge::msgCmdSteerCallback(mmr_kria_base::msg::CmdMotor::SharedPtr msg)
+void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 {
     if (msg->enable) {
         /* Enables the steer motor in PPM */
@@ -141,7 +141,7 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_kria_base::msg::CmdMotor::SharedPtr 
         this->m_mSteer->writeTargetPos(nIncrements);
 }
 
-void CANOpenBridge::msgCmdBrakeCallback(mmr_kria_base::msg::CmdMotor::SharedPtr msg)
+void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 {
     if (msg->enable) {
         /* Enables the brake motor in CST */

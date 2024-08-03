@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mmr_kria_base/mmr_edf.hpp>
+#include <mmr_base/mmr_edf.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/exceptions.hpp>

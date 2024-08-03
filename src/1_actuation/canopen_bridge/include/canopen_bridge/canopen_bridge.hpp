@@ -4,9 +4,9 @@
 #include <canopen_bridge/driver/brake_maxon.hpp>
 
 #include <mmr_edf/mmr_edf.hpp>
-#include <mmr_kria_base/configuration.hpp>
-#include <mmr_kria_base/msg/cmd_motor.hpp>
-#include <mmr_kria_base/msg/actuator_status.hpp>
+#include <mmr_base/configuration.hpp>
+#include <mmr_base/msg/cmd_motor.hpp>
+#include <mmr_base/msg/actuator_status.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/exceptions.hpp>
@@ -45,20 +45,20 @@ class CANOpenBridge : public EDFNode
         float m_fClutchPot;
 
         /* Subscriber for CANOpen Command Msg */
-        rclcpp::Subscription<mmr_kria_base::msg::CmdMotor>::SharedPtr m_subCmdSteer;
-        void msgCmdSteerCallback(mmr_kria_base::msg::CmdMotor::SharedPtr msg);
+        rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr m_subCmdSteer;
+        void msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg);
 
-        rclcpp::Subscription<mmr_kria_base::msg::CmdMotor>::SharedPtr m_subCmdBrake;
-        void msgCmdBrakeCallback(mmr_kria_base::msg::CmdMotor::SharedPtr msg);
+        rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr m_subCmdBrake;
+        void msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg);
 
-        rclcpp::Subscription<mmr_kria_base::msg::CmdMotor>::SharedPtr m_subCmdClutch;
-        void msgCmdClutchCallback(mmr_kria_base::msg::CmdMotor::SharedPtr msg);
+        rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr m_subCmdClutch;
+        void msgCmdClutchCallback(mmr_base::msg::CmdMotor::SharedPtr msg);
 
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr m_subCanCallback;
         void msgCanCallback(can_msgs::msg::Frame::SharedPtr msg);
 
-        mmr_kria_base::msg::ActuatorStatus m_asActuatorStatus;
-        rclcpp::Publisher<mmr_kria_base::msg::ActuatorStatus>::SharedPtr m_pubCANBusTx;
+        mmr_base::msg::ActuatorStatus m_asActuatorStatus;
+        rclcpp::Publisher<mmr_base::msg::ActuatorStatus>::SharedPtr m_pubCANBusTx;
 
         int m_nSocket;
         struct ifreq m_ifr;
