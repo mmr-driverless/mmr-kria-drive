@@ -10,7 +10,7 @@
 
 namespace control_node {
 
-ControlNode::ControlNode() : EDFNode("control_node"),
+ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(this->declare_parameter("tick_interval", rclcpp::PARAMETER_INTEGER).get<int>())),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_estimator(std::make_unique<estimation::noop::NoopEstimator>(*this, Parameters(this, "noop_estimator"))),
@@ -20,13 +20,14 @@ ControlNode::ControlNode() : EDFNode("control_node"),
   m_viz_pub(this->create_publisher<viz_msgs::MarkerArray>("/control/viz", 2))
 {
   
+  #ifdef USE_EDF
   this->configureEDFScheduler(
     std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count(),
     this->declare_parameter("wcet_ns", rclcpp::PARAMETER_INTEGER).get<int>(),
     std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count()
   );
+  #endif
   
-
   m_has_completed_path = false;
   m_actuators.push_back(std::make_unique<actuation::canopen_bridge::CANOpenBridge>(*this, Parameters(this, "actuation.actuators._0.params")));
   m_actuators.push_back(std::make_unique<actuation::sim::Sim>(*this, Parameters(this, "actuation.actuators._1.params")));

@@ -1,3 +1,6 @@
+#ifndef CONTROLNODE_VIZMSGS_HPP
+#define CONTROLNODE_VIZMSGS_HPP
+
 #ifdef USE_KRIA_MSGS
   #include <mmr_base/msg/marker.hpp>
   #include <mmr_base/msg/marker_array.hpp>
@@ -19,3 +22,5 @@ namespace viz_msgs {
 
 };
 };
+
+#endif

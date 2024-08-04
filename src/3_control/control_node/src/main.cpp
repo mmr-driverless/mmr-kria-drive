@@ -1,5 +1,6 @@
 #include <control_node/control_node.hpp>
 
+#ifdef USE_EDF
 bool stop = false;
 void handleSignal(int signal) {
   if (signal == SIGINT) {
@@ -7,12 +8,16 @@ void handleSignal(int signal) {
     stop = true;
   }
 }
-
 using namespace std::chrono_literals;
+#endif
+
 
 int main(int argc, char * argv[])
 {
+#ifdef USE_EDF
   signal(SIGINT, handleSignal);
+#endif
+
   /* node initialization */
   rclcpp::init(argc, argv);
 
@@ -20,12 +25,16 @@ int main(int argc, char * argv[])
   auto node = std::make_shared<control_node::ControlNode>();
   executor.add_node(node);
 
+#ifdef USE_EDF
   while (!stop)
   {
     executor.spin_all(std::chrono::duration_cast<std::chrono::nanoseconds>(node->tick_interval()) / 2);
     node->tick();
     sched_yield();
   }
+#else
+  executor.spin();
+#endif
 
   rclcpp::shutdown();
   return 0;
