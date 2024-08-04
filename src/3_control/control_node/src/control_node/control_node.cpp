@@ -4,6 +4,7 @@
 #include <control_node/estimation/noop_estimator/noop_estimator.hpp>
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
 #include <control_node/actuation/canopen_bridge/canopen_bridge.hpp>
+#include <control_node/actuation/sim/sim.hpp>
 #include <control_node/path/reference_path.hpp>
 #include <control_node/visualize.hpp>
 
@@ -28,6 +29,7 @@ ControlNode::ControlNode() : EDFNode("control_node"),
 
   m_has_completed_path = false;
   m_actuators.push_back(std::make_unique<actuation::canopen_bridge::CANOpenBridge>(*this, Parameters(this, "actuation.actuators._0.params")));
+  m_actuators.push_back(std::make_unique<actuation::sim::Sim>(*this, Parameters(this, "actuation.actuators._1.params")));
 }
 
 
