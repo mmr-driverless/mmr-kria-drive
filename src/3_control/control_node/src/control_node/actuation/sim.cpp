@@ -10,7 +10,7 @@ Sim::Sim(rclcpp::Node& node, const Parameters& p)
 
 void Sim::actuate(const control::Control& u) {
   ackermann_msgs::msg::AckermannDrive msg;
-  msg.steering_angle = u.steer();
+  msg.steering_angle = u.steer;
   m_pub->publish(msg);
 }
 

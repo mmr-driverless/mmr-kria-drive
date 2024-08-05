@@ -41,15 +41,15 @@ Control PurePursuit2023::control(
 
   if (!vehicle_path_projection.has_value()) {
     // TODO: Choose better safe state
-    return Control(0.0, 0.0, 0.0, 0.0, 0);
+    return Control(0.0, 0.0, 0.0, 0.0, 0, false);
   }
 
   auto target_ref = reference_path.advance_point(*vehicle_path_projection, lookforward);
 
   double steering = calculateSteeringTarget(
     reference_path.get_position(target_ref),
-    state.position,
-    state.yaw,
+    state.position(),
+    state.yaw(),
     lookforward,
     m_steerGain,
     m_vp.max_steering_angle(),
@@ -58,7 +58,7 @@ Control PurePursuit2023::control(
   );
 
   // TODO: look ma! no throttle!
-  return Control(steering, 0.0, 0.0, 0.0, 0);
+  return Control(steering, 0.0, 0.0, 0.0, 0, false);
 }
 
 }; // namespace pure_pursuit_2023

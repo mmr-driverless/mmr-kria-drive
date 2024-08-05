@@ -29,7 +29,9 @@ add_executable(control_node
   src/control_node/actuation/canopen_bridge.cpp
   src/control_node/actuation/sim.cpp
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
+  src/control_node/control/inspection/inspection.cpp
   src/control_node/estimation/noop_estimator.cpp
+  src/control_node/start_stop/start_stop.cpp
 )
 target_include_directories(control_node PUBLIC include)
 set_property(TARGET control_node PROPERTY CXX_STANDARD 20)

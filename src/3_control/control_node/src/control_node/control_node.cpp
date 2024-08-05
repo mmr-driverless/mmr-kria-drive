@@ -15,6 +15,7 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_estimator(std::make_unique<estimation::noop::NoopEstimator>(*this, Parameters(this, "noop_estimator"))),
   m_controller(std::make_unique<control::pure_pursuit_2023::PurePursuit2023>(Parameters(this, "pure_pursuit_2023"), m_vp)),
+  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
   m_centerline_sub(this->create_subscription<viz_msgs::Marker>("/planning/center_line", 1, std::bind(&ControlNode::center_line_cb, this, std::placeholders::_1))),
   m_centerline_cmpl_sub(this->create_subscription<viz_msgs::Marker>("/planning/center_line_completed", 1, std::bind(&ControlNode::center_line_completed_cb, this, std::placeholders::_1))),
   m_viz_pub(this->create_publisher<viz_msgs::MarkerArray>("/control/viz", 2))
@@ -66,8 +67,8 @@ void ControlNode::center_line_completed_cb(viz_msgs::Marker::SharedPtr msg) {
 void ControlNode::tick() {
   auto vehicle_state = m_estimator->update_and_get_current_state();
 
-  control::Control u(0,0,0,0,0);
-  auto projection = m_path.project_vehicle(vehicle_state.position, m_last_path_ref);
+  control::Control u(0,0,0,0,0, false);
+  auto projection = m_path.project_vehicle(vehicle_state.position(), m_last_path_ref);
   std::optional<path::ReferencePath::PointRef> closest_point;
   std::optional<Eigen::Vector2d> lookforward;
   if (projection.has_value()) {
@@ -77,7 +78,9 @@ void ControlNode::tick() {
   }
   u = m_controller->control(vehicle_state, m_path, closest_point);
 
-  auto msg = visualize(*this, m_path, projection, vehicle_state.position, lookforward, 10);
+  m_startStop->triggerFSM(vehicle_state, u);
+
+  auto msg = visualize(*this, m_path, projection, vehicle_state.position(), lookforward, 10);
   m_viz_pub->publish(msg);
 
   for (auto& actuator : m_actuators)

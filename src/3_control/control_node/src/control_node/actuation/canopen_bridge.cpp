@@ -25,7 +25,7 @@ CANOpenBridge::~CANOpenBridge() {
 
 void CANOpenBridge::actuate(const control::Control& u) {
   mmr_base::msg::CmdMotor msg;
-  msg.wheel_angle = u.steer();
+  msg.wheel_angle = u.steer;
   m_steer_pub->publish(msg);
 }
 
