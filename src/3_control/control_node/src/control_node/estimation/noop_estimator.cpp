@@ -9,7 +9,7 @@ NoopEstimator::NoopEstimator(rclcpp::Node& node, const Parameters& p)
 {}
 
 void NoopEstimator::odom_cb(nav_msgs::msg::Odometry::SharedPtr msg) {
-  m_state.position = Eigen::Vector2d(msg->pose.pose.position.x, msg->pose.pose.position.y);
+  m_state.m_position = Eigen::Vector2d(msg->pose.pose.position.x, msg->pose.pose.position.y);
   Eigen::Quaterniond q(
     msg->pose.pose.orientation.w,
     msg->pose.pose.orientation.x,
@@ -17,11 +17,7 @@ void NoopEstimator::odom_cb(nav_msgs::msg::Odometry::SharedPtr msg) {
     msg->pose.pose.orientation.z
   );
   auto rpy = q.toRotationMatrix().eulerAngles(0,1,2);
-  m_state.yaw = rpy.z();
-
-  // TODO: i guess the car does move, right?
-  m_state.velocity = Eigen::Vector2d::Zero();
-  m_state.yaw_rate = 0;
+  m_state.m_yaw = rpy.z();
 }
 
 };

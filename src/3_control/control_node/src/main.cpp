@@ -33,6 +33,7 @@ int main(int argc, char * argv[])
     sched_yield();
   }
 #else
+  node->create_wall_timer(node->tick_interval(), std::bind(&control_node::ControlNode::tick, node.get()));
   executor.spin();
 #endif
 

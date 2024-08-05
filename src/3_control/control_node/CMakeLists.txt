@@ -8,7 +8,7 @@ endif()
 # Whether to use the custom visualization msgs or the standard ones
 set(USE_KRIA_MSGS ON)
 # Whether to use the EDF scheduler or not
-set(USE_EDF ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
@@ -30,6 +30,8 @@ add_executable(control_node
   src/control_node/actuation/sim.cpp
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
   src/control_node/estimation/noop_estimator.cpp
+  src/control_node/path/sources/ros/path_from_marker_msg.cpp
+  src/control_node/path/reference_path_manager.cpp
 )
 target_include_directories(control_node PUBLIC include)
 set_property(TARGET control_node PROPERTY CXX_STANDARD 20)

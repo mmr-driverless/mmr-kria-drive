@@ -7,7 +7,7 @@ namespace control_node {
 namespace estimation {
 
 struct IStateEstimator {
-  virtual IVehicleState& update_and_get_current_state() = 0;
+  virtual const IVehicleState& update_and_get_current_state() = 0;
 };
 
 

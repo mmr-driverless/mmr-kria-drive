@@ -13,14 +13,25 @@ namespace noop {
 class NoopEstimator : public IStateEstimator {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
 
-  VehicleState m_state;
-
   void odom_cb(nav_msgs::msg::Odometry::SharedPtr msg);
 
 public:
-  // TODO: I hate the whole ass node reference just to create some subscriptions
+  struct VehicleState : public IVehicleState {
+    Eigen::Vector2d m_position;
+    double m_yaw;
+    
+    friend NoopEstimator;
+  private:
+    virtual int lap() const override { return 0; }
+    virtual Eigen::Vector2d position() const override { return m_position; }
+    virtual Eigen::Vector2d velocity() const override { return Eigen::Vector2d::Zero(); }
+    virtual double yaw() const override { return m_yaw; }
+    virtual double yaw_rate() const override { return 0; }
+  } m_state;
+
   NoopEstimator(rclcpp::Node& node, const Parameters& p);
-  virtual VehicleState update_and_get_current_state() override { return m_state; }
+  virtual const IVehicleState& update_and_get_current_state() override { return m_state; }
+
 };
 
 };

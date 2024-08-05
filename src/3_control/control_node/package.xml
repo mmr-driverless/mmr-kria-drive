@@ -7,16 +7,6 @@
   <maintainer email="simonebondi456@gmail.com">simonebondi</maintainer>
   <license>TODO: License declaration</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-
-  <depend>rclcpp</depend>
-  <depend>mmr_base</depend>
-  <depend>mmr_edf</depend>
-  <depend>visualization_msgs</depend>
-
   <export>
     <build_type>ament_cmake</build_type>
   </export>

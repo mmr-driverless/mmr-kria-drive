@@ -41,26 +41,28 @@
           type: print_to_console
 
     # Reference path settings
-    reference_path:
+    reference_path_manager:
       # Reference path sources in order of priority, 0 is lowest
       # Whenever a path from a higher priority source is received, it overrides any lower priority path
       sources:
-        _0:
+        0:
           enabled: true
-          topic: "/planning/center_line"
-          type: "visualization_msgs/msg/Marker"
-          is_closed: false
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line"
+            is_closed: false
 
-        _1:
+        1:
           enabled: true
-          topic: "/planning/center_line_completed"
-          type: "visualization_msgs/msg/Marker"
-          is_closed: true
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line_completed"
+            is_closed: true
 
-        _2:
+        2:
           enabled: false
           topic: "/planning/global"
-          type: "mmr_base/msg/SpeedProfilePoints"
+          type: "ROS_SpeedProfilePoints"
           is_closed: true
     
     vehicle_parameters:
@@ -87,3 +89,4 @@
     noop_estimator:
       odometry_topic: "/Odometry"
       race_status_topic: "/planning/race_status"
+      

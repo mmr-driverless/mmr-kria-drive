@@ -53,7 +53,6 @@ private:
 
   bool m_is_closed;
   bool m_is_data_valid;
-  double m_threshold;
   
   int compute_index(int start, int offset) const {
     int idx = start + offset;
@@ -106,10 +105,13 @@ private:
   }
 
 public:
-  double threshold() const { return m_threshold; }
+  struct PathProperties {
+    bool is_closed;
+    bool is_data_valid;
+  };
 
   // Passing spans around because it must be readily apparent that ReferencePath is a stateless object.
-  ReferencePath(std::span<Eigen::Vector2d> waypoints, std::span<PointData::StorageT> data, bool closed, bool is_data_valid, double threshold) : m_waypoints(waypoints), m_data(data), m_is_closed(closed), m_is_data_valid(is_data_valid), m_threshold(threshold * threshold) {
+  ReferencePath(std::span<Eigen::Vector2d> waypoints, std::span<PointData::StorageT> data, PathProperties prop) : m_waypoints(waypoints), m_data(data), m_is_closed(prop.is_closed), m_is_data_valid(prop.is_data_valid) {
     assert (waypoints.size() == data.size() && "The waypoints and data views must have the same size.");
     m_waypoints_size = (int)waypoints.size();
   }
@@ -119,7 +121,6 @@ public:
       m_data(std::span<PointData::StorageT>()),
       m_is_closed(false),
       m_is_data_valid(false),
-      m_threshold(0),
       m_waypoints_size(0)
   {}
 
@@ -149,7 +150,7 @@ public:
    * @param position The current vehicle position [m, m]
    * @param last_ref The last known path point.
    */
-  std::optional<ProjectionResult> project_vehicle(Eigen::Vector2d position, std::optional<PointRef> last_ref) const {
+  std::optional<ProjectionResult> project_vehicle(Eigen::Vector2d position, std::optional<PointRef> last_ref, double threshold_squared) const {
     /*
       Find the closest point on the path.
 
@@ -213,11 +214,11 @@ public:
       // If we already entered the threshold region,
       if (inside_thresh_region) {
         // If we're now leaving it, then stop traversing the path
-        if (d > m_threshold)
+        if (d > threshold_squared)
           break;
       } else {
         // Otherwise, if we're now entering it
-        if (d <= m_threshold)
+        if (d <= threshold_squared)
           inside_thresh_region = true;
       }
 

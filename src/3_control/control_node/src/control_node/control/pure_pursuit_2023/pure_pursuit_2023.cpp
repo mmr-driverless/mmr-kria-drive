@@ -48,8 +48,8 @@ Control PurePursuit2023::control(
 
   double steering = calculateSteeringTarget(
     reference_path.get_position(target_ref),
-    state.position,
-    state.yaw,
+    state.position(),
+    state.yaw(),
     lookforward,
     m_steerGain,
     m_vp.max_steering_angle(),
