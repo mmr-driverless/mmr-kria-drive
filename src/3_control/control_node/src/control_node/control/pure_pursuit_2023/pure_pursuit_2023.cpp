@@ -33,7 +33,7 @@ PurePursuit2023::PurePursuit2023(const Parameters& p, const VehicleParameters& v
 {}
 
 Control PurePursuit2023::control(
-  const estimation::VehicleState& state,
+  const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,
   const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
 ) {

@@ -19,7 +19,7 @@ public:
   double minLookForward() const { return m_minLookForward; };
 
   virtual Control control(
-    const estimation::VehicleState& state,
+    const estimation::IVehicleState& state,
     const path::ReferencePath& reference_path,
     const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
   ) override;

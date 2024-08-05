@@ -1,7 +1,6 @@
 #ifndef CONTROLNODE_ACTUATION_ACTUATOR_HPP
 #define CONTROLNODE_ACTUATION_ACTUATOR_HPP
 
-#include <control_node/estimation/vehicle_state.hpp>
 #include <control_node/control/control.hpp>
 #include <rclcpp/node.hpp>
 
