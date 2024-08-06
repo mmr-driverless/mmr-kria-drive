@@ -1,5 +1,5 @@
-#ifndef CONTROLNODE_VIZMSGS_HPP
-#define CONTROLNODE_VIZMSGS_HPP
+#ifndef CONTROLNODE_VIZ_MSGS_VIZMSGS_HPP
+#define CONTROLNODE_VIZ_MSGS_VIZMSGS_HPP
 
 #ifdef USE_KRIA_MSGS
   #include <mmr_base/msg/marker.hpp>
@@ -10,7 +10,8 @@
 #endif
 
 namespace control_node {
-namespace viz_msgs {
+namespace viz {
+namespace msgs {
 
 #ifdef USE_KRIA_MSGS
   using Marker = mmr_base::msg::Marker;
@@ -20,7 +21,8 @@ namespace viz_msgs {
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 #endif
 
-};
-};
+}; // namespace msgs
+}; // namespace viz
+}; // namespace control_node
 
-#endif
+#endif // !CONTROLNODE_VIZ_MSGS_VIZMSGS_HPP

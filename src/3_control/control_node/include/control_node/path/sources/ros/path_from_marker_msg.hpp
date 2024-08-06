@@ -1,7 +1,7 @@
 #ifndef CONTROLNODE_PATH_SOURCES_ROS_PATHFROMMARKERMSG_HPP
 #define CONTROLNODE_PATH_SOURCES_ROS_PATHFROMMARKERMSG_HPP
 
-#include <control_node/viz_msgs.hpp>
+#include <control_node/viz/msgs/viz_msgs.hpp>
 #include <control_node/path/sources/reference_path_source.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -11,10 +11,10 @@ namespace sources {
 namespace ros {
 
 class PathFromMarkerMsg : public ReferencePathSource {
-  rclcpp::Subscription<viz_msgs::Marker>::SharedPtr m_sub;
+  rclcpp::Subscription<viz::msgs::Marker>::SharedPtr m_sub;
   ReferencePath::PathProperties m_path_prop;
 
-  void msg_cb(viz_msgs::Marker::SharedPtr msg);
+  void msg_cb(viz::msgs::Marker::SharedPtr msg);
 
 public:
   PathFromMarkerMsg() {}

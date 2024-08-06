@@ -91,6 +91,11 @@
       lr: 0.75 # distance between CoM and rear axle [m]
       max_steering_angle: 0.3979351 # maximum angle at the wheel [rad]
     
+    viz:
+      enabled: true
+      topic: "/control/viz"
+      min_interval_ms: 100
+
     start_stop:
       lapTarget: 10
       brakeToStop: 8.0

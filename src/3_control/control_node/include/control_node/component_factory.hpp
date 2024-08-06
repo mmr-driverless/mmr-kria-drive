@@ -43,7 +43,7 @@ public:
       }
 
       ans.push_back(std::make_pair(idx, std::move(component)));
-      RCLCPP_ERROR(logger, "INITIALIZING entry %d (of type '%s')", idx, type.c_str());
+      RCLCPP_INFO(logger, "INITIALIZING entry %d (of type '%s')", idx, type.c_str());
       init_fn(*ans.back().second, idx, p_i.subparams("params"));
     });
 

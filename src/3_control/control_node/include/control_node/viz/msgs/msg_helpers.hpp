@@ -1,5 +1,5 @@
-#ifndef MSG_HELPERS_HPP
-#define MSG_HELPERS_HPP
+#ifndef CONTROLNODE_VIZ_MSGS_MSGHELPERS_HPP
+#define CONTROLNODE_VIZ_MSGS_MSGHELPERS_HPP
 
 #define __SET2(msg, Xname, X, Yname, Y) \
 do { \
@@ -24,4 +24,4 @@ do { \
 #define SET_RGBA(msg, R, G, B, A) __SET4(msg, r, R, g, G, b, B, a, A)
 #define SET_XYZW(msg, X, Y, Z, W) __SET4(msg, x, X, y, Y, z, Z, w, W)
 
-#endif // !VISUALIZATION_MSGS_HELPERS_HPP
+#endif // !CONTROLNODE_VIZ_MSGS_MSGHELPERS_HPP

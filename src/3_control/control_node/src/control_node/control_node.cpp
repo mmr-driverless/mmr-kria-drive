@@ -1,4 +1,5 @@
 #include <chrono>
+#include <rclcpp/logging.hpp>
 #include <stdexcept>
 
 #include <control_node/estimation/ivehicle_state.hpp>
@@ -6,12 +7,12 @@
 #include <control_node/control_node.hpp>
 
 #include <control_node/path/reference_path.hpp>
-#include <control_node/visualize.hpp>
 
 #include <control_node/actuation/actuator_factory.hpp>
 #include <control_node/estimation/state_estimator_factory.hpp>
 #include "control_node/control/controller_factory.hpp"
 
+using namespace std::chrono_literals;
 
 namespace control_node {
 
@@ -19,8 +20,8 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(this->declare_parameter("tick_interval", rclcpp::PARAMETER_INTEGER).get<int>())),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_refpath_mgr(*this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
-  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
-  m_viz_pub(this->create_publisher<viz_msgs::MarkerArray>("/control/viz", 2))
+  m_viz_mgr(this, Parameters(this, "viz")),
+  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop")))
 { 
   #ifdef USE_EDF
   this->configureEDFScheduler(
@@ -31,6 +32,7 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   #endif
   
   m_has_completed_path = false;
+  m_start_time = this->get_clock()->now();
 
   setup_actuators();
   setup_estimator();
@@ -76,6 +78,9 @@ void ControlNode::setup_actuators() {
 }
 
 void ControlNode::tick() {
+  std::chrono::nanoseconds t((this->get_clock()->now() - m_start_time).nanoseconds());
+  RCLCPP_DEBUG(this->get_logger(), "Tick @%lf.3", std::chrono::duration<double>(t).count());
+
   const estimation::IVehicleState& vehicle_state = m_estimator->update_and_get_current_state();
 
   control::Control u(0,0,0,0,0, false);
