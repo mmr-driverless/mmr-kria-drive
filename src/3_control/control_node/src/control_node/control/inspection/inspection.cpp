@@ -4,18 +4,18 @@ namespace control_node {
 namespace control {
 namespace inspection {
 
-Inspection::Inspection(const Parameters& p, const VehicleParameters& vp, rclcpp::Clock clock)
-  : m_vp(vp),
-    m_velocityMultiplier(p.get<float>("velocityMultiplier")),
-    m_clock(clock)
-{}
+void Inspection::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) {
+  m_vp = &vp;
+  m_clock = node.get_clock();
+  m_velocityMultiplier = p.get<float>("velocityMultiplier");
+}
 
 Control Inspection::control(
   const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,
   const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
 ) {
-  double steering = std::sin( m_velocityMultiplier * m_clock.now().nanoseconds()) * m_vp.max_steering_angle() * 0.5;
+  double steering = std::sin( m_velocityMultiplier * m_clock->now().nanoseconds()) * m_vp->max_steering_angle() * 0.5;
 
   // TODO: look ma! no throttle!
   return Control(steering, 0.0, 0.0, 0.0, 0, false);

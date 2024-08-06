@@ -26,11 +26,11 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
   return std::clamp(wheelRotation, -max_steer, max_steer);
 }
 
-PurePursuit2023::PurePursuit2023(const Parameters& p, const VehicleParameters& vp)
-  : m_vp(vp),
-    m_minLookForward(p.get<double>("minLookForward")),
-    m_steerGain(p.get<double>("steerGain"))
-{}
+void PurePursuit2023::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp) {
+  m_vp = &vp;
+  m_minLookForward = p.get<double>("minLookForward");
+  m_steerGain = p.get<double>("steerGain");
+}
 
 Control PurePursuit2023::control(
   const estimation::IVehicleState& state,
@@ -52,9 +52,9 @@ Control PurePursuit2023::control(
     state.yaw(),
     lookforward,
     m_steerGain,
-    m_vp.max_steering_angle(),
-    m_vp.lr(),
-    m_vp.wheelbase()
+    m_vp->max_steering_angle(),
+    m_vp->lr(),
+    m_vp->wheelbase()
   );
 
   // TODO: look ma! no throttle!

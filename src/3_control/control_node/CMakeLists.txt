@@ -33,6 +33,7 @@ add_executable(control_node
   src/control_node/actuation/actuator_factory.cpp
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
   src/control_node/control/inspection/inspection.cpp
+  src/control_node/control/controller_factory.cpp
   src/control_node/estimation/noop_estimator.cpp
   src/control_node/start_stop/start_stop.cpp
   src/control_node/path/sources/ros/sources_factory.cpp

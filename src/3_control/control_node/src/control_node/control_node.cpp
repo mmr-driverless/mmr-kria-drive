@@ -1,3 +1,4 @@
+#include "control_node/control/controller_factory.hpp"
 #include "control_node/estimation/ivehicle_state.hpp"
 #include "control_node/parameters.hpp"
 #include <control_node/control_node.hpp>
@@ -8,6 +9,7 @@
 #include <control_node/path/reference_path.hpp>
 #include <control_node/visualize.hpp>
 #include <control_node/actuation/actuator_factory.hpp>
+#include <stdexcept>
 
 namespace control_node {
 
@@ -15,8 +17,6 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(this->declare_parameter("tick_interval", rclcpp::PARAMETER_INTEGER).get<int>())),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_refpath_mgr(*this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
-  m_estimator(std::make_unique<estimation::noop::NoopEstimator>(*this, Parameters(this, "noop_estimator"))),
-  m_controller(std::make_unique<control::pure_pursuit_2023::PurePursuit2023>(Parameters(this, "pure_pursuit_2023"), m_vp)),
   m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
   m_viz_pub(this->create_publisher<viz_msgs::MarkerArray>("/control/viz", 2))
 { 
@@ -31,10 +31,21 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_has_completed_path = false;
 
   setup_actuators();
+  setup_estimator();
+  setup_controller();
 }
 
 void ControlNode::setup_estimator() {}
-void ControlNode::setup_controller() {}
+void ControlNode::setup_controller() {
+  Parameters p(this, "control");
+  auto type = p.get<std::string>("type");
+  m_controller = control::get_factory().get(type);
+  if (m_controller == nullptr) {
+    RCLCPP_FATAL(this->get_logger(), "UNKNOWN controller type '%s'", type.c_str());
+    throw std::runtime_error("Bad controller type");
+  }
+  m_controller->init(*this, p.subparams("params"), m_vp);
+}
 void ControlNode::setup_actuators() {
   auto logger = this->get_logger().get_child("setup_actuators");
 

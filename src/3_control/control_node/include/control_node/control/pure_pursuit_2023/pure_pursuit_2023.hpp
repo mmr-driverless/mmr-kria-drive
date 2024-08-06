@@ -9,14 +9,12 @@ namespace control {
 namespace pure_pursuit_2023 {
 
 class PurePursuit2023 : public IController {
-  const VehicleParameters& m_vp;
+  const VehicleParameters* m_vp;
   double m_minLookForward;
   double m_steerGain;
 
 public:
-  PurePursuit2023(const Parameters& p, const VehicleParameters& vp);
-  
-  double minLookForward() const { return m_minLookForward; };
+  virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;
 
   virtual Control control(
     const estimation::IVehicleState& state,

@@ -10,12 +10,12 @@ namespace control {
 namespace inspection {
 
 class Inspection : public IController {
-    const VehicleParameters& m_vp;
-    rclcpp::Clock m_clock;
+    const VehicleParameters* m_vp;
+    rclcpp::Clock::SharedPtr m_clock;
     float m_velocityMultiplier;
 
 public:
-    Inspection(const Parameters& p, const VehicleParameters& vp, rclcpp::Clock clock);
+    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;
 
     virtual Control control(
     const estimation::IVehicleState& state,
