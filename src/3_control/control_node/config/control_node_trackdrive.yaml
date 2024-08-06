@@ -16,29 +16,25 @@
     # Actuation settings
     actuation:
       actuators:
-        _0:
+        0:
           enabled: true
-          type: canopen_bridge
+          type: CANOpenBridge
           params:
             steer_topic: "/command/steer"
             brake_topic: "/command/brake"
             clutch_topic: "/command/clutch"
 
-        _1:
+        1:
           enabled: true
-          type: sim
+          type: Sim
           params:
             topic: "/sim/drive_parameters"
         
-        _2:
-          enabled: true
+        2:
+          enabled: false
           type: spi_apps
           params:
             dev: "/dev/ur_mom"
-
-        _3:
-          enabled: true
-          type: print_to_console
 
     # Reference path settings
     reference_path_manager:

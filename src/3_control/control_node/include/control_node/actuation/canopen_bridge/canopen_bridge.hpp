@@ -14,11 +14,9 @@ class CANOpenBridge : public IActuator {
   rclcpp::Publisher<mmr_base::msg::CmdMotor>::SharedPtr m_steer_pub;
 
 public:
-  // TODO: Do i seriously want to pass around a reference to a whole ass Node if i just need to create publishers?
-  CANOpenBridge(rclcpp::Node& node, const Parameters& p);
-  ~CANOpenBridge();
-  
+  virtual void init(rclcpp::Node& node, const Parameters& p) override;
   virtual void actuate(const control::Control& control) override;
+  ~CANOpenBridge();
 };
 
 };

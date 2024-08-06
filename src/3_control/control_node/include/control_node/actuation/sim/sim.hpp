@@ -14,8 +14,7 @@ class Sim : public IActuator {
   rclcpp::Publisher<ackermann_msgs::msg::AckermannDrive>::SharedPtr m_pub;
 
 public:
-  // TODO: Do i seriously want to pass around a reference to a whole ass Node if i just need to create publishers?
-  Sim(rclcpp::Node& node, const Parameters& p);
+  virtual void init(rclcpp::Node& node, const Parameters& p) override;
   virtual void actuate(const control::Control& control) override;
 };
 

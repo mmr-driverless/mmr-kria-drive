@@ -31,19 +31,19 @@ public:
 
     p.parse_list<std::string>(prefix, "type", [this, &ans, &init_fn, &logger](int idx, const Parameters& p_i) {
       if (!p_i.get<bool>("enabled")) {
-        RCLCPP_WARN(logger, "Component %d IGNORED (disabled from config).", idx);
+        RCLCPP_WARN(logger, "Entry %d IGNORED (disabled from config).", idx);
         return;
       }
 
       std::string type = p_i.get<std::string>("type");
       auto component = this->get(type);
       if (component == nullptr) {
-        RCLCPP_ERROR(logger, "Component %d IGNORED (UNKNOWN path source type '%s')", idx, type.c_str());
+        RCLCPP_ERROR(logger, "Entry %d IGNORED (UNKNOWN type '%s')", idx, type.c_str());
         return;
       }
 
       ans.push_back(std::make_pair(idx, std::move(component)));
-      RCLCPP_ERROR(logger, "INITIALIZING component %d (of type '%s')", idx, type.c_str());
+      RCLCPP_ERROR(logger, "INITIALIZING entry %d (of type '%s')", idx, type.c_str());
       init_fn(*ans.back().second, idx, p_i.subparams("params"));
     });
 

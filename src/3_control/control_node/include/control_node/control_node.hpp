@@ -1,6 +1,7 @@
 #ifndef CONTROLNODE_CONTROLNODE_HPP
 #define CONTROLNODE_CONTROLNODE_HPP
 
+#include "control_node/parameters.hpp"
 #include "control_node/path/reference_path_manager.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <control_node/estimation/istate_estimator.hpp>
@@ -24,13 +25,17 @@ class ControlNode : public NodeBase
   std::unique_ptr<estimation::IStateEstimator> m_estimator;
   std::unique_ptr<control::IController> m_controller;
   std::unique_ptr<start_stop::StartStop> m_startStop;
-  std::vector<std::unique_ptr<actuation::IActuator>> m_actuators;
+  std::vector<std::pair<int, std::unique_ptr<actuation::IActuator>>> m_actuators;
 
   std::optional<path::ReferencePath::PointRef> m_last_path_ref;
 
   rclcpp::Publisher<viz_msgs::MarkerArray>::SharedPtr m_viz_pub;
 
   bool m_has_completed_path;
+
+  void setup_estimator();
+  void setup_controller();
+  void setup_actuators();
 
 public:
   ControlNode();
