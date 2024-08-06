@@ -16,6 +16,42 @@ using namespace std::chrono_literals;
 
 namespace control_node {
 
+void ControlNode::tick() {
+  std::chrono::nanoseconds t((this->get_clock()->now() - m_start_time).nanoseconds());
+  RCLCPP_DEBUG(this->get_logger(), "Tick @%lf.3", std::chrono::duration<double>(t).count());
+
+  // Estimate the current state.
+  const estimation::IVehicleState& vehicle_state = m_estimator->update_and_get_current_state();
+
+  // Retrieve the current path. If it changed, invalidate the last path reference.
+  path::ReferencePath path = m_refpath_mgr.get();
+  if (m_refpath_mgr.changed())
+    m_last_path_ref = std::nullopt;
+  
+  // Project the vehicle onto the path.
+  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, 8.0 * 8.0);
+
+  // If the projection succeeds, store the closest point and update the last path reference.
+  std::optional<path::ReferencePath::PointRef> closest_point;
+  if (projection.has_value()) {
+    closest_point = projection->closest_point;
+    m_last_path_ref = projection->closest_point;
+  }
+
+  // Decide what inputs to apply based on the current vehicle state and position relative to the path.
+  control::Control u = m_controller->control(vehicle_state, path, closest_point);
+
+  // Override the controls to perform the start and stop maneuvers.
+  m_startStop->triggerFSM(vehicle_state, u);
+
+  // Actuate the control input.
+  for (auto& actuator : m_actuators)
+    actuator.second->actuate(u);
+
+  // Update the visualization.
+  m_viz_mgr.tick(std::chrono::duration_cast<std::chrono::milliseconds>(t));
+}
+
 ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(this->declare_parameter("tick_interval", rclcpp::PARAMETER_INTEGER).get<int>())),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
@@ -75,30 +111,6 @@ void ControlNode::setup_actuators() {
     RCLCPP_WARN(logger, "NO actuators initialized!");
   else
     RCLCPP_INFO(logger, "INITIALIZED %zu actuators.", m_actuators.size());
-}
-
-void ControlNode::tick() {
-  std::chrono::nanoseconds t((this->get_clock()->now() - m_start_time).nanoseconds());
-  RCLCPP_DEBUG(this->get_logger(), "Tick @%lf.3", std::chrono::duration<double>(t).count());
-
-  const estimation::IVehicleState& vehicle_state = m_estimator->update_and_get_current_state();
-
-  control::Control u(0,0,0,0,0, false);
-  path::ReferencePath path = m_refpath_mgr.get();
-  if (m_refpath_mgr.changed())
-    m_last_path_ref = std::nullopt;
-
-  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, 8.0 * 8.0);
-  std::optional<path::ReferencePath::PointRef> closest_point;
-  if (projection.has_value()) {
-    closest_point = projection->closest_point;
-    m_last_path_ref = projection->closest_point;
-  }
-  u = m_controller->control(vehicle_state, path, closest_point);
-  m_startStop->triggerFSM(vehicle_state, u);
-
-  for (auto& actuator : m_actuators)
-    actuator.second->actuate(u);
 }
 
 };
