@@ -42,15 +42,15 @@
 
     # Reference path settings
     reference_path_manager:
-      # Reference path sources in order of priority, 0 is lowest
-      # Whenever a path from a higher priority source is received, it overrides any lower priority path
+      # Reference path sources in order of priority, 0 is highest
+      # Whenever a path from a higher priority source is received, any lower priority source is destroyed
       sources:
         0:
-          enabled: true
-          type: "ROS_Marker"
+          enabled: false
+          type: "ROS_SpeedProfilePoints"
           params:
-            topic: "/planning/center_line"
-            is_closed: false
+            topic: "/planning/global"
+            is_closed: true
 
         1:
           enabled: true
@@ -59,12 +59,14 @@
             topic: "/planning/center_line_completed"
             is_closed: true
 
+
         2:
-          enabled: false
-          topic: "/planning/global"
-          type: "ROS_SpeedProfilePoints"
-          is_closed: true
-    
+          enabled: true
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line"
+            is_closed: false
+
     vehicle_parameters:
       wheelbase: 1.541 # distance between front and rear axle [m]
       lr: 0.75 # distance between CoM and rear axle [m]

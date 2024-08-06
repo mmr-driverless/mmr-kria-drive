@@ -14,18 +14,17 @@ class ReferencePathManager {
   std::vector<Eigen::Vector2d> m_waypoints;
   std::vector<ReferencePath::PointData::StorageT> m_data;
 
-  std::vector<std::unique_ptr<sources::ReferencePathSource>> m_sources;
-  int m_max_activated_source_idx;
+  std::vector<std::pair<int, std::unique_ptr<sources::ReferencePathSource>>> m_sources;
 
   bool m_changed;
 
   ReferencePath m_path;
 
-  const rclcpp::Logger& m_logger;
+  rclcpp::Logger m_logger;
 
   void on_source_notification(int source_id, size_t sz, const sources::ReferencePathSource::UpdateFn& ufn);
 public:
-  ReferencePathManager(rclcpp::Node& node, const Parameters& p, const rclcpp::Logger& logger);
+  ReferencePathManager(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger);
 
   bool changed();
   const ReferencePath& get() const;

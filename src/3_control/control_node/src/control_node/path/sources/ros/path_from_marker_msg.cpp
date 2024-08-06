@@ -18,7 +18,7 @@ void PathFromMarkerMsg::msg_cb(viz_msgs::Marker::SharedPtr msg) {
 void PathFromMarkerMsg::init_impl(rclcpp::Node& node, const Parameters& p) {
   m_path_prop.is_closed = p.get<bool>("is_closed");
   m_path_prop.is_data_valid = false;
-  m_sub = node.create_subscription<viz_msgs::Marker>(p.get<std::string>("topic"), p.parse_qos("qos"), std::bind(&PathFromMarkerMsg::msg_cb, this, std::placeholders::_1));
+  m_sub = node.create_subscription<viz_msgs::Marker>(p.get<std::string>("topic"), p.parse_qos("qos_override"), std::bind(&PathFromMarkerMsg::msg_cb, this, std::placeholders::_1));
 }
 
 }; // namespace ros

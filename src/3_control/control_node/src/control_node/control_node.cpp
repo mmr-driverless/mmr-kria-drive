@@ -30,8 +30,8 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   #endif
   
   m_has_completed_path = false;
-  m_actuators.push_back(std::make_unique<actuation::canopen_bridge::CANOpenBridge>(*this, Parameters(this, "actuation.actuators._0.params")));
-  m_actuators.push_back(std::make_unique<actuation::sim::Sim>(*this, Parameters(this, "actuation.actuators._1.params")));
+  // m_actuators.push_back(std::make_unique<actuation::canopen_bridge::CANOpenBridge>(*this, Parameters(this, "actuation.actuators._0.params")));
+  // m_actuators.push_back(std::make_unique<actuation::sim::Sim>(*this, Parameters(this, "actuation.actuators._1.params")));
 }
 
 void ControlNode::tick() {
@@ -42,7 +42,7 @@ void ControlNode::tick() {
   if (m_refpath_mgr.changed())
     m_last_path_ref = std::nullopt;
 
-  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref);
+  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, 8.0 * 8.0);
   std::optional<path::ReferencePath::PointRef> closest_point;
   if (projection.has_value()) {
     closest_point = projection->closest_point;
