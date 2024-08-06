@@ -22,6 +22,7 @@ public:
     
     friend NoopEstimator;
   private:
+    virtual AS::STATE as_state() const override { return AS::STATE::DRIVING; }
     virtual int lap() const override { return 0; }
     virtual Eigen::Vector2d position() const override { return m_position; }
     virtual Eigen::Vector2d velocity() const override { return Eigen::Vector2d::Zero(); }
