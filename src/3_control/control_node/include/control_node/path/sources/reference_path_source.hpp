@@ -42,6 +42,7 @@ protected:
   virtual void init_impl(rclcpp::Node& node, const Parameters& params) = 0;
 
 public:
+  virtual ~ReferencePathSource() = default;
   inline void init(NotificationListener listener, rclcpp::Node& node, const Parameters& params) { m_listener = listener; init_impl(node, params); }
 };
 

@@ -20,13 +20,14 @@ ReferencePathManager::ReferencePathManager(rclcpp::Node& node, const Parameters&
 }
 
 void ReferencePathManager::on_source_notification(int source_id, size_t path_size, const sources::ReferencePathSource::UpdateFn& ufn) {
+  if (source_id < m_max_activated_source_idx) {
+    RCLCPP_INFO(m_logger, "IGNORING path received from source %d.", source_id);
+    return;
+  }
+  
   RCLCPP_INFO(m_logger, "RECEIVED path from source %d.", source_id);
-
-  // Delete any source that has id > source_id.
-  auto it = std::find_if(m_sources.begin(), m_sources.end(), [source_id](std::pair<int, std::unique_ptr<sources::ReferencePathSource>>& src) {
-    return src.first > source_id;
-  });
-  m_sources.erase(it, m_sources.end());
+  if (source_id >= m_max_activated_source_idx)
+    m_max_activated_source_idx = source_id;
 
   m_changed = true;
 

@@ -58,7 +58,9 @@
           params:
             topic: "/planning/center_line_completed"
             is_closed: true
-
+            qos_override:
+              durability: transient_local
+              reliability: reliable
 
         2:
           enabled: true

@@ -15,6 +15,7 @@ class ReferencePathManager {
   std::vector<ReferencePath::PointData::StorageT> m_data;
 
   std::vector<std::pair<int, std::unique_ptr<sources::ReferencePathSource>>> m_sources;
+  int m_max_activated_source_idx;
 
   bool m_changed;
 
