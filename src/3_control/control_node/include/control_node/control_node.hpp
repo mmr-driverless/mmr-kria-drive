@@ -27,6 +27,7 @@ class ControlNode : public NodeBase
   std::unique_ptr<start_stop::StartStop> m_startStop;
   std::vector<std::pair<int, std::unique_ptr<actuation::IActuator>>> m_actuators;
 
+  double m_path_threshold2;
 
   rclcpp::Time m_start_time;
 

@@ -1,3 +1,5 @@
+#include <control_node/parameters.hpp>
+#include <control_node/viz/msgs/viz_msgs.hpp>
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
 
 namespace control_node {
@@ -26,10 +28,21 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
   return std::clamp(wheelRotation, -max_steer, max_steer);
 }
 
-void PurePursuit2023::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp) {
+void PurePursuit2023::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr) {
   m_vp = &vp;
   m_minLookForward = p.get<double>("minLookForward");
   m_steerGain = p.get<double>("steerGain");
+  
+  Parameters p_color = p.subparams("target_viz_color");
+
+  m_viz_lookforward_alpha = p_color.get<double>("a");
+  m_viz_lookforward = viz_mgr.get_new(
+    viz::msgs::Marker::CYLINDER,
+    p_color.get<double>("r"),
+    p_color.get<double>("g"),
+    p_color.get<double>("b"),
+    0.0
+  );
 }
 
 Control PurePursuit2023::control(
@@ -41,13 +54,18 @@ Control PurePursuit2023::control(
 
   if (!vehicle_path_projection.has_value()) {
     // TODO: Choose better safe state
+    m_viz_lookforward->color.a = 0;
     return Control(0.0, 0.0, 0.0, 0.0, 0, false);
   }
 
   auto target_ref = reference_path.advance_point(*vehicle_path_projection, lookforward);
+  Eigen::Vector2d target = reference_path.get_position(target_ref);
+  
+  SET_XY(m_viz_lookforward->pose.position, target.x(), target.y());
+  m_viz_lookforward->color.a = m_viz_lookforward_alpha;
 
   double steering = calculateSteeringTarget(
-    reference_path.get_position(target_ref),
+    target,
     state.position(),
     state.yaw(),
     lookforward,

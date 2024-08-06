@@ -4,7 +4,7 @@ namespace control_node {
 namespace control {
 namespace inspection {
 
-void Inspection::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) {
+void Inspection::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) {
   m_vp = &vp;
   m_clock = node.get_clock();
   m_velocityMultiplier = p.get<float>("velocityMultiplier");

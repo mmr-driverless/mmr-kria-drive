@@ -29,7 +29,7 @@ void ControlNode::tick() {
     m_last_path_ref = std::nullopt;
   
   // Project the vehicle onto the path.
-  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, 8.0 * 8.0);
+  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, m_path_threshold2);
 
   // If the projection succeeds, store the closest point and update the last path reference.
   std::optional<path::ReferencePath::PointRef> closest_point;
@@ -53,12 +53,13 @@ void ControlNode::tick() {
 }
 
 ControlNode::ControlNode() : NodeBase("control_node"),
-  m_tick_interval(std::chrono::milliseconds(this->declare_parameter("tick_interval", rclcpp::PARAMETER_INTEGER).get<int>())),
+  m_tick_interval(std::chrono::milliseconds(Parameters(this).get<int>("tick_interval"))),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_refpath_mgr(*this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
   m_viz_mgr(this, Parameters(this, "viz")),
-  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop")))
-{ 
+  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
+  m_path_threshold2(std::pow(Parameters(this).get<double>("path_tracking_threshold"), 2))
+{
   #ifdef USE_EDF
   this->configureEDFScheduler(
     std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count(),
@@ -97,7 +98,7 @@ void ControlNode::setup_controller() {
   }
   
   RCLCPP_INFO(this->get_logger(), "INITIALIZING controller '%s'.", type.c_str());
-  m_controller->init(*this, p.subparams("params"), m_vp);
+  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr);
 }
 void ControlNode::setup_actuators() {
   auto logger = this->get_logger().get_child("setup_actuators");

@@ -15,7 +15,11 @@ class Parameters {
   rclcpp::Node& m_node;
   std::string m_prefix;
 
-  inline std::string get_param_name(const std::string& s) const { return m_prefix + "." + s; }
+  inline std::string get_param_name(const std::string& s) const {
+    return m_prefix.size() > 0?
+      m_prefix + "." + s
+      : s;
+  }
 
   template <typename T>
   inline T log_value(const std::string& name, T val) const {
@@ -36,7 +40,7 @@ class Parameters {
   }
 
 public:
-  Parameters(rclcpp::Node* node, const std::string& prefix) : m_node(*node), m_prefix(prefix) {}
+  Parameters(rclcpp::Node* node, const std::string& prefix = "") : m_node(*node), m_prefix(prefix) {}
 
   template <typename T>
   T get(const std::string& s, std::optional<T> default_value = std::nullopt) const {

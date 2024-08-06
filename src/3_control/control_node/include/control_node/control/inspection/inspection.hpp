@@ -15,7 +15,7 @@ class Inspection : public IController {
     float m_velocityMultiplier;
 
 public:
-    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;
+    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) override;
 
     virtual Control control(
     const estimation::IVehicleState& state,

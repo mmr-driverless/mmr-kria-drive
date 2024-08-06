@@ -21,7 +21,7 @@ public:
   VizManager(rclcpp::Node* node, const Parameters& p);
 
   void tick(std::chrono::milliseconds t);
-  msgs::Marker& get_new(int32_t type, std::array<float, 4> color, const std::string& frame_id = "track");
+  msgs::Marker* get_new(int32_t type, float r, float g, float b, float a, const std::string& frame_id = "track");
 };
 
 }; // namespace viz

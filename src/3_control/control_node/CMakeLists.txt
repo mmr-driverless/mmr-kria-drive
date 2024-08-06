@@ -45,6 +45,8 @@ add_executable(control_node
   src/control_node/actuation/canopen_bridge.cpp
   src/control_node/actuation/sim.cpp
   src/control_node/actuation/actuator_factory.cpp
+
+  src/control_node/viz/viz_manager.cpp
 )
 target_include_directories(control_node PUBLIC include)
 set_property(TARGET control_node PROPERTY CXX_STANDARD 20)

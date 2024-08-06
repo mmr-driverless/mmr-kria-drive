@@ -3,6 +3,8 @@
     tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
     wcet_ns: 5000000 # 5ms
 
+    path_tracking_threshold: 8.0 # Meters. If the path doesn't pass through a circle of this radius centered on the vehicle, the tracking problem is restarted (which is a problem ONLY in Skidpad) and takes longer to execute
+
     estimation:
       type: Noop
       params:
@@ -32,6 +34,12 @@
           maxSpeed: 8.0
           targetSpeedWeight:  0.85
           velocityCoeffs: [0.5051, 1.063, -0.02495, 0.0003832, -3.251e-6, 1.494e-8, -3.511e-11, 3.32e-14]
+
+        target_viz_color:
+          r: 0.0
+          g: 1.0
+          b: 0.0
+          a: 1.0
 
 
     # Actuation settings
