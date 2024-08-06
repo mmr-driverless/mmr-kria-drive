@@ -17,6 +17,7 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_refpath_mgr(*this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
   m_estimator(std::make_unique<estimation::noop::NoopEstimator>(*this, Parameters(this, "noop_estimator"))),
   m_controller(std::make_unique<control::pure_pursuit_2023::PurePursuit2023>(Parameters(this, "pure_pursuit_2023"), m_vp)),
+  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
   m_viz_pub(this->create_publisher<viz_msgs::MarkerArray>("/control/viz", 2))
 {
   
@@ -36,20 +37,19 @@ ControlNode::ControlNode() : NodeBase("control_node"),
 void ControlNode::tick() {
   const estimation::IVehicleState& vehicle_state = m_estimator->update_and_get_current_state();
 
-  control::Control u(0,0,0,0,0);
-
+  control::Control u(0,0,0,0,0, false);
   path::ReferencePath path = m_refpath_mgr.get();
   if (m_refpath_mgr.changed())
     m_last_path_ref = std::nullopt;
 
-  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, 9.0*9.0);
-  
+  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref);
   std::optional<path::ReferencePath::PointRef> closest_point;
   if (projection.has_value()) {
     closest_point = projection->closest_point;
     m_last_path_ref = projection->closest_point;
   }
   u = m_controller->control(vehicle_state, path, closest_point);
+  m_startStop->triggerFSM(vehicle_state, u);
 
   for (auto& actuator : m_actuators)
     actuator->actuate(u);

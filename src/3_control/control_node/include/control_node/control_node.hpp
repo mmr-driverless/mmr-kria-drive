@@ -9,6 +9,7 @@
 #include <control_node/path/reference_path.hpp>
 #include <control_node/vehicle_parameters.hpp>
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
+#include <control_node/start_stop/start_stop.hpp>
 #include <control_node/viz_msgs.hpp>
 #include <control_node/edf.hpp>
 
@@ -22,6 +23,7 @@ class ControlNode : public NodeBase
   path::ReferencePathManager m_refpath_mgr;
   std::unique_ptr<estimation::IStateEstimator> m_estimator;
   std::unique_ptr<control::IController> m_controller;
+  std::unique_ptr<start_stop::StartStop> m_startStop;
   std::vector<std::unique_ptr<actuation::IActuator>> m_actuators;
 
   std::optional<path::ReferencePath::PointRef> m_last_path_ref;

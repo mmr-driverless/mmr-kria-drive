@@ -29,7 +29,9 @@ add_executable(control_node
   src/control_node/actuation/canopen_bridge.cpp
   src/control_node/actuation/sim.cpp
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
+  src/control_node/control/inspection/inspection.cpp
   src/control_node/estimation/noop_estimator.cpp
+  src/control_node/start_stop/start_stop.cpp
   src/control_node/path/sources/ros/path_from_marker_msg.cpp
   src/control_node/path/reference_path_manager.cpp
 )

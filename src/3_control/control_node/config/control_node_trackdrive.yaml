@@ -70,6 +70,14 @@
       lr: 0.75 # distance between CoM and rear axle [m]
       max_steering_angle: 0.3979351 # maximum angle at the wheel [rad]
     
+    start_stop:
+      lapTarget: 10
+      brakeToStop: 8.0
+      timeForLaunch: 1.0
+
+    inspection:
+      velocityMultiplier: 1.0
+
     pure_pursuit_2023:
       minLookForward: 5.0
       minLookForwardGain: 0.4
