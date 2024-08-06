@@ -28,17 +28,23 @@ endif ()
 add_executable(control_node 
   src/main.cpp
   src/control_node/control_node.cpp
-  src/control_node/actuation/canopen_bridge.cpp
-  src/control_node/actuation/sim.cpp
-  src/control_node/actuation/actuator_factory.cpp
-  src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
-  src/control_node/control/inspection/inspection.cpp
-  src/control_node/control/controller_factory.cpp
+
   src/control_node/estimation/noop_estimator.cpp
-  src/control_node/start_stop/start_stop.cpp
+  src/control_node/estimation/state_estimator_factory.cpp
+
   src/control_node/path/sources/ros/sources_factory.cpp
   src/control_node/path/sources/ros/path_from_marker_msg.cpp
   src/control_node/path/reference_path_manager.cpp
+
+  src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
+  src/control_node/control/inspection/inspection.cpp
+  src/control_node/control/controller_factory.cpp
+
+  src/control_node/start_stop/start_stop.cpp
+  
+  src/control_node/actuation/canopen_bridge.cpp
+  src/control_node/actuation/sim.cpp
+  src/control_node/actuation/actuator_factory.cpp
 )
 target_include_directories(control_node PUBLIC include)
 set_property(TARGET control_node PROPERTY CXX_STANDARD 20)

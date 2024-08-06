@@ -1,15 +1,17 @@
-#include "control_node/control/controller_factory.hpp"
-#include "control_node/estimation/ivehicle_state.hpp"
-#include "control_node/parameters.hpp"
-#include <control_node/control_node.hpp>
 #include <chrono>
+#include <stdexcept>
 
-#include <control_node/estimation/noop_estimator/noop_estimator.hpp>
-#include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
+#include <control_node/estimation/ivehicle_state.hpp>
+#include <control_node/parameters.hpp>
+#include <control_node/control_node.hpp>
+
 #include <control_node/path/reference_path.hpp>
 #include <control_node/visualize.hpp>
+
 #include <control_node/actuation/actuator_factory.hpp>
-#include <stdexcept>
+#include <control_node/estimation/state_estimator_factory.hpp>
+#include "control_node/control/controller_factory.hpp"
+
 
 namespace control_node {
 
@@ -35,15 +37,28 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   setup_controller();
 }
 
-void ControlNode::setup_estimator() {}
+void ControlNode::setup_estimator() {
+  Parameters p(this, "estimation");
+  auto type = p.get<std::string>("type");
+  m_estimator = estimation::get_factory().get(type);
+  if (m_estimator == nullptr) {
+    RCLCPP_FATAL(this->get_logger(), "UNKNOWN estimator type '%s'", type.c_str());
+    throw std::runtime_error("Bad estimator type");
+  }
+
+  RCLCPP_INFO(this->get_logger(), "INITIALIZING estimator '%s'.", type.c_str());
+  m_estimator->init(*this, p.subparams("params"), m_vp);
+}
 void ControlNode::setup_controller() {
   Parameters p(this, "control");
   auto type = p.get<std::string>("type");
   m_controller = control::get_factory().get(type);
   if (m_controller == nullptr) {
-    RCLCPP_FATAL(this->get_logger(), "UNKNOWN controller type '%s'", type.c_str());
+    RCLCPP_FATAL(this->get_logger(), "UNKNOWN controller type '%s'.", type.c_str());
     throw std::runtime_error("Bad controller type");
   }
+  
+  RCLCPP_INFO(this->get_logger(), "INITIALIZING controller '%s'.", type.c_str());
   m_controller->init(*this, p.subparams("params"), m_vp);
 }
 void ControlNode::setup_actuators() {

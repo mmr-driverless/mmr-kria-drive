@@ -3,7 +3,10 @@
     tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
     wcet_ns: 5000000 # 5ms
 
-    state_estimator: noop_estimator
+    estimation:
+      type: Noop
+      params:
+        odometry_topic: "/Odometry"
 
     # Launch and stop procedure (start by engaging clutch - end by disengaging clutch, braking, sending stop message, etc..)
     launch_and_stop:
@@ -94,9 +97,4 @@
       timeForLaunch: 1.0
 
     inspection:
-      velocityMultiplier: 1.0
-
-    noop_estimator:
-      odometry_topic: "/Odometry"
-      race_status_topic: "/planning/race_status"
-      
+      velocityMultiplier: 1.0      

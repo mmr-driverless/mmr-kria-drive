@@ -30,13 +30,12 @@ public:
     virtual double yaw_rate() const override { return 0; }
   } m_state;
 
-  NoopEstimator(rclcpp::Node& node, const Parameters& p);
+  virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;
   virtual const IVehicleState& update_and_get_current_state() override { return m_state; }
-
 };
 
-};
-};
-};
+}; // namespace noop
+}; // namespace estimation
+}; // namespace control_node
 
 #endif // !CONTROLNODE_ESTIMATION_NOOPESTIMATOR_NOOPESTIMATOR_HPP

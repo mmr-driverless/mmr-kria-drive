@@ -1,12 +1,13 @@
 #include <control_node/estimation/noop_estimator/noop_estimator.hpp>
+#include <rclcpp/qos.hpp>
 
 namespace control_node {
 namespace estimation {
 namespace noop {
 
-NoopEstimator::NoopEstimator(rclcpp::Node& node, const Parameters& p)
-  : m_odom_sub(node.create_subscription<nav_msgs::msg::Odometry>(p.get<std::string>("odometry_topic"), rclcpp::SensorDataQoS(), std::bind(&NoopEstimator::odom_cb, this, std::placeholders::_1)))
-{}
+void NoopEstimator::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters&) {
+  m_odom_sub = node.create_subscription<nav_msgs::msg::Odometry>(p.get<std::string>("odometry_topic"), rclcpp::SensorDataQoS(), std::bind(&NoopEstimator::odom_cb, this, std::placeholders::_1));
+}
 
 void NoopEstimator::odom_cb(nav_msgs::msg::Odometry::SharedPtr msg) {
   m_state.m_position = Eigen::Vector2d(msg->pose.pose.position.x, msg->pose.pose.position.y);
