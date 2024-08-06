@@ -26,12 +26,12 @@ class Parameters {
     else
       repr = std::to_string(val);
 
-    RCLCPP_DEBUG(m_node.get_logger(), "Parameter %s: %s", name.c_str(), repr.c_str());
+    RCLCPP_INFO(m_node.get_logger(), "Parameter %s: %s", name.c_str(), repr.c_str());
     return val;
   }
 
   inline std::nullopt_t log_missing_value(const std::string& name) const {
-    RCLCPP_DEBUG(m_node.get_logger(), "Parameter %s: NOT SET", name.c_str());
+    RCLCPP_INFO(m_node.get_logger(), "Parameter %s: NOT SET", name.c_str());
     return std::nullopt;
   }
 
@@ -47,8 +47,13 @@ public:
         return log_value<T>(name, m_node.get_parameter(name).get_value<T>());
 
       if (default_value.has_value()) {
-        std::optional<T> val = get_maybe<T>(s);
-        return log_value<T>(name, val.value_or(*default_value));
+        auto param = m_node.declare_parameter(name, rclcpp::ParameterValue(T{}).get_type());
+        
+        T ans;
+        if (m_node.get_parameter(name, ans))
+          return log_value<T>(name, ans);
+        else
+          return log_value<T>(name, *default_value);
       }
       else
         return log_value<T>(name, m_node.declare_parameter(name, rclcpp::ParameterValue(T{}).get_type()).get<T>());
@@ -64,7 +69,7 @@ public:
 
     try {
       if (m_node.has_parameter(name))
-        return m_node.get_parameter(name).get_value<T>();
+        return log_value<T>(name, m_node.get_parameter(name).get_value<T>());
 
       m_node.declare_parameter(name, rclcpp::ParameterValue(T{}).get_type());
 

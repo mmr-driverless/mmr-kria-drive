@@ -9,8 +9,7 @@ def generate_launch_description():
     name="control_node",
     package="control_node",
     executable="control_node",
-    parameters=[config],
-    arguments=['--ros-args', '--log-level', 'debug']
+    parameters=[config]
   )
 
   return LaunchDescription([ node ])
