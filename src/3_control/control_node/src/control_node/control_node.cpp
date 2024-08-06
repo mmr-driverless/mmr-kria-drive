@@ -18,7 +18,7 @@ namespace control_node {
 
 void ControlNode::tick() {
   std::chrono::nanoseconds t((this->get_clock()->now() - m_start_time).nanoseconds());
-  RCLCPP_DEBUG(this->get_logger(), "Tick @%lf.3", std::chrono::duration<double>(t).count());
+  RCLCPP_DEBUG(this->get_logger(), "Tick @%ld.%03lds", std::chrono::duration_cast<std::chrono::seconds>(t).count(), std::chrono::duration_cast<std::chrono::milliseconds>(t).count() % 1000);
 
   // Estimate the current state.
   const estimation::IVehicleState& vehicle_state = m_estimator->update_and_get_current_state();
@@ -56,7 +56,7 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(Parameters(this).get<int>("tick_interval"))),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
   m_refpath_mgr(*this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
-  m_viz_mgr(this, Parameters(this, "viz")),
+  m_viz_mgr(this, Parameters(this, "viz"), this->get_logger().get_child("VizMgr")),
   m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
   m_path_threshold2(std::pow(Parameters(this).get<double>("path_tracking_threshold"), 2))
 {

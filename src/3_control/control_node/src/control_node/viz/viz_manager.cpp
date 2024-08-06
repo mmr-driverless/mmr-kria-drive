@@ -9,15 +9,25 @@ static const rclcpp::QoS QOS =
     .durability_volatile()
     .best_effort();
 
-VizManager::VizManager(rclcpp::Node* node, const Parameters& p)
+VizManager::VizManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger)
+  : m_logger(logger),
+    m_pub(nullptr),
+    m_min_interval(std::chrono::milliseconds(p.get<int>("min_interval_ms"))),
+    m_last_t(0)
 {
-  m_enabled = p.get<bool>("enabled");
-  m_min_interval = std::chrono::milliseconds(p.get<int>("min_interval_ms"));
-  m_pub = node->create_publisher<msgs::MarkerArray>(p.get<std::string>("topic"), QOS);
+  if (p.get<bool>("enabled")) {
+    m_pub = node->create_publisher<msgs::MarkerArray>(p.get<std::string>("topic"), QOS);
+    RCLCPP_DEBUG(m_logger, "Visualization ENABLED.");
+  } else {
+    RCLCPP_DEBUG(m_logger, "Visualization DISABLED.");
+  }
 }
 
 msgs::Marker* VizManager::get_new(int32_t type, float r, float g, float b, float a, const std::string& frame_id)
 {
+  if (m_pub == nullptr)
+    return nullptr;
+
   m_msg.markers.emplace_back();
   auto& m = m_msg.markers.back();
 
@@ -35,10 +45,11 @@ msgs::Marker* VizManager::get_new(int32_t type, float r, float g, float b, float
 }
 
 void VizManager::tick(std::chrono::milliseconds t) {
-  if (!m_enabled)
+  if (m_pub == nullptr)
     return;
 
   if (t - m_last_t > m_min_interval) {
+    RCLCPP_DEBUG(m_logger, "Publishing visualization.");
     m_last_t = t;
     m_pub->publish(m_msg);
   }
