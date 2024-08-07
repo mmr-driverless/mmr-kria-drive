@@ -1,7 +1,7 @@
 #pragma once
 
 #include <canopen_bridge/driver/lib/canopen.hpp>
-#include "mmr_kria_base/configuration.hpp"
+#include "mmr_base/configuration.hpp"
 
 #include <ctime>
 #include <cmath>
@@ -44,7 +44,7 @@ class MaxonMotor
         void init();
         void disable();
 
-        void toggle_new_pos();
+        void toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS nType);
 
     public:
 

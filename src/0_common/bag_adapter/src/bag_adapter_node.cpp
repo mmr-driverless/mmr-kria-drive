@@ -1,10 +1,10 @@
 
 #include "bag_adapter/bag_adapter.hpp"
 
-rclcpp::Publisher<mmr_kria_base::msg::CmdMotor>::SharedPtr steeringPub;
+rclcpp::Publisher<mmr_base::msg::CmdMotor>::SharedPtr steeringPub;
 
 void disableMotor(){
-    mmr_kria_base::msg::CmdMotor steeringMsg;
+    mmr_base::msg::CmdMotor steeringMsg;
 
     steeringMsg.homing = false;
     steeringMsg.enable = false;
@@ -27,7 +27,7 @@ int main(int argc, char **argv){
     rclcpp::init(argc, argv );
     rclcpp::Node::SharedPtr nh = std::make_shared<rclcpp::Node>("bag_adapter_node");
 
-    steeringPub = nh->create_publisher<mmr_kria_base::msg::CmdMotor>("/command/steer", 1);
+    steeringPub = nh->create_publisher<mmr_base::msg::CmdMotor>("/command/steer", 1);
     bag_adapter adapter(nh, steeringPub);
 
     rclcpp::spin(nh);

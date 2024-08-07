@@ -1,15 +1,16 @@
 /canbus_bridge_node:
   ros__parameters:
     generic:
-      interface: vcan0
+      interface: can0
       bitrate: 1000000
       debug: true
-      WCET: 5000000 # ms
-      period: 10000000 # 10ms
-      deadline: 10000000
-      max_msgs: 5
+      WCET: 2500000 # ms
+      period: 5000000 # 5ms
+      deadline: 5000000
+      max_msgs: 25
     topic:
       canTxTopic: "/canbus/tx/msg"
       canRxTopic: "/canbus/rx/msg"
       ecuStatusTopic: "/status/ecu"
       resStatusTopic: "/status/res"
+      missionSelectTopic: "/mission/selected"

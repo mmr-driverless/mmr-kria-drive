@@ -11,7 +11,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(can_msgs REQUIRED)
-find_package(mmr_kria_base REQUIRED)
+find_package(mmr_base REQUIRED)
 find_package(mmr_edf REQUIRED)
 
 include_directories(
@@ -22,14 +22,14 @@ add_library(motor_maxon src/driver/motor_maxon.cpp)
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
 
 ament_target_dependencies(motor_maxon
-  mmr_kria_base
+  mmr_base
 )
 
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   std_msgs
   can_msgs
-  mmr_kria_base
+  mmr_base
   mmr_edf
 )
 
