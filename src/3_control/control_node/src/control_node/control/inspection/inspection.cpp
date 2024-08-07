@@ -4,21 +4,29 @@ namespace control_node {
 namespace control {
 namespace inspection {
 
-void Inspection::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) {
+Inspection::Inspection()
+  : m_vp(nullptr),
+    m_frequency(0.0),
+    m_steer_fraction(0.0)
+{ }
+
+void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) {
   m_vp = &vp;
-  m_clock = node.get_clock();
-  m_velocityMultiplier = p.get<float>("velocityMultiplier");
+  m_frequency = p.get<double>("frequency");
+  m_steer_fraction = p.get<double>("steer_fraction");
 }
 
 Control Inspection::control(
-  const estimation::IVehicleState& state,
-  const path::ReferencePath& reference_path,
-  const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
+  std::chrono::nanoseconds t,
+  const estimation::IVehicleState&,
+  const path::ReferencePath&,
+  const std::optional<path::ReferencePath::PointRef>&
 ) {
-  double steering = std::sin( m_velocityMultiplier * m_clock->now().nanoseconds()) * m_vp->max_steering_angle() * 0.5;
+  if (!m_start_t.has_value())
+    m_start_t = t;
 
-  // TODO: look ma! no throttle!
-  return Control(steering, 0.0, 0.0, 0.0, 0, false);
+  double steering = std::sin(m_frequency * std::chrono::duration<double>(t - *m_start_t).count()) * m_vp->max_steering_angle() * m_steer_fraction;
+  return Control(steering, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 }
 
 }; // namespace inspection

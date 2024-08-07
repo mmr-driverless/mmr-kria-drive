@@ -39,7 +39,7 @@ void ControlNode::tick() {
   }
 
   // Decide what inputs to apply based on the current vehicle state and position relative to the path.
-  control::Control u = m_controller->control(vehicle_state, path, closest_point);
+  control::Control u = m_controller->control(t, vehicle_state, path, closest_point);
 
   // Override the controls to perform the start and stop maneuvers.
   m_startStop->triggerFSM(vehicle_state, u);

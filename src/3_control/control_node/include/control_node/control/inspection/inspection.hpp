@@ -11,16 +11,20 @@ namespace inspection {
 
 class Inspection : public IController {
     const VehicleParameters* m_vp;
-    rclcpp::Clock::SharedPtr m_clock;
-    float m_velocityMultiplier;
-
+    std::optional<std::chrono::nanoseconds> m_start_t;
+    double m_frequency;
+    double m_steer_fraction;
+    
 public:
+    Inspection();
+
     virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) override;
 
     virtual Control control(
-    const estimation::IVehicleState& state,
-    const path::ReferencePath& reference_path,
-    const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
+        std::chrono::nanoseconds t,
+        const estimation::IVehicleState& state,
+        const path::ReferencePath& reference_path,
+        const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
     ) override;
 };
 

@@ -46,6 +46,7 @@ void PurePursuit2023::init(rclcpp::Node&, const Parameters& p, const VehiclePara
 }
 
 Control PurePursuit2023::control(
+  std::chrono::nanoseconds,
   const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,
   const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
@@ -53,9 +54,9 @@ Control PurePursuit2023::control(
   double lookforward = m_minLookForward;
 
   if (!vehicle_path_projection.has_value()) {
-    // TODO: Choose better safe state
+    // TODO: Choose a better safe state. Putting it in 1st no matter the speed is most likely not a good idea.
     m_viz_lookforward->color.a = 0;
-    return Control(0.0, 0.0, 0.0, 0.0, 0, false);
+    return Control(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
   }
 
   auto target_ref = reference_path.advance_point(*vehicle_path_projection, lookforward);
@@ -76,7 +77,7 @@ Control PurePursuit2023::control(
   );
 
   // TODO: look ma! no throttle!
-  return Control(steering, 0.0, 0.0, 0.0, 0, false);
+  return Control(steering, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 }
 
 }; // namespace pure_pursuit_2023

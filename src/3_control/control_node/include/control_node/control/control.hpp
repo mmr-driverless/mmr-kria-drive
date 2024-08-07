@@ -6,15 +6,24 @@ namespace control {
 
 class Control {
 public:
-  Control(double steer, double throttle, double brake, double clutch, int gear, bool launch)
-    : steer(steer), throttle(throttle), brake(brake), clutch(clutch), gear(gear), launch(launch) {}
+  enum class LaunchControl {
+    Set,
+    Unset
+  };
+  enum class Clutch {
+    Engaged,
+    Disengaged
+  };
 
+  Control(double steer, double throttle, double brake, Clutch clutch, int gear, LaunchControl launch)
+    : steer(steer), throttle(throttle), brake(brake), clutch(clutch), gear(gear), launch(launch) {}
+  
   double steer;
   double throttle;
   double brake;
-  double clutch;
+  Clutch clutch;
   int gear;
-  bool launch;
+  LaunchControl launch;
 };
 
 }; // namespace control
