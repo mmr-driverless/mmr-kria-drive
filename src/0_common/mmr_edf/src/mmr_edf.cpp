@@ -5,9 +5,9 @@ void EDFNode::configureEDFScheduler(int period_ns, int runtime_ns, int deadline_
     sched_attr attr = {
       .size = sizeof(attr),
       .sched_policy = SCHED_DEADLINE,
-      .sched_runtime = 10 * 1000 * 1000,
-      .sched_deadline = 11 * 1000 * 1000,
-      .sched_period = 10 * 1000 * 1000 * 1000,
+      .sched_runtime = runtime_ns,
+      .sched_deadline = deadline_ns,
+      .sched_period = period_ns,
     };
 
     if (syscall(SYS_sched_setattr, gettid(), &attr, 0) != 0) {
