@@ -7,15 +7,15 @@
 namespace control_node {
 namespace path {
 
-ReferencePathManager::ReferencePathManager(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger)
+ReferencePathManager::ReferencePathManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger)
   : m_max_activated_source_idx(0),
     m_changed(false),
     m_logger(logger)
 {
-  m_sources = sources::get_factory().from_param_list(p, "sources", [this, &node](sources::ReferencePathSource& src, int idx, const Parameters& p_i) {
+  m_sources = sources::get_factory().from_param_list(p, "sources", [this, &node](sources::ReferencePathSource& src, int idx, const Parameters& p_i, const std::string&) {
     src.init(
       std::bind(&ReferencePathManager::on_source_notification, this, idx, std::placeholders::_1, std::placeholders::_2),
-      node,
+      *node,
       p_i
     );
   }, m_logger.get_child("ComponentFactory"));

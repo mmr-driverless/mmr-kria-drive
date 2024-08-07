@@ -2,18 +2,21 @@
 #define CONTROLNODE_ESTIMATION_IVEHICLESTATE_HPP
 
 #include <Eigen/Dense>
-#include "mmr_base/configuration.hpp"
+#include <optional>
 
 namespace control_node {
 namespace estimation {
 
 struct IVehicleState {
-  virtual AS::STATE as_state() const = 0;
-  virtual int lap() const = 0;
-  virtual Eigen::Vector2d position() const = 0;
-  virtual Eigen::Vector2d velocity() const = 0;
-  virtual double yaw() const = 0;
-  virtual double yaw_rate() const = 0;
+  virtual std::optional<Eigen::Vector2d> position() const = 0;
+  virtual std::optional<Eigen::Vector2d> velocity() const = 0;
+  virtual std::optional<double> yaw() const = 0;
+  virtual std::optional<double> yaw_rate() const = 0;
+  virtual std::optional<double> speed() const = 0;
+  virtual std::optional<int> rpm() const = 0;
+  virtual std::optional<bool> lc_is_active() const = 0;
+  virtual std::optional<bool> clutch_is_engaged() const = 0;
+  virtual std::optional<int> gear() const = 0;
 };
 
 }; // namespace estimation

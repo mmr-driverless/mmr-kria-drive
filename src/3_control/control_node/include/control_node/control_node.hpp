@@ -1,16 +1,16 @@
 #ifndef CONTROLNODE_CONTROLNODE_HPP
 #define CONTROLNODE_CONTROLNODE_HPP
 
-#include "control_node/viz/viz_manager.hpp"
 #include <rclcpp/rclcpp.hpp>
+
+#include <control_node/actuation/actuator_manager.hpp>
+#include <control_node/viz/viz_manager.hpp>
 #include <control_node/path/reference_path_manager.hpp>
+#include <control_node/event/event_manager.hpp>
 #include <control_node/estimation/istate_estimator.hpp>
 #include <control_node/control/icontroller.hpp>
-#include <control_node/actuation/iactuator.hpp>
-#include <control_node/path/reference_path.hpp>
 #include <control_node/vehicle_parameters.hpp>
-#include <control_node/start_stop/start_stop.hpp>
-#include <control_node/viz/viz_manager.hpp>
+
 #include <control_node/edf.hpp>
 
 namespace control_node {
@@ -20,12 +20,13 @@ class ControlNode : public NodeBase
   std::chrono::milliseconds m_tick_interval;
   VehicleParameters m_vp;
 
+  actuation::ActuatorManager m_actuator_mgr;
+  event::EventManager m_event_mgr;
   path::ReferencePathManager m_refpath_mgr;
   viz::VizManager m_viz_mgr;
+
   std::unique_ptr<estimation::IStateEstimator> m_estimator;
   std::unique_ptr<control::IController> m_controller;
-  std::unique_ptr<start_stop::StartStop> m_startStop;
-  std::vector<std::pair<int, std::unique_ptr<actuation::IActuator>>> m_actuators;
 
   double m_path_threshold2;
 
@@ -37,7 +38,6 @@ class ControlNode : public NodeBase
 
   void setup_estimator();
   void setup_controller();
-  void setup_actuators();
 
 public:
   ControlNode();

@@ -12,10 +12,15 @@ namespace sim {
 
 class Sim : public IActuator {
   rclcpp::Publisher<ackermann_msgs::msg::AckermannDrive>::SharedPtr m_pub;
+  bool m_enabled;
 
 public:
-  virtual void init(rclcpp::Node& node, const Parameters& p) override;
+  virtual void init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger) override;
   virtual void actuate(const control::Control& control) override;
+
+  virtual void request_enable() override { m_enabled = true; };
+  virtual void request_disable() override { m_enabled = false; };
+  virtual bool enabled() const override { return m_enabled; };
 };
 
 };

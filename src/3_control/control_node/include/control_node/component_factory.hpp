@@ -26,7 +26,7 @@ public:
     return nullptr;
   }
 
-  std::vector<std::pair<int, std::unique_ptr<T>>> from_param_list(const Parameters& p, const std::string& prefix, std::function<void(T&, int, const Parameters&)> init_fn, const rclcpp::Logger& logger) const {
+  std::vector<std::pair<int, std::unique_ptr<T>>> from_param_list(const Parameters& p, const std::string& prefix, std::function<void(T&, int, const Parameters&, const std::string&)> init_fn, const rclcpp::Logger& logger) const {
     std::vector<std::pair<int, std::unique_ptr<T>>> ans;
 
     p.parse_list<std::string>(prefix, "type", [this, &ans, &init_fn, &logger](int idx, const Parameters& p_i) {
@@ -44,7 +44,7 @@ public:
 
       ans.push_back(std::make_pair(idx, std::move(component)));
       RCLCPP_INFO(logger, "INITIALIZING entry %d (of type '%s')", idx, type.c_str());
-      init_fn(*ans.back().second, idx, p_i.subparams("params"));
+      init_fn(*ans.back().second, idx, p_i.subparams("params"), type);
     });
 
     return ans;

@@ -16,18 +16,21 @@ class NoopEstimator : public IStateEstimator {
   void odom_cb(nav_msgs::msg::Odometry::SharedPtr msg);
 
 public:
-  struct VehicleState : public IVehicleState {
-    Eigen::Vector2d m_position;
-    double m_yaw;
+  class VehicleState : public IVehicleState {
+    std::optional<Eigen::Vector2d> m_position;
+    std::optional<double> m_yaw;
     
+  public:
     friend NoopEstimator;
-  private:
-    virtual AS::STATE as_state() const override { return AS::STATE::DRIVING; }
-    virtual int lap() const override { return 0; }
-    virtual Eigen::Vector2d position() const override { return m_position; }
-    virtual Eigen::Vector2d velocity() const override { return Eigen::Vector2d::Zero(); }
-    virtual double yaw() const override { return m_yaw; }
-    virtual double yaw_rate() const override { return 0; }
+    virtual std::optional<Eigen::Vector2d> position() const override { return m_position; }
+    virtual std::optional<Eigen::Vector2d> velocity() const override { return std::nullopt; }
+    virtual std::optional<double> yaw() const override { return m_yaw; }
+    virtual std::optional<double> yaw_rate() const override { return std::nullopt; }
+    virtual std::optional<int> rpm() const override { return std::nullopt; }
+    virtual std::optional<double> speed() const override { return std::nullopt; }
+    virtual std::optional<bool> lc_is_active() const override { return std::nullopt; }
+    virtual std::optional<bool> clutch_is_engaged() const override { return std::nullopt; }
+    virtual std::optional<int> gear() const override { return std::nullopt; }
   } m_state;
 
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;

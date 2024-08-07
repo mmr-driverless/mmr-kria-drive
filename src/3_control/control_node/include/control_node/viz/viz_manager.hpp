@@ -20,7 +20,7 @@ class VizManager {
 public:
   VizManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger);
 
-  void tick(std::chrono::milliseconds t);
+  void tick(std::chrono::nanoseconds t);
   msgs::Marker* get_new(int32_t type, float r, float g, float b, float a, const std::string& frame_id = "track");
 };
 

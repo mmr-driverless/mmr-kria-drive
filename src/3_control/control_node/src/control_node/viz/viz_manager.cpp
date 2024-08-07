@@ -44,13 +44,13 @@ msgs::Marker* VizManager::get_new(int32_t type, float r, float g, float b, float
   return &m_msg.markers.back();
 }
 
-void VizManager::tick(std::chrono::milliseconds t) {
+void VizManager::tick(std::chrono::nanoseconds t) {
   if (m_pub == nullptr)
     return;
 
-  if (t - m_last_t > m_min_interval) {
+  if (t - m_last_t >= m_min_interval) {
     RCLCPP_DEBUG(m_logger, "Publishing visualization.");
-    m_last_t = t;
+    m_last_t = std::chrono::duration_cast<std::chrono::milliseconds>(t);
     m_pub->publish(m_msg);
   }
 }

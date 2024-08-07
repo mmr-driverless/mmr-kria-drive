@@ -53,7 +53,7 @@ Control PurePursuit2023::control(
 ) {
   double lookforward = m_minLookForward;
 
-  if (!vehicle_path_projection.has_value()) {
+  if (!state.position().has_value() || !state.yaw().has_value() || !vehicle_path_projection.has_value()) {
     // TODO: Choose a better safe state. Putting it in 1st no matter the speed is most likely not a good idea.
     m_viz_lookforward->color.a = 0;
     return Control(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
@@ -67,8 +67,8 @@ Control PurePursuit2023::control(
 
   double steering = calculateSteeringTarget(
     target,
-    state.position(),
-    state.yaw(),
+    *state.position(),
+    *state.yaw(),
     lookforward,
     m_steerGain,
     m_vp->max_steering_angle(),

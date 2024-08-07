@@ -40,11 +40,12 @@ add_executable(control_node
   src/control_node/control/inspection/inspection.cpp
   src/control_node/control/controller_factory.cpp
 
-  src/control_node/start_stop/start_stop.cpp
+  src/control_node/event/event_manager.cpp
   
   src/control_node/actuation/canopen_bridge.cpp
   src/control_node/actuation/sim.cpp
   src/control_node/actuation/actuator_factory.cpp
+  src/control_node/actuation/actuator_manager.cpp
 
   src/control_node/viz/viz_manager.cpp
 )

@@ -21,43 +21,46 @@ void ControlNode::tick() {
   RCLCPP_DEBUG(this->get_logger(), "Tick @%ld.%03lds", std::chrono::duration_cast<std::chrono::seconds>(t).count(), std::chrono::duration_cast<std::chrono::milliseconds>(t).count() % 1000);
 
   // Estimate the current state.
-  const estimation::IVehicleState& vehicle_state = m_estimator->update_and_get_current_state();
+  const estimation::IVehicleState& x = m_estimator->update_and_get_current_state();
 
   // Retrieve the current path. If it changed, invalidate the last path reference.
   path::ReferencePath path = m_refpath_mgr.get();
   if (m_refpath_mgr.changed())
     m_last_path_ref = std::nullopt;
   
-  // Project the vehicle onto the path.
-  auto projection = path.project_vehicle(vehicle_state.position(), m_last_path_ref, m_path_threshold2);
 
-  // If the projection succeeds, store the closest point and update the last path reference.
   std::optional<path::ReferencePath::PointRef> closest_point;
-  if (projection.has_value()) {
-    closest_point = projection->closest_point;
-    m_last_path_ref = projection->closest_point;
+  if (x.position().has_value()) {
+    // Project the vehicle onto the path.
+    auto projection = path.project_vehicle(*x.position(), m_last_path_ref, m_path_threshold2);
+
+    // If the projection succeeds, store the closest point and update the last path reference.
+    if (projection.has_value()) {
+      closest_point = projection->closest_point;
+      m_last_path_ref = projection->closest_point;
+    }
   }
 
   // Decide what inputs to apply based on the current vehicle state and position relative to the path.
-  control::Control u = m_controller->control(t, vehicle_state, path, closest_point);
+  control::Control u = m_controller->control(t, x, path, closest_point);
 
   // Override the controls to perform the start and stop maneuvers.
-  m_startStop->triggerFSM(vehicle_state, u);
+  u = m_event_mgr.tick(t, x, u);
 
   // Actuate the control input.
-  for (auto& actuator : m_actuators)
-    actuator.second->actuate(u);
+  m_actuator_mgr.actuate_all(u);
 
   // Update the visualization.
-  m_viz_mgr.tick(std::chrono::duration_cast<std::chrono::milliseconds>(t));
+  m_viz_mgr.tick(t);
 }
 
 ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(Parameters(this).get<int>("tick_interval"))),
   m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
-  m_refpath_mgr(*this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
+  m_actuator_mgr(this, Parameters(this, "actuation"), this->get_logger().get_child("ActuatorMgr")),
+  m_event_mgr(this, Parameters(this, "event_manager"), this->get_logger().get_child("EventMgr"), m_actuator_mgr),
+  m_refpath_mgr(this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
   m_viz_mgr(this, Parameters(this, "viz"), this->get_logger().get_child("VizMgr")),
-  m_startStop(std::make_unique<start_stop::StartStop>(Parameters(this, "start_stop"))),
   m_path_threshold2(std::pow(Parameters(this).get<double>("path_tracking_threshold"), 2))
 {
   #ifdef USE_EDF
@@ -71,7 +74,6 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_has_completed_path = false;
   m_start_time = this->get_clock()->now();
 
-  setup_actuators();
   setup_estimator();
   setup_controller();
 }
@@ -99,19 +101,6 @@ void ControlNode::setup_controller() {
   
   RCLCPP_INFO(this->get_logger(), "INITIALIZING controller '%s'.", type.c_str());
   m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr);
-}
-void ControlNode::setup_actuators() {
-  auto logger = this->get_logger().get_child("setup_actuators");
-
-  Parameters p(this, "actuation");
-  m_actuators = actuation::get_factory().from_param_list(p, "actuators", [this](actuation::IActuator& act, int, const Parameters& p_i) {
-    act.init(*this, p_i);
-  }, logger);
-
-  if (m_actuators.size() == 0)
-    RCLCPP_WARN(logger, "NO actuators initialized!");
-  else
-    RCLCPP_INFO(logger, "INITIALIZED %zu actuators.", m_actuators.size());
 }
 
 };
