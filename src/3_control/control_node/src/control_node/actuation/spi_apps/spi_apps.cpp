@@ -1,5 +1,6 @@
 #include <control_node/actuation/spi_apps/spi_apps.hpp>
 #include <stdexcept>
+#include <algorithm>
 
 namespace control_node {
 namespace actuation {

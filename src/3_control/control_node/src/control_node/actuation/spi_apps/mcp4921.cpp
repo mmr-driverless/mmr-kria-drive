@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <system_error>
 #include <memory.h>
+#include <algorithm>
 
 namespace control_node {
 namespace actuation {

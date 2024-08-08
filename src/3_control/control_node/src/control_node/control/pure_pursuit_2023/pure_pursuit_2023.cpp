@@ -1,6 +1,7 @@
 #include <control_node/parameters.hpp>
 #include <control_node/viz/msgs/viz_msgs.hpp>
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
+#include <algorithm>
 
 namespace control_node {
 namespace control {
