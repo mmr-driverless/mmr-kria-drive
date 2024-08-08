@@ -1,30 +1,46 @@
 /canopen_bridge_node:
   ros__parameters:
     generic:
-      interface: can0
+      interface: can1
       bitrate: 1000000
       debug: true
       WCET: 5000000 # ms
       period: 10000000 # 10ms
       deadline: 10000000
-      timeout_msgs: 5
     topic:
       steerTopic: "/command/steer"
       brakeTopic: "/command/brake"
       clutchTopic: "/command/clutch"
       statusActuatorTopic: "/actuator/status"
-      canBusTopic: "/canbus/tx/msg"
+      ecuStatusTopic: "/status/ecu"
     steer:
-      node_id: 1 # 18
+      node_id: 18
       wheel_rate: 6.4286
       inc_per_degree: 179.7224 # riduzione 1-4 44.9306
       max_target: 24000.0
       velocity: 2750
+      timeout_msgs: 5
     brake:
       node_id: 17
       max_torque: 1500
       return_pedal_torque: -20
+      timeout_msgs: 5 # da testare
     clutch:
       node_id: 16
       velocity: 3500
-      
+      monitoring_freq: 5
+      timeout_msgs: 2
+      step_maxon:
+        - 200
+        - -500
+        - 300
+        - 100
+        - 600
+        - 400
+      pot_val: 
+        - 2.5
+        - 90.0
+        - 42.5
+        - 32.5
+        - 12.5
+        - 2.5

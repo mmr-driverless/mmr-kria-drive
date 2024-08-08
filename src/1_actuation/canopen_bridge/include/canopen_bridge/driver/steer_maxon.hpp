@@ -10,6 +10,17 @@ class MaxonSteer : public MaxonMotor
         const int m_nModeOfOp = MOTOR::PPM;
         int m_nVelocity, m_fMaxTarget;
 
+        void initSteer() {
+            /* set modes of operation */
+            this->download<uint8_t>(0x6060, 0x00, this->m_nModeOfOp);
+
+            /* set parameter */
+            this->download<int>(0x6081, 0x00, this->m_nVelocity);
+
+            /* enable device */
+            this->init();
+        }
+
     public:
 
         MaxonSteer(int nSocket, int nNodeId, int nTimeOutMsg, float fMaxTarget, int nVelocity) 
@@ -36,22 +47,9 @@ class MaxonSteer : public MaxonMotor
 
             /* start homing */
             this->download<uint16_t>(0x6040, 0x00, 0x001F);
-
-            this->disable();
         }
 
         ~MaxonSteer() { this->disable(); };
-
-        void initSteer() {
-            /* set modes of operation */
-            this->download<uint8_t>(0x6060, 0x00, this->m_nModeOfOp);
-
-            /* set parameter */
-            this->download<int>(0x6081, 0x00, this->m_nVelocity);
-
-            /* enable device */
-            this->init();
-        }
 
         void writeTargetPos(int nTargetPos) {
             if ((nTargetPos < -this->m_fMaxTarget) || (nTargetPos > this->m_fMaxTarget))
@@ -61,7 +59,7 @@ class MaxonSteer : public MaxonMotor
             this->download<int>(0x607A, 0x00, nTargetPos);
 
             /* start postioning & toggle `new position` bit */
-            this->toggle_new_pos();
+            this->toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS);
         }
 
 };
