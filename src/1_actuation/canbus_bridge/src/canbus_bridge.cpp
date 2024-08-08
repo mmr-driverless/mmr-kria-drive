@@ -141,6 +141,7 @@ void CANBusBridge::sendStatus()
 {
     if (this->m_pubEcuStatus != nullptr) {
         this->m_msgEcuStatus.header.stamp.sec = std::chrono::duration_cast<std::chrono::seconds>(timing::Clock::get_time()).count();
+        this->m_msgEcuStatus.header.stamp.nanosec = std::chrono::duration_cast<std::chrono::nanoseconds>(timing::Clock::get_time()).count();
         this->m_msgEcuStatus.header.frame_id = "ECU_STATE";
 
         this->m_pubEcuStatus->publish(this->m_msgEcuStatus);
@@ -148,6 +149,7 @@ void CANBusBridge::sendStatus()
 
     if (this->m_pubResStatus != nullptr) {
         this->m_msgResStatus.header.stamp.sec = std::chrono::duration_cast<std::chrono::seconds>(timing::Clock::get_time()).count();
+        this->m_msgResStatus.header.stamp.nanosec = std::chrono::duration_cast<std::chrono::nanoseconds>(timing::Clock::get_time()).count();
         this->m_msgResStatus.header.frame_id = "RES_STATE";
 
         this->m_pubResStatus->publish(this->m_msgResStatus);
