@@ -69,12 +69,17 @@
           type: Sim
           params:
             topic: "/sim/drive_parameters"
-        
+
         2:
-          enabled: false
-          type: spi_apps
+          enabled: true
+          type: SpiApps
           params:
-            dev: "/dev/ur_mom"
+            spi_interface: /dev/spidev1.0
+            spi_frequency: 50000
+            v_ref: 5.0
+            v_apps_min: 1.0
+            v_apps_max: 3.0
+
 
     # Reference path settings
     reference_path_manager:
