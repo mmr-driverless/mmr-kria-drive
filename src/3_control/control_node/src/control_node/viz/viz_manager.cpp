@@ -13,7 +13,8 @@ VizManager::VizManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger l
   : m_logger(logger),
     m_pub(nullptr),
     m_min_interval(std::chrono::milliseconds(p.get<int>("min_interval_ms"))),
-    m_last_t(0)
+    m_last_t(0),
+    m_is_viz_tick(false)
 {
   if (p.get<bool>("enabled")) {
     m_pub = node->create_publisher<msgs::MarkerArray>(p.get<std::string>("topic"), QOS);
@@ -23,35 +24,45 @@ VizManager::VizManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger l
   }
 }
 
-msgs::Marker* VizManager::get_new(int32_t type, float r, float g, float b, float a, const std::string& frame_id)
+int VizManager::get_new(int32_t type, std::array<float, 3> color, std::array<double, 3> scale, const std::string& frame_id)
 {
   if (m_pub == nullptr)
-    return nullptr;
+    return -1;
 
-  auto& m = m_msg.markers.emplace_back();
+  int ans = m_msg.markers.size();
+  viz::msgs::Marker& m = m_msg.markers.emplace_back();
 
   m.header.frame_id = frame_id;
   m.ns = "control_node";
   m.id = m_msg.markers.size() - 1;
   m.type = type;
   m.action = msgs::Marker::ADD;
-  SET_RGBA(m.color, r, g, b, a);
+  SET_RGBA(m.color, color[0], color[1], color[2], 0.0f);
   SET_XYZW(m.pose.orientation, 0.0, 0.0, 0.0, 1.0);
   SET_XYZ(m.pose.position, 0.0, 0.0, 0.0);
-  SET_XYZ(m.scale, 1.0, 1.0, 1.0);
-  
-  return &m;
+  SET_XYZ(m.scale, scale[0], scale[1], scale[2]);
+
+  return ans;
 }
 
-void VizManager::tick(std::chrono::nanoseconds t) {
-  if (m_pub == nullptr)
+void VizManager::pre_tick(std::chrono::nanoseconds t_ns) {
+  if (m_pub == nullptr) {
+    m_is_viz_tick = false;
+    return;
+  }
+
+  auto t = std::chrono::duration_cast<std::chrono::milliseconds>(t_ns);
+  m_is_viz_tick = t - m_last_t >= m_min_interval;
+  if (m_is_viz_tick)
+    m_last_t = t;
+}
+
+void VizManager::tick() {
+  if (!m_is_viz_tick)
     return;
 
-  if (t - m_last_t >= m_min_interval) {
-    RCLCPP_DEBUG(m_logger, "Publishing visualization.");
-    m_last_t = std::chrono::duration_cast<std::chrono::milliseconds>(t);
-    m_pub->publish(m_msg);
-  }
+  RCLCPP_DEBUG(m_logger, "Publishing visualization.");
+  m_pub->publish(m_msg);
 }
 
 }; // namespace viz

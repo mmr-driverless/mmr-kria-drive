@@ -23,7 +23,18 @@ class ControlNode : public NodeBase
   actuation::ActuatorManager m_actuator_mgr;
   event::EventManager m_event_mgr;
   path::ReferencePathManager m_refpath_mgr;
+  
   viz::VizManager m_viz_mgr;
+  
+  int m_path_projection_marker;
+  int m_path_threshold_marker;
+  int m_path_search_start_marker;
+  int m_path_search_end_marker;
+
+  float m_path_projection_marker_alpha;
+  float m_path_threshold_marker_alpha;
+  float m_path_search_start_marker_alpha;
+  float m_path_search_end_marker_alpha;
 
   std::unique_ptr<estimation::IStateEstimator> m_estimator;
   std::unique_ptr<control::IController> m_controller;

@@ -13,8 +13,11 @@ class PurePursuit2023 : public IController {
   double m_minLookForward;
   double m_steerGain;
 
-  double m_viz_lookforward_alpha;
-  viz::msgs::Marker* m_viz_lookforward;
+  viz::VizManager* m_viz_mgr;
+  float m_viz_lookforward_alpha;
+  int m_viz_lookforward;
+
+  void viz(std::optional<Eigen::Vector2d> target);
 
 public:
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr) override;

@@ -88,6 +88,12 @@ public:
     }
   }
 
+  std::array<float, 3> parse_rgba(const std::string& prefix, float& alpha) const {
+    const Parameters p = subparams(prefix);
+    alpha = (float)p.get<float>("a");
+    return { (float)p.get<double>("r"), (float)p.get<double>("g"), (float)p.get<double>("b") };
+  }
+
   rmw_time_t parse_rmw_time(const std::string& prefix, std::optional<rmw_time_t> default_value) const {
     const Parameters p = subparams(prefix);
     rmw_time_t s;
