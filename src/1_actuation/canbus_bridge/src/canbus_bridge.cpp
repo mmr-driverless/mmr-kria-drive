@@ -13,8 +13,8 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 
     RCLCPP_INFO(
         this->get_logger(),
-        "[ TX Topic ]: %s, [ RX Topic ]: %s, [ ECU TOPIC ], %s, [ RES TOPIC ]: %s",
-        this->m_sTopicTx.c_str(), this->m_sTopicRx.c_str(), this->m_sEcuStatusTopic.c_str(), this->m_sResStatusTopic.c_str()
+        "[ TX Topic ]: %s, [ CMD ECU Topic ]: %s, [ RX Topic ]: %s, [ ECU TOPIC ], %s, [ RES TOPIC ]: %s",
+        this->m_sTopicTx.c_str(), this->m_sCmdEcuTopic.c_str(), this->m_sTopicRx.c_str(), this->m_sEcuStatusTopic.c_str(), this->m_sResStatusTopic.c_str()
     );
 
     this->connectCANBus();
@@ -23,6 +23,8 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 
     this->m_subCANRx = this->create_subscription<can_msgs::msg::Frame>(
         this->m_sTopicRx, 1, std::bind(&CANBusBridge::msgCANBusRxCallback, this, std::placeholders::_1));
+    this->m_subCmdEcuTargetStatus = this->create_subscription<mmr_base::msg::CmdEcu>(
+        this->m_sCmdEcuTopic, 1, std::bind(&CANBusBridge::msgCmdEcuCallback, this, std::placeholders::_1));
 
     this->m_pubCANBusTx = this->create_publisher<can_msgs::msg::Frame>(this->m_sTopicTx, 1);
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
@@ -42,9 +44,15 @@ void CANBusBridge::loadParameters()
 
     declare_parameter("topic.canTxTopic", "");
     declare_parameter("topic.canRxTopic", "");
+    declare_parameter("topic.cmdEcuTopic", "");
     declare_parameter("topic.ecuStatusTopic", "");
     declare_parameter("topic.resStatusTopic", "");
     declare_parameter("topic.missionSelectTopic", "");
+
+    declare_parameter("gear.ctrLimit", 5);
+    declare_parameter("gear.changeDeltaTime", 200);
+
+    declare_parameter("launch_control.changeDeltaTime", 100);
     
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
@@ -56,11 +64,18 @@ void CANBusBridge::loadParameters()
 
     get_parameter("topic.canTxTopic", this->m_sTopicTx);
     get_parameter("topic.canRxTopic", this->m_sTopicRx);
+    get_parameter("topic.cmdEcuTopic", this->m_sCmdEcuTopic);
     get_parameter("topic.ecuStatusTopic", this->m_sEcuStatusTopic);
     get_parameter("topic.resStatusTopic", this->m_sResStatusTopic);
     get_parameter("topic.missionSelectTopic", this->m_sMissionSelectTopic);
 
+    get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
+    get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
+
+    get_parameter("launch_control.changeDeltaTime", this->m_lLCChangeDeltaTime);
+
 }
+
 
 void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg)
 {
@@ -80,6 +95,87 @@ void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg
 
     if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
         RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+}
+
+void CANBusBridge::changeGearUpDown()
+{    
+    if (this->m_msgCmdEcu.gear_target == this->m_msgEcuStatus.gear)
+        return;
+
+    if ((this->m_msgCmdEcu.gear_target == 0) && (this->m_msgEcuStatus.gear == 1))
+        return;
+
+    auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
+    if ((this->m_lLastGearTime != 0) && ((act_time - this->m_lLastGearTime) <= this->m_lGearChangeDeltaTime))
+        return;
+
+    this->m_lLastGearTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
+
+    ECU::CMD::DATA gear_info;
+    std::vector<uint8_t> gear_data(8);
+    std::fill(gear_data.begin(), gear_data.end(), 0);
+
+    gear_info = (this->m_msgCmdEcu.gear_target < this->m_msgEcuStatus.gear) ? 
+        ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::GEAR_DOWN) :
+        ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::GEAR_UP);
+
+    this->toggleNthBit(gear_data, gear_info.bit);
+
+    struct can_frame gear_frame = {
+        .can_id = gear_info.id,
+        .len = 8,
+    };
+
+    memcpy(gear_frame.data, &(gear_data.at(0)), gear_data.size());
+
+    for (uint8_t i=0; i < m_unGearCtrLimit; i++)
+    {
+        if (write(this->m_nSocket, &gear_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    }
+}
+
+void CANBusBridge::setGearNeutral() {}
+
+
+void CANBusBridge::setLaunchControl()
+{
+    if (!this->m_msgCmdEcu.set_launch_control)
+        return;
+
+    if ((this->m_msgCmdEcu.set_launch_control) && (this->m_msgEcuStatus.bool_ack_ideal_launch_control))
+        return;
+
+    auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
+    if ((this->m_lLastLCTime != 0) && ((act_time - this->m_lLastLCTime) <= this->m_lLCChangeDeltaTime))
+        return;
+
+    this->m_lLastLCTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
+
+    ECU::CMD::DATA lc_info;
+    std::vector<uint8_t> lc_data(8);
+    std::fill(lc_data.begin(), lc_data.end(), 0);
+
+    lc_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL);
+
+    if (this->m_bSetLCValue)
+    {
+        this->toggleNthBit(lc_data, lc_info.bit);
+        this->m_bSetLCValue = false;
+    } else {
+        this->m_bSetLCValue = true;
+    }
+
+    struct can_frame lc_frame = {
+        .can_id = lc_info.id,
+        .len = 8,
+    };
+
+    memcpy(lc_frame.data, &(lc_data.at(0)), lc_data.size());
+
+    if (write(this->m_nSocket, &lc_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+
 }
 
 void CANBusBridge::connectCANBus()

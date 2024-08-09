@@ -9,6 +9,7 @@
 #include <mmr_edf/mmr_edf.hpp>
 #include <mmr_base/msg/ecu_status.hpp>
 #include <mmr_base/msg/res_status.hpp>
+#include <mmr_base/msg/cmd_ecu.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <mmr_base/configuration.hpp>
 
@@ -23,13 +24,14 @@
 
 #include <bit>
 #include <algorithm>
+#include <cassert>
 
 class CANBusBridge : public EDFNode
 {
 
     private:
 
-        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
+        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
         int m_nBitrate, m_nMaxMsgs;
         bool m_bDebug;
 
@@ -38,6 +40,10 @@ class CANBusBridge : public EDFNode
         /* Subscriber for CANBus Msg */
         rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr m_subCANRx;
         void msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg);
+
+        /* Subscriber for target ECU status */
+        rclcpp::Subscription<mmr_base::msg::CmdEcu>::SharedPtr m_subCmdEcuTargetStatus;
+        void msgCmdEcuCallback(const mmr_base::msg::CmdEcu::SharedPtr msg) { this->m_msgCmdEcu = *msg; }
 
         /* Publisher for CANBus Msg */
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr m_pubCANBusTx;
@@ -50,9 +56,27 @@ class CANBusBridge : public EDFNode
         mmr_base::msg::EcuStatus m_msgEcuStatus;
         mmr_base::msg::ResStatus m_msgResStatus;
 
+        /* Message for CmdEcu */
+        mmr_base::msg::CmdEcu m_msgCmdEcu;
+
+        /* Gear Parameters */
+        uint8_t m_unGearCtrLimit;
+        long int m_lLastGearTime = 0, m_lGearChangeDeltaTime;
+
+        /* Launch Control Parameters */
+        long int m_lLastLCTime = 0, m_lLCChangeDeltaTime;
+        bool m_bSetLCValue = false;
+
         int m_nSocket;
         struct ifreq m_ifr;
         struct sockaddr_can m_addr;
+
+        inline void toggleNthBit(std::vector<uint8_t> &vec, uint8_t n) {
+            uint8_t index = (n % 8) == 0 ? ((n / 8) - 1) : (n / 8);
+            assert(vec.capacity() >= index);
+            uint8_t bit = (n % 8) == 0 ? 0  : (8 - (n % 8));
+            vec.at(index) ^= ((uint8_t)1 << bit);
+        }
 
         void connectCANBus();
         void readEcuStatus(can_frame frame);
@@ -65,4 +89,7 @@ class CANBusBridge : public EDFNode
 
         void readMsgFromCANBus();
         void sendStatus();
+        void changeGearUpDown();
+        void setGearNeutral();
+        void setLaunchControl();
 };

@@ -53,6 +53,38 @@ namespace ECU {
 
     };
 
+    namespace CMD {
+        enum ACTIONS {
+            GEAR_UP,
+            GEAR_DOWN,
+            SET_NEUTRAL,
+            SET_LAUNCH_CONTROL,
+            UNSET_LAUNCH_CONTROL
+        };
+
+        const inline std::unordered_map<CMD::ACTIONS, uint8_t> CmdEcuActionsBits {
+            { CMD::ACTIONS::GEAR_UP, 7 },
+            { CMD::ACTIONS::GEAR_DOWN, 8 },
+            { CMD::ACTIONS::SET_LAUNCH_CONTROL, 5 },
+            { CMD::ACTIONS::UNSET_LAUNCH_CONTROL, 5 },
+            { CMD::ACTIONS::SET_NEUTRAL, 32 },
+        };
+
+        struct DATA {
+            ECU::MMR_CAN_MSG_ID id;
+            uint8_t bit;
+        };
+
+    };
+
+    const inline std::unordered_map<CMD::ACTIONS, CMD::DATA> CmdEcuLookup {
+        { CMD::ACTIONS::GEAR_UP, {.id = MMR_ECU_GEAR_CONTROL, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::GEAR_UP)}},
+        { CMD::ACTIONS::GEAR_DOWN, {.id = MMR_ECU_GEAR_CONTROL, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::GEAR_DOWN)}},
+        { CMD::ACTIONS::SET_LAUNCH_CONTROL, {.id = MMR_ECU_SET_PIT_LAUNCH, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::SET_LAUNCH_CONTROL)}},
+        { CMD::ACTIONS::UNSET_LAUNCH_CONTROL, {.id = MMR_ECU_SET_PIT_LAUNCH, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::UNSET_LAUNCH_CONTROL)}},
+        { CMD::ACTIONS::SET_NEUTRAL, {.id = MMR_ECU_SET_PIT_LAUNCH, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::SET_NEUTRAL)}}
+    };
+
 };
 
 namespace COCKPIT {
