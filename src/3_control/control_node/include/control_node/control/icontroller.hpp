@@ -14,6 +14,7 @@ namespace control_node {
 namespace control {
 
 struct IController {
+  virtual ~IController() = default;
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr) = 0;
   virtual Control control(
     std::chrono::nanoseconds t,

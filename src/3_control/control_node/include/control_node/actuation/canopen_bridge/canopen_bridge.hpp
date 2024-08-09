@@ -61,7 +61,7 @@ class CANOpenBridge : public IActuator {
   GroupedActuatorStatus m_status;
   std::optional<GroupedActuatorStatus> m_old_status;
 
-  void actuator_status_cb(mmr_base::msg::ActuatorStatus::SharedPtr msg);
+  void actuator_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg);
   const rclcpp::Logger& logger() const { return *m_logger; }
 
   void serve_enable_request();

@@ -73,7 +73,7 @@ void CANOpenBridge::init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger
   RCLCPP_INFO(this->logger(), "Initialized");
 }
 
-void CANOpenBridge::actuator_status_cb(mmr_base::msg::ActuatorStatus::SharedPtr msg) {
+void CANOpenBridge::actuator_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg) {
   m_status.steer = (MOTOR::ACTUATOR_STATUS)msg->steer_status == MOTOR::ACTUATOR_STATUS::DISABLE? ActuatorStatus::Disabled : ActuatorStatus::Enabled;
   m_status.brake = (MOTOR::ACTUATOR_STATUS)msg->brake_status == MOTOR::ACTUATOR_STATUS::DISABLE? ActuatorStatus::Disabled : ActuatorStatus::Enabled;
   m_status.clutch = (MOTOR::ACTUATOR_STATUS)msg->clutch_status == MOTOR::ACTUATOR_STATUS::DISABLE? ActuatorStatus::Disabled : ActuatorStatus::Enabled;

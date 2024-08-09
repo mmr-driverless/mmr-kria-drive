@@ -28,8 +28,7 @@ msgs::Marker* VizManager::get_new(int32_t type, float r, float g, float b, float
   if (m_pub == nullptr)
     return nullptr;
 
-  m_msg.markers.emplace_back();
-  auto& m = m_msg.markers.back();
+  auto& m = m_msg.markers.emplace_back();
 
   m.header.frame_id = frame_id;
   m.ns = "control_node";
@@ -41,7 +40,7 @@ msgs::Marker* VizManager::get_new(int32_t type, float r, float g, float b, float
   SET_XYZ(m.pose.position, 0.0, 0.0, 0.0);
   SET_XYZ(m.scale, 1.0, 1.0, 1.0);
   
-  return &m_msg.markers.back();
+  return &m;
 }
 
 void VizManager::tick(std::chrono::nanoseconds t) {

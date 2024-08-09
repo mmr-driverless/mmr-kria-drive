@@ -65,8 +65,8 @@ class EventManager {
 public:
   EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger, const actuation::ActuatorManager& actuators);
   
-  void as_state_cb(std_msgs::msg::Int8::SharedPtr msg) { m_as_state = (AS::STATE)msg->data; }
-  void race_status_cb(std_msgs::msg::Int8::SharedPtr msg) { m_lap = msg->data; }
+  void as_state_cb(std::shared_ptr<const std_msgs::msg::Int8> msg) { m_as_state = (AS::STATE)msg->data; }
+  void race_status_cb(std::shared_ptr<const std_msgs::msg::Int8> msg) { m_lap = msg->data; }
 
   control::Control tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u);
 };

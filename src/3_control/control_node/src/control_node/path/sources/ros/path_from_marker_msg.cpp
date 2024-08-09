@@ -6,7 +6,7 @@ namespace path {
 namespace sources {
 namespace ros {
 
-void PathFromMarkerMsg::msg_cb(viz::msgs::Marker::SharedPtr msg) {
+void PathFromMarkerMsg::msg_cb(std::shared_ptr<const viz::msgs::Marker> msg) {
   notifyPathChanged(msg->points.size(), UpdateFn([this, &msg](WaypointsT waypoints, DataT) {
     for (size_t i = 0; i < msg->points.size(); i++)
       waypoints[i] = Eigen::Vector2d(msg->points[i].x, msg->points[i].y);

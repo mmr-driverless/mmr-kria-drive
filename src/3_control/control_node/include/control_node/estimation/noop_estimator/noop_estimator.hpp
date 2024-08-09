@@ -13,7 +13,7 @@ namespace noop {
 class NoopEstimator : public IStateEstimator {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
 
-  void odom_cb(nav_msgs::msg::Odometry::SharedPtr msg);
+  void odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg);
 
 public:
   class VehicleState : public IVehicleState {
