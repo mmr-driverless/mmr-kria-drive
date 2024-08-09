@@ -1,6 +1,6 @@
 #include "mmr_edf/mmr_edf.hpp"
 
-void EDFNode::configureEDFScheduler(int period_ns, int runtime_ns, int deadline_ns) {
+void EDFNode::configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uint64_t deadline_ns) {
     // Set the scheduling policy to SCHED_DEADLINE
     sched_attr attr = {
       .size = sizeof(attr),
@@ -11,7 +11,7 @@ void EDFNode::configureEDFScheduler(int period_ns, int runtime_ns, int deadline_
     };
 
     if (syscall(SYS_sched_setattr, gettid(), &attr, 0) != 0) {
-      std::cout << strerror(errno) << std::endl;
+      RCLCPP_ERROR(this->get_logger(), "[ FAILED to SET SCHED_DEADLINE ]: %s", strerror(errno));
       throw std::runtime_error("Wrong parameters for EDF scheduler");
     }
 }
