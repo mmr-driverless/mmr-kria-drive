@@ -158,9 +158,13 @@ void CANBusBridge::sendStatus()
 
 void CANBusBridge::readResStatus(can_frame frame)
 {
-    this->m_msgResStatus.emergency = frame.data[0] & RES::RES_SIGNAL_EMERGENCY;
-    this->m_msgResStatus.go_signal = frame.data[0] & RES::RES_SIGNAL_GO;
-    this->m_msgResStatus.bag = frame.data[0] & RES::RES_SIGNAL_BAG;
+    auto maskRes = [](uint8_t bitvector, RES::MMR_RES_STATUS_MASK mask) -> bool {
+        return bitvector & mask;
+    };
+
+    this->m_msgResStatus.emergency = !maskRes(frame.data[0], RES::RES_SIGNAL_EMERGENCY);
+    this->m_msgResStatus.go_signal = maskRes(frame.data[0], RES::RES_SIGNAL_GO);
+    this->m_msgResStatus.bag = maskRes(frame.data[0], RES::RES_SIGNAL_BAG);
 }
 
 void CANBusBridge::readEcuStatus(can_frame frame)
