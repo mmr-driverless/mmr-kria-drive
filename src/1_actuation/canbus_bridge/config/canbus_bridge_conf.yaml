@@ -20,5 +20,8 @@
       ctrLimit: 5
       changeDeltaTime: 200 #ms
 
-    launch_contro:
+    launch_control:
+      changeDeltaTime: 100 #ms
+
+    neutral:
       changeDeltaTime: 100 #ms

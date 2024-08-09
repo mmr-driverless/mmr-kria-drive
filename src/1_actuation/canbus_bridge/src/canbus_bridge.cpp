@@ -58,6 +58,8 @@ void CANBusBridge::loadParameters()
 
     declare_parameter("launch_control.changeDeltaTime", 100);
     
+    declare_parameter("neutral.changeDeltaTime", 100);
+
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
 	get_parameter("generic.WCET", this->m_nWCET);
@@ -78,6 +80,8 @@ void CANBusBridge::loadParameters()
     get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
 
     get_parameter("launch_control.changeDeltaTime", this->m_lLCChangeDeltaTime);
+
+    get_parameter("neutral.changeDeltaTime", this->m_lNeutralChangeDeltaTime);
 
 }
 
