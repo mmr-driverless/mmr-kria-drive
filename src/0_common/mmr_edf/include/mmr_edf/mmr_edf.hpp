@@ -45,7 +45,7 @@ class EDFNode : public rclcpp::Node
         int m_nWCET, m_nPeriod, m_nDeadline;
         
         /* function to configure the node to use EDF - SCHED_DEALINE */
-        void configureEDFScheduler(int period_ns, int runtime_ns, int deadline_ns);
+        void configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uint64_t deadline_ns);
 
         /* driver for write on GPIO using file descriptor */
         bool readGPIOValueFromFile(std::string sFile);
