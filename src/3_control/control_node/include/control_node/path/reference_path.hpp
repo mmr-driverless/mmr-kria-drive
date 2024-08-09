@@ -55,18 +55,24 @@ private:
   bool m_is_data_valid;
   
   int compute_index(int start, int offset) const {
-    int idx = start + offset;
-
-    // If the path is closed, we can loop around
-    if (is_closed())
-      return idx % n_waypoints();
-
-    // Otherwise, if the path is open, we don't loop around
-    else if (idx < n_waypoints())
+    if(this->is_closed())
+    {
+      int idx = (start + offset) % n_waypoints();
+      if(idx < 0)
+      {
+        return idx + n_waypoints();
+      }
       return idx;
-
-    // Invalid index
-    return -1;
+    }
+    else
+    {
+      int idx = start + offset;
+      if(idx < 0 || idx >= this->n_waypoints())
+      {
+        return -1;
+      }
+      return idx;
+    }
   }
 
   struct SegmentRef {
