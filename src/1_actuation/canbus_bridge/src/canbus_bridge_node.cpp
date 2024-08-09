@@ -28,6 +28,7 @@ int main(int argc, char * argv[])
       node->sendStatus();
       node->changeGearUpDown();
       node->setLaunchControl();
+      node->setGearNeutral();
       sched_yield();
     }
 

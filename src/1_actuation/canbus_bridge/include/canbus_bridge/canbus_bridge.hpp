@@ -10,6 +10,7 @@
 #include <mmr_base/msg/ecu_status.hpp>
 #include <mmr_base/msg/res_status.hpp>
 #include <mmr_base/msg/cmd_ecu.hpp>
+#include <mmr_base/msg/actuator_status.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <mmr_base/configuration.hpp>
 
@@ -31,7 +32,7 @@ class CANBusBridge : public EDFNode
 
     private:
 
-        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
+        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic, m_sActuatorsStatusTopic;
         int m_nBitrate, m_nMaxMsgs;
         bool m_bDebug;
 
@@ -44,6 +45,10 @@ class CANBusBridge : public EDFNode
         /* Subscriber for target ECU status */
         rclcpp::Subscription<mmr_base::msg::CmdEcu>::SharedPtr m_subCmdEcuTargetStatus;
         void msgCmdEcuCallback(const mmr_base::msg::CmdEcu::SharedPtr msg) { this->m_msgCmdEcu = *msg; }
+
+        /* Subscriber for actuators status */
+        rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr m_subActuatorsStatus;
+        void msgActuatorsStatusCallback(const mmr_base::msg::ActuatorStatus::SharedPtr msg) { this->m_msgActuatorsStatus = *msg; }
 
         /* Publisher for CANBus Msg */
         rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr m_pubCANBusTx;
@@ -59,6 +64,9 @@ class CANBusBridge : public EDFNode
         /* Message for CmdEcu */
         mmr_base::msg::CmdEcu m_msgCmdEcu;
 
+        /* Message for Clutch Actuator Status*/
+        mmr_base::msg::ActuatorStatus m_msgActuatorsStatus;
+
         /* Gear Parameters */
         uint8_t m_unGearCtrLimit;
         long int m_lLastGearTime = 0, m_lGearChangeDeltaTime;
@@ -66,6 +74,10 @@ class CANBusBridge : public EDFNode
         /* Launch Control Parameters */
         long int m_lLastLCTime = 0, m_lLCChangeDeltaTime;
         bool m_bSetLCValue = false;
+
+        /* Set Neutral Parameters */
+        long int m_lLastNeutralTime = 0, m_lNeutralChangeDeltaTime;
+        bool m_bSetNeutralValue = false;
 
         int m_nSocket;
         struct ifreq m_ifr;

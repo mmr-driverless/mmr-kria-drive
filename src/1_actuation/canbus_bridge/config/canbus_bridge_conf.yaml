@@ -14,6 +14,7 @@
       cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"
       resStatusTopic: "/status/res"
+      ActuatorsStatusTopic: "/actuator/status"
       missionSelectTopic: "/mission/selected"
     gear:
       ctrLimit: 5
