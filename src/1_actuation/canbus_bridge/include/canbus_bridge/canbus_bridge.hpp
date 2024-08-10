@@ -83,11 +83,16 @@ class CANBusBridge : public EDFNode
         struct ifreq m_ifr;
         struct sockaddr_can m_addr;
 
+        /**
+        @param vec Output parameters that represents a string of bytes
+        @param n Bit position, numbered from 1, counting from left to right (Ema's notation) 
+        */
         inline void toggleNthBit(std::vector<uint8_t> &vec, uint8_t n) {
-            uint8_t index = (n % 8) == 0 ? ((n / 8) - 1) : (n / 8);
+            n--;  // Shift back to 0-7 range
+            uint8_t index = i/8;
             assert(vec.capacity() >= index);
-            uint8_t bit = (n % 8) == 0 ? 0  : (8 - (n % 8));
-            vec.at(index) ^= ((uint8_t)1 << bit);
+            uint8_t bit = 7 - i%8;
+            vec.at(index) ^= ((uint8_t) 1 << bit);
         }
 
         void connectCANBus();
