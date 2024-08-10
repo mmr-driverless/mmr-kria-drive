@@ -1,4 +1,4 @@
 # Gnss Message Definition
 
-int32 latitude
-int32 longitude
+float32 latitude
+float32 longitude

@@ -11,8 +11,11 @@
 #include <mmr_base/msg/res_status.hpp>
 #include <mmr_base/msg/cmd_ecu.hpp>
 #include <mmr_base/msg/actuator_status.hpp>
+#include <mmr_base/msg/imu_can_data.hpp>
 #include <std_msgs/msg/int8.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <mmr_base/configuration.hpp>
+#include "imu_helper.hpp"
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
@@ -32,7 +35,7 @@ class CANBusBridge : public EDFNode
 
     private:
 
-        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic, m_sActuatorsStatusTopic;
+        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic, m_sActuatorsStatusTopic, m_sOutImuDataTopic;
         int m_nBitrate, m_nMaxMsgs;
         bool m_bDebug;
 
@@ -57,9 +60,19 @@ class CANBusBridge : public EDFNode
 
         rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr m_pubMissionSelect;
 
+        /* Parsed IMU CAN Data publisher */
+        rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr m_pubImuData;
+
         /* message for the pub */
         mmr_base::msg::EcuStatus m_msgEcuStatus;
         mmr_base::msg::ResStatus m_msgResStatus;
+
+        /* Message for IMU Data parsed from CAN Bus*/
+        mmr_base::msg::ImuCanData m_msgImuCanData;
+
+        /* Message for output IMU Data */
+        sensor_msgs::msg::Imu m_msgOutImuData;
+
 
         /* Message for CmdEcu */
         mmr_base::msg::CmdEcu m_msgCmdEcu;
@@ -98,6 +111,7 @@ class CANBusBridge : public EDFNode
         void connectCANBus();
         void readEcuStatus(can_frame frame);
         void readResStatus(can_frame frame);
+        void readImuStatus(can_frame frame);
 
     public:
 

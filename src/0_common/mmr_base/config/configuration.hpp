@@ -185,3 +185,27 @@ namespace timing {
         }
     };
 }
+
+namespace IMU {
+    enum MMR_CAN_MASK {
+        MMR_ECU_MASK = 0x400,
+    };
+
+    enum MMR_CAN_MSG_ID {
+        
+        MMR_IMU_ERROR = 0x401,
+        MMR_IMU_SAMPLE_TIME = 0x405,
+        MMR_IMU_GROUP_COUNTER,
+        MMR_IMU_UTC_TIME,
+        MMR_IMU_STATUS_WORD = 0x411,
+        MMR_IMU_QUATERNION = 0x421,
+        MMR_IMU_EULER_ANGLES,
+        MMR_IMU_RATE_OF_TURN = 0x432,
+        MMR_IMU_ACCELERATION = 0x434,
+        MMR_IMU_BAROMETRIC_PRESSURE = 0x452,
+        MMR_IMU_LATITUDE_LONGITUDE = 0x471,
+        MMR_IMU_VELOCITY = 0x476,
+        MMR_IMU_GNSS_STATUS = 0x479,
+    };
+
+}

@@ -51,7 +51,7 @@ Acceleration acceleration # [m / s^2]
 #################################################################
 
 # pressure: Exterior pressure
-uint32 pressure # [Pa]
+float32 pressure # [Pa]
 
 #################################################################
 #                POSITION AND VELOCITY MESSAGES

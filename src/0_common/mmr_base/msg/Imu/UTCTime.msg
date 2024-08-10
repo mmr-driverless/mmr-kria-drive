@@ -6,4 +6,4 @@ uint8 day
 uint8 hour
 uint8 min
 uint8 sec
-uint16 tenth_ms
+float32 tenth_ms

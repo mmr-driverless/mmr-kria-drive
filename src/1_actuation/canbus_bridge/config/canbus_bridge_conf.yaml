@@ -16,6 +16,7 @@
       resStatusTopic: "/status/res"
       ActuatorsStatusTopic: "/actuator/status"
       missionSelectTopic: "/mission/selected"
+      outputImuTopic: "/canbus/imu/data"
     gear:
       ctrLimit: 5
       changeDeltaTime: 200 #ms
