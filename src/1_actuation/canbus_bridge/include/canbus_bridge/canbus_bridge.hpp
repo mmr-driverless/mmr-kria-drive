@@ -84,7 +84,7 @@ class CANBusBridge : public EDFNode
         struct sockaddr_can m_addr;
 
         /**
-        @param vec output parameters that represents a string of byts
+        @param vec Output parameters that represents a string of bytes
         @param n Bit position, numbered from 1, counting from left to right (Ema's notation) 
         */
         inline void toggleNthBit(std::vector<uint8_t> &vec, uint8_t n) {
