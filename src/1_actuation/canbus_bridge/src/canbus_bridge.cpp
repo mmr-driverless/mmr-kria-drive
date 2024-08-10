@@ -153,7 +153,7 @@ void CANBusBridge::setGearNeutral()
         return;
 
     auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
-    if ((this->m_lLastLCTime != 0) && ((act_time - this->m_lLastNeutralTime) <= this->m_lNeutralChangeDeltaTime))
+    if ((this->m_lLastNeutralTime != 0) && ((act_time - this->m_lLastNeutralTime) <= this->m_lNeutralChangeDeltaTime))
         return;
 
     this->m_lLastNeutralTime = timing::Clock::get_time<std::chrono::milliseconds>().count();

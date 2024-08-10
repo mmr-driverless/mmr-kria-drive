@@ -89,9 +89,9 @@ class CANBusBridge : public EDFNode
         */
         inline void toggleNthBit(std::vector<uint8_t> &vec, uint8_t n) {
             n--;  // Shift back to 0-7 range
-            uint8_t index = i/8;
+            uint8_t index = n/8;
             assert(vec.capacity() >= index);
-            uint8_t bit = 7 - i%8;
+            uint8_t bit = 7 - n%8;
             vec.at(index) ^= ((uint8_t) 1 << bit);
         }
 
