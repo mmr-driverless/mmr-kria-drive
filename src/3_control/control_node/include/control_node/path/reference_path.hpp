@@ -54,6 +54,10 @@ private:
   bool m_is_closed;
   bool m_is_data_valid;
   
+  inline bool is_valid_reference(const PointRef& ref) const {
+    return ref.prev_waypoint_idx >= 0 && ref.prev_waypoint_idx < n_waypoints() && ref.t >= 0 && ref.t <= 1;
+  }
+
   int compute_index(int start, int offset) const {
     if(this->is_closed())
     {
@@ -177,10 +181,10 @@ public:
     if (n_waypoints() == 1)
       return ProjectionResult(PointRef(0));
 
-
+    
     bool inside_thresh_region = false;
 
-    assert((!last_ref.has_value() || (last_ref->prev_waypoint_idx >= 0 && last_ref->prev_waypoint_idx < n_waypoints())) && "last_window_start must be a valid reference.");
+    assert(!last_ref.has_value() || is_valid_reference(*last_ref) && "last_ref must either be empty or a valid reference!");
     const int start_waypoint_idx = last_ref.has_value()? last_ref->prev_waypoint_idx : 0;
 
     // At this point it is guaranteed that we find a closest point. Keep it optional so that we can assert this assumption later.
@@ -237,6 +241,7 @@ public:
 
     assert(closest_point.has_value());
     assert(last_waypoint_idx >= 0);
+    assert(is_valid_reference(*closest_point));
 
     return ProjectionResult(
       *closest_point,
@@ -251,7 +256,7 @@ public:
    * @param delta_s How much to advance the point [m]
    */
   PointRef advance_point(const PointRef& at, double delta_s) const {
-    assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints() && "'at' must be a valid reference");
+    assert(is_valid_reference(at) && "at must be a valid reference.");
     assert(delta_s >= 0 && "'delta_s' must be nonnegative.");
     
     PointRef cur = at;
@@ -264,28 +269,76 @@ public:
 
       auto start = get_position(PointRef(seg->start));
       auto end = get_position(PointRef(seg->end));
-
+      
       // Compute the distance between the current position and the next waypoint
       double seg_len = (end - start).norm();
-      double ds = (1 - cur.t) * seg_len;
+      if (seg_len > 0) {
+        double ds = (1 - cur.t) * seg_len;
 
-      // If we would consume more space than needed by advancing to the next waypoint
-      if (ds > delta_s) {
-        /* Then the search ends here.
-            Add the fraction of remaining space to the parameter part of PointRef.
-            Addition is required only for the start reference (nonzero start t),
-            while for the rest (if we've advanced by even just one waypoint) this is equivalent to setting it directly (t is zero).
-        */
-        cur.t += (delta_s / seg_len);
-        break;
+        // If we would consume more space than needed by advancing to the next waypoint
+        if (ds > delta_s) {
+          /* Then the search ends here.
+              Add the fraction of remaining space to the parameter part of PointRef.
+              Addition is required only for the start reference (nonzero start t),
+              while for the rest (if we've advanced by even just one waypoint) this is equivalent to setting it directly (t is zero).
+          */
+          cur.t += (delta_s / seg_len);
+          break;
+        }
+
+        delta_s -= ds;
       }
       
       // Advance to the next waypoint.
-      delta_s -= ds;
       cur = PointRef(seg->end);
     }
 
     return cur;
+  }
+
+  PointRef trace_back_point(const PointRef& at, double delta_s) const {
+    assert(is_valid_reference(at) && "'at' must be a valid reference");
+    assert(delta_s >= 0 && "'delta_s' must be nonnegative.");
+
+    // Retreat to the segment start waypoint, if we're in the middle of one
+    if (at.t > 0) {
+      if (auto seg = compute_segment(at.prev_waypoint_idx)) {
+        double segment_length = (m_waypoints[seg->end] - m_waypoints[seg->start]).norm();
+
+        if (segment_length > 0) {
+          double dist_from_start = segment_length * at.t;
+
+          // If we would not deplete delta_s
+          if (dist_from_start < delta_s)
+            delta_s -= dist_from_start;
+          else
+            return PointRef(at.prev_waypoint_idx, at.t - delta_s / segment_length);
+        }
+      }
+    }
+
+    // Iterate over each segment (backwards) to consume delta_s of space
+    int end_i = at.prev_waypoint_idx;
+    while (delta_s > 0) {
+      int start_i = compute_index(end_i, -1);
+
+      // If we reached the end of the path
+      if (start_i < 0)
+        return PointRef(end_i);
+      
+      // Compute this segment length
+      double segment_length = (m_waypoints[end_i] - m_waypoints[start_i]).norm();
+      if (segment_length > 0) {
+        // If we would not deplete delta_s
+        if (segment_length < delta_s)
+          delta_s -= segment_length;
+        else
+          return PointRef(start_i, 1 - delta_s / segment_length);
+      }
+      end_i = start_i;
+    }
+
+    return PointRef(end_i);
   }
 
   /**
