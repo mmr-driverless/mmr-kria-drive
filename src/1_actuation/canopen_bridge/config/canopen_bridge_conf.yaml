@@ -28,13 +28,13 @@
     clutch:
       node_id: 16
       velocity: 3500
-      monitoring_freq: 10
+      monitoring_freq: 5
       timeout_msgs: 2
       step_maxon:
         - 200
         - -500
-        - 900
-        - 200
+        - 300
+        - 100
         - 600
         - 400
       pot_val: 

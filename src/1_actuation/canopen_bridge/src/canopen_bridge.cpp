@@ -299,3 +299,10 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
         this->m_mClutch->disengage(fClutchPot);
     }
 }
+
+void CANOpenBridge::sendActuatorStatus()
+{
+    this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
+    this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
+    this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); 
+}

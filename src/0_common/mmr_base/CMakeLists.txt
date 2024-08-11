@@ -22,6 +22,18 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MeshFile.msg"
   "msg/Marker.msg"
   "msg/MarkerArray.msg"
+  "msg/CmdEcu.msg"
+  ### IMU data dependecies ###
+  "msg/Imu/Acceleration.msg"
+  "msg/Imu/EulerAngles.msg"
+  "msg/Imu/Gnss.msg"
+  "msg/Imu/GnssStatus.msg"
+  "msg/Imu/Quaternion.msg"
+  "msg/Imu/RateOfTurn.msg"
+  "msg/Imu/UTCTime.msg"
+  "msg/Imu/Velocity.msg"
+  ############################
+  "msg/ImuCanData.msg"
   # Add custom msg dependecies to standard ROS2 msgs
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )

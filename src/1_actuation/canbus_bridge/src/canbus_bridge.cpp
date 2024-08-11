@@ -13,8 +13,8 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 
     RCLCPP_INFO(
         this->get_logger(),
-        "[ TX Topic ]: %s, [ RX Topic ]: %s, [ ECU TOPIC ], %s, [ RES TOPIC ]: %s",
-        this->m_sTopicTx.c_str(), this->m_sTopicRx.c_str(), this->m_sEcuStatusTopic.c_str(), this->m_sResStatusTopic.c_str()
+        "[ TX Topic ]: %s, [ CMD ECU Topic ]: %s, [ RX Topic ]: %s, [ ECU TOPIC ], %s, [ RES TOPIC ]: %s",
+        this->m_sTopicTx.c_str(), this->m_sCmdEcuTopic.c_str(), this->m_sTopicRx.c_str(), this->m_sEcuStatusTopic.c_str(), this->m_sResStatusTopic.c_str()
     );
 
     this->connectCANBus();
@@ -23,11 +23,17 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 
     this->m_subCANRx = this->create_subscription<can_msgs::msg::Frame>(
         this->m_sTopicRx, 1, std::bind(&CANBusBridge::msgCANBusRxCallback, this, std::placeholders::_1));
+    this->m_subCmdEcuTargetStatus = this->create_subscription<mmr_base::msg::CmdEcu>(
+        this->m_sCmdEcuTopic, 1, std::bind(&CANBusBridge::msgCmdEcuCallback, this, std::placeholders::_1));
+    this->m_subActuatorsStatus = this->create_subscription<mmr_base::msg::ActuatorStatus>(
+        this->m_sActuatorsStatusTopic, 1, std::bind(&CANBusBridge::msgActuatorsStatusCallback, this, std::placeholders::_1));
+
 
     this->m_pubCANBusTx = this->create_publisher<can_msgs::msg::Frame>(this->m_sTopicTx, 1);
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
     this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
+    this->m_pubImuData = this->create_publisher<sensor_msgs::msg::Imu>(this->m_sOutImuDataTopic, qos);
 }
 
 void CANBusBridge::loadParameters()
@@ -42,10 +48,20 @@ void CANBusBridge::loadParameters()
 
     declare_parameter("topic.canTxTopic", "");
     declare_parameter("topic.canRxTopic", "");
+    declare_parameter("topic.cmdEcuTopic", "");
     declare_parameter("topic.ecuStatusTopic", "");
     declare_parameter("topic.resStatusTopic", "");
+    declare_parameter("topic.ActuatorsStatusTopic", "");
     declare_parameter("topic.missionSelectTopic", "");
+    declare_parameter("topic.outputImuTopic", "");
+
+    declare_parameter("gear.ctrLimit", 5);
+    declare_parameter("gear.changeDeltaTime", 200);
+
+    declare_parameter("launch_control.changeDeltaTime", 100);
     
+    declare_parameter("neutral.changeDeltaTime", 100);
+
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
 	get_parameter("generic.WCET", this->m_nWCET);
@@ -56,11 +72,22 @@ void CANBusBridge::loadParameters()
 
     get_parameter("topic.canTxTopic", this->m_sTopicTx);
     get_parameter("topic.canRxTopic", this->m_sTopicRx);
+    get_parameter("topic.cmdEcuTopic", this->m_sCmdEcuTopic);
     get_parameter("topic.ecuStatusTopic", this->m_sEcuStatusTopic);
     get_parameter("topic.resStatusTopic", this->m_sResStatusTopic);
+    get_parameter("topic.ActuatorsStatusTopic", this->m_sActuatorsStatusTopic);
     get_parameter("topic.missionSelectTopic", this->m_sMissionSelectTopic);
+    get_parameter("topic.outputImuTopic", this->m_sOutImuDataTopic);
+
+    get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
+    get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
+
+    get_parameter("launch_control.changeDeltaTime", this->m_lLCChangeDeltaTime);
+
+    get_parameter("neutral.changeDeltaTime", this->m_lNeutralChangeDeltaTime);
 
 }
+
 
 void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg)
 {
@@ -80,6 +107,128 @@ void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg
 
     if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
         RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+}
+
+void CANBusBridge::changeGearUpDown()
+{    
+    if (this->m_msgCmdEcu.gear_target == this->m_msgEcuStatus.gear)
+        return;
+
+    if ((this->m_msgCmdEcu.gear_target == 0) && (this->m_msgEcuStatus.gear == 1))
+        return;
+
+    if ((this->m_msgCmdEcu.gear_target == 1) && (this->m_msgEcuStatus.gear == 0) && (this->m_msgActuatorsStatus.clutch_status != static_cast<uint8_t>(MOTOR::ACTUATOR_STATUS::DISENGAGE)))
+        return;
+
+    auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
+    if ((this->m_lLastGearTime != 0) && ((act_time - this->m_lLastGearTime) <= this->m_lGearChangeDeltaTime))
+        return;
+
+    this->m_lLastGearTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
+
+    ECU::CMD::DATA gear_info;
+    std::vector<uint8_t> gear_data(8);
+    std::fill(gear_data.begin(), gear_data.end(), 0);
+
+    gear_info = (this->m_msgCmdEcu.gear_target < this->m_msgEcuStatus.gear) ? 
+        ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::GEAR_DOWN) :
+        ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::GEAR_UP);
+
+    this->toggleNthBit(gear_data, gear_info.bit);
+
+    struct can_frame gear_frame = {
+        .can_id = gear_info.id,
+        .len = 8,
+    };
+
+    memcpy(gear_frame.data, &(gear_data.at(0)), gear_data.size());
+
+    for (uint8_t i=0; i < m_unGearCtrLimit; i++)
+    {
+        if (write(this->m_nSocket, &gear_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    }
+}
+
+void CANBusBridge::setGearNeutral() 
+{
+    if ((this->m_msgCmdEcu.gear_target != 0) || (this->m_msgEcuStatus.gear != 1))
+        return;
+
+    if (this->m_msgActuatorsStatus.clutch_status != static_cast<uint8_t>(MOTOR::ACTUATOR_STATUS::DISENGAGE))
+        return;
+
+    auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
+    if ((this->m_lLastNeutralTime != 0) && ((act_time - this->m_lLastNeutralTime) <= this->m_lNeutralChangeDeltaTime))
+        return;
+
+    this->m_lLastNeutralTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
+
+    ECU::CMD::DATA neutral_info;
+    std::vector<uint8_t> neutral_data(8);
+    std::fill(neutral_data.begin(), neutral_data.end(), 0);
+
+    neutral_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_NEUTRAL);
+
+    if (this->m_bSetNeutralValue)
+    {
+        this->toggleNthBit(neutral_data, neutral_info.bit);
+        this->m_bSetNeutralValue = false;
+    } else {
+        this->m_bSetNeutralValue = true;
+    }
+
+    struct can_frame neutral_frame = {
+        .can_id = neutral_info.id,
+        .len = 8,
+    };
+
+    memcpy(neutral_frame.data, &(neutral_data.at(0)), neutral_data.size());
+
+    if (write(this->m_nSocket, &neutral_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+
+}
+
+
+void CANBusBridge::setLaunchControl()
+{
+    if (!this->m_msgCmdEcu.set_launch_control)
+        return;
+
+    if ((this->m_msgCmdEcu.set_launch_control) && (this->m_msgEcuStatus.bool_ack_ideal_launch_control))
+        return;
+
+    auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
+    if ((this->m_lLastLCTime != 0) && ((act_time - this->m_lLastLCTime) <= this->m_lLCChangeDeltaTime))
+        return;
+
+    this->m_lLastLCTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
+
+    ECU::CMD::DATA lc_info;
+    std::vector<uint8_t> lc_data(8);
+    std::fill(lc_data.begin(), lc_data.end(), 0);
+
+    lc_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL);
+
+    if (this->m_bSetLCValue)
+    {
+        this->toggleNthBit(lc_data, lc_info.bit);
+        this->m_bSetLCValue = false;
+    } else {
+        this->m_bSetLCValue = true;
+    }
+
+    struct can_frame lc_frame = {
+        .can_id = lc_info.id,
+        .len = 8,
+    };
+
+    memcpy(lc_frame.data, &(lc_data.at(0)), lc_data.size());
+
+    if (write(this->m_nSocket, &lc_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+
 }
 
 void CANBusBridge::connectCANBus()
@@ -122,6 +271,9 @@ void CANBusBridge::readMsgFromCANBus()
 
         if ((frame.can_id & ECU::MMR_ECU_MASK) == ECU::MMR_ECU_MASK)
             this->readEcuStatus(frame);
+
+        else if ((frame.can_id & IMU::MMR_ECU_MASK) == IMU::MMR_ECU_MASK)
+            this->readImuStatus(frame);
         
         if (frame.can_id == RES::MMR_RES_STATUS)
             this->readResStatus(frame);
@@ -140,14 +292,16 @@ void CANBusBridge::readMsgFromCANBus()
 void CANBusBridge::sendStatus()
 {
     if (this->m_pubEcuStatus != nullptr) {
-        this->m_msgEcuStatus.header.stamp.sec = std::chrono::duration_cast<std::chrono::seconds>(timing::Clock::get_time()).count();
+        this->m_msgEcuStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
+        this->m_msgEcuStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
         this->m_msgEcuStatus.header.frame_id = "ECU_STATE";
 
         this->m_pubEcuStatus->publish(this->m_msgEcuStatus);
     }
 
     if (this->m_pubResStatus != nullptr) {
-        this->m_msgResStatus.header.stamp.sec = std::chrono::duration_cast<std::chrono::seconds>(timing::Clock::get_time()).count();
+        this->m_msgResStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
+        this->m_msgResStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
         this->m_msgResStatus.header.frame_id = "RES_STATE";
 
         this->m_pubResStatus->publish(this->m_msgResStatus);
@@ -156,9 +310,13 @@ void CANBusBridge::sendStatus()
 
 void CANBusBridge::readResStatus(can_frame frame)
 {
-    this->m_msgResStatus.emergency = frame.data[0] & RES::RES_SIGNAL_EMERGENCY;
-    this->m_msgResStatus.go_signal = frame.data[0] & RES::RES_SIGNAL_GO;
-    this->m_msgResStatus.bag = frame.data[0] & RES::RES_SIGNAL_BAG;
+    auto maskRes = [](uint8_t bitvector, RES::MMR_RES_STATUS_MASK mask) -> bool {
+        return bitvector & mask;
+    };
+
+    this->m_msgResStatus.emergency = !maskRes(frame.data[0], RES::RES_SIGNAL_EMERGENCY);
+    this->m_msgResStatus.go_signal = maskRes(frame.data[0], RES::RES_SIGNAL_GO);
+    this->m_msgResStatus.bag = maskRes(frame.data[0], RES::RES_SIGNAL_BAG);
 }
 
 void CANBusBridge::readEcuStatus(can_frame frame)
@@ -230,4 +388,92 @@ void CANBusBridge::readEcuStatus(can_frame frame)
             break;
         
     }
+}
+
+void CANBusBridge::readImuStatus(can_frame frame)
+{
+
+    this->m_msgOutImuData.header.stamp = this->now();
+
+    switch (frame.can_id)
+    {
+        case IMU::MMR_IMU_ERROR:
+            this->m_msgImuCanData.error_code = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data);
+            break;
+
+        case IMU::MMR_IMU_SAMPLE_TIME:
+            this->m_msgImuCanData.sample_time = (uint32_t)this->endian_cast<uint32_t, std::endian::big>(frame.data);
+            break;
+
+        case IMU::MMR_IMU_GROUP_COUNTER:
+            this->m_msgImuCanData.group_counter = (uint16_t)this->endian_cast<uint16_t, std::endian::big>(frame.data);
+            break;
+        
+        case IMU::MMR_IMU_UTC_TIME:
+            this->m_msgImuCanData.utc_time.year = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data);
+            this->m_msgImuCanData.utc_time.month = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 1);
+            this->m_msgImuCanData.utc_time.day = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 2);
+            this->m_msgImuCanData.utc_time.hour = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 3);
+            this->m_msgImuCanData.utc_time.min = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 4);
+            this->m_msgImuCanData.utc_time.sec = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 5);
+            this->m_msgImuCanData.utc_time.tenth_ms = (float)this->endian_cast<uint16_t, std::endian::big>(frame.data + 6) * 1e-4;
+            break;
+
+        case IMU::MMR_IMU_STATUS_WORD:
+            this->m_msgImuCanData.status_word = (uint32_t)this->endian_cast<uint32_t, std::endian::big>(frame.data);
+            break;
+
+        case IMU::MMR_IMU_QUATERNION:
+            this->m_msgImuCanData.quaternion.qw = (float)this->endian_cast<int16_t, std::endian::big>(frame.data) / 32767;
+            this->m_msgImuCanData.quaternion.qx = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 2) / 32767;
+            this->m_msgImuCanData.quaternion.qy = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 4) / 32767;
+            this->m_msgImuCanData.quaternion.qz = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 6) / 32767;
+            setImuOrientation(this->m_msgOutImuData, this->m_msgImuCanData.quaternion.qx, this->m_msgImuCanData.quaternion.qy, this->m_msgImuCanData.quaternion.qz, this->m_msgImuCanData.quaternion.qw);
+            break;
+
+        case IMU::MMR_IMU_EULER_ANGLES:
+            this->m_msgImuCanData.euler_angles.roll = (float)this->endian_cast<int16_t, std::endian::big>(frame.data) / 128;
+            this->m_msgImuCanData.euler_angles.pitch = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 2) / 128;
+            this->m_msgImuCanData.euler_angles.yaw = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 4) / 128;
+            break;
+
+        case IMU::MMR_IMU_RATE_OF_TURN:
+            this->m_msgImuCanData.rate_of_turn.gyro_x = (float)this->endian_cast<int16_t, std::endian::big>(frame.data) / 512;
+            this->m_msgImuCanData.rate_of_turn.gyro_y = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 2) / 512;
+            this->m_msgImuCanData.rate_of_turn.gyro_z = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 4) / 512;
+            setImuAngularVelocity(this->m_msgOutImuData, this->m_msgImuCanData.rate_of_turn.gyro_x, this->m_msgImuCanData.rate_of_turn.gyro_y, this->m_msgImuCanData.rate_of_turn.gyro_z);
+            break;
+
+        case IMU::MMR_IMU_ACCELERATION:
+            this->m_msgImuCanData.acceleration.acc_x = (float)this->endian_cast<int16_t, std::endian::big>(frame.data) / 256;
+            this->m_msgImuCanData.acceleration.acc_y = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 2) / 256;
+            this->m_msgImuCanData.acceleration.acc_z = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 4) / 256;
+            setImuLinearAcceleration(this->m_msgOutImuData, this->m_msgImuCanData.acceleration.acc_x, this->m_msgImuCanData.acceleration.acc_y, this->m_msgImuCanData.acceleration.acc_z);
+            break;
+        
+        case IMU::MMR_IMU_BAROMETRIC_PRESSURE:
+            this->m_msgImuCanData.pressure = (float)this->endian_cast<uint32_t, std::endian::big>(frame.data) / 32768;
+            break;
+        
+        case IMU::MMR_IMU_LATITUDE_LONGITUDE:
+            this->m_msgImuCanData.gnss_position.latitude = (float)this->endian_cast<int32_t, std::endian::big>(frame.data) / 16777216;
+            this->m_msgImuCanData.gnss_position.longitude = (float)this->endian_cast<int32_t, std::endian::big>(frame.data + 4) / 8388608;
+            break;
+        
+        case IMU::MMR_IMU_VELOCITY:
+            this->m_msgImuCanData.velocities.vel_x = (float)this->endian_cast<int16_t, std::endian::big>(frame.data) / 64;
+            this->m_msgImuCanData.velocities.vel_y = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 2) / 64;
+            this->m_msgImuCanData.velocities.vel_z = (float)this->endian_cast<int16_t, std::endian::big>(frame.data + 4) / 64;
+            break;
+
+        case IMU::MMR_IMU_GNSS_STATUS:
+            this->m_msgImuCanData.gnss_status.fix_type = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data); 
+            this->m_msgImuCanData.gnss_status.n_used_sat = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 1); 
+            this->m_msgImuCanData.gnss_status.flags = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 2); 
+            this->m_msgImuCanData.gnss_status.date_validity = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 3); 
+            this->m_msgImuCanData.gnss_status.n_avail_sat = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 4); 
+            break;
+    }
+
+    this->m_pubImuData->publish(this->m_msgOutImuData);
 }

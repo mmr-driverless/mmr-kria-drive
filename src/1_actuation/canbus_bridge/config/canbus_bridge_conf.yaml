@@ -11,6 +11,18 @@
     topic:
       canTxTopic: "/canbus/tx/msg"
       canRxTopic: "/canbus/rx/msg"
+      cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"
       resStatusTopic: "/status/res"
+      ActuatorsStatusTopic: "/actuator/status"
       missionSelectTopic: "/mission/selected"
+      outputImuTopic: "/canbus/imu/data"
+    gear:
+      ctrLimit: 5
+      changeDeltaTime: 200 #ms
+
+    launch_control:
+      changeDeltaTime: 100 #ms
+
+    neutral:
+      changeDeltaTime: 100 #ms

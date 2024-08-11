@@ -89,7 +89,7 @@ class CANOpenBridge : public EDFNode
 
         CANOpenBridge();
 
-        void sendActuatorStatus(){ this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); }
+        void sendActuatorStatus();
 
         ~CANOpenBridge() { close(this->m_nSocket); };
 

@@ -53,6 +53,38 @@ namespace ECU {
 
     };
 
+    namespace CMD {
+        enum ACTIONS {
+            GEAR_UP,
+            GEAR_DOWN,
+            SET_NEUTRAL,
+            SET_LAUNCH_CONTROL,
+            UNSET_LAUNCH_CONTROL
+        };
+
+        const inline std::unordered_map<CMD::ACTIONS, uint8_t> CmdEcuActionsBits {
+            { CMD::ACTIONS::GEAR_UP, 7 },
+            { CMD::ACTIONS::GEAR_DOWN, 8 },
+            { CMD::ACTIONS::SET_LAUNCH_CONTROL, 5 },
+            { CMD::ACTIONS::UNSET_LAUNCH_CONTROL, 5 },
+            { CMD::ACTIONS::SET_NEUTRAL, 32 },
+        };
+
+        struct DATA {
+            ECU::MMR_CAN_MSG_ID id;
+            uint8_t bit;
+        };
+
+    };
+
+    const inline std::unordered_map<CMD::ACTIONS, CMD::DATA> CmdEcuLookup {
+        { CMD::ACTIONS::GEAR_UP, {.id = MMR_ECU_GEAR_CONTROL, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::GEAR_UP)}},
+        { CMD::ACTIONS::GEAR_DOWN, {.id = MMR_ECU_GEAR_CONTROL, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::GEAR_DOWN)}},
+        { CMD::ACTIONS::SET_LAUNCH_CONTROL, {.id = MMR_ECU_SET_PIT_LAUNCH, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::SET_LAUNCH_CONTROL)}},
+        { CMD::ACTIONS::UNSET_LAUNCH_CONTROL, {.id = MMR_ECU_SET_PIT_LAUNCH, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::UNSET_LAUNCH_CONTROL)}},
+        { CMD::ACTIONS::SET_NEUTRAL, {.id = MMR_ECU_SET_PIT_LAUNCH, .bit = CMD::CmdEcuActionsBits.at(CMD::ACTIONS::SET_NEUTRAL)}}
+    };
+
 };
 
 namespace COCKPIT {
@@ -152,4 +184,28 @@ namespace timing {
             return duration_cast<duration>(steady_clock::now().time_since_epoch());
         }
     };
-}
+};
+
+namespace IMU {
+    enum MMR_CAN_MASK {
+        MMR_ECU_MASK = 0x400,
+    };
+
+    enum MMR_CAN_MSG_ID {
+        
+        MMR_IMU_ERROR = 0x401,
+        MMR_IMU_SAMPLE_TIME = 0x405,
+        MMR_IMU_GROUP_COUNTER,
+        MMR_IMU_UTC_TIME,
+        MMR_IMU_STATUS_WORD = 0x411,
+        MMR_IMU_QUATERNION = 0x421,
+        MMR_IMU_EULER_ANGLES,
+        MMR_IMU_RATE_OF_TURN = 0x432,
+        MMR_IMU_ACCELERATION = 0x434,
+        MMR_IMU_BAROMETRIC_PRESSURE = 0x452,
+        MMR_IMU_LATITUDE_LONGITUDE = 0x471,
+        MMR_IMU_VELOCITY = 0x476,
+        MMR_IMU_GNSS_STATUS = 0x479,
+    };
+
+};
