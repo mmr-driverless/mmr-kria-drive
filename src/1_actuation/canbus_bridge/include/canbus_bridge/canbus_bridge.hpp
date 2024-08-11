@@ -9,10 +9,6 @@
 #include <mmr_edf/mmr_edf.hpp>
 #include <mmr_base/msg/ecu_status.hpp>
 #include <mmr_base/msg/res_status.hpp>
-<<<<<<< HEAD
-#include <std_msgs/msg/int8.hpp>
-#include <mmr_base/configuration.hpp>
-=======
 #include <mmr_base/msg/cmd_ecu.hpp>
 #include <mmr_base/msg/actuator_status.hpp>
 #include <mmr_base/msg/imu_can_data.hpp>
@@ -20,7 +16,6 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <mmr_base/configuration.hpp>
 #include "imu_helper.hpp"
->>>>>>> origin/dev/gear_logic
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
