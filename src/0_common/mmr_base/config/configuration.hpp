@@ -184,7 +184,7 @@ namespace timing {
             return duration_cast<duration>(steady_clock::now().time_since_epoch());
         }
     };
-}
+};
 
 namespace IMU {
     enum MMR_CAN_MASK {
@@ -208,4 +208,4 @@ namespace IMU {
         MMR_IMU_GNSS_STATUS = 0x479,
     };
 
-}
+};
