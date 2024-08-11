@@ -393,6 +393,8 @@ void CANBusBridge::readEcuStatus(can_frame frame)
 void CANBusBridge::readImuStatus(can_frame frame)
 {
 
+    this->m_msgOutImuData.header.stamp = this->now();
+
     switch (frame.can_id)
     {
         case IMU::MMR_IMU_ERROR:
