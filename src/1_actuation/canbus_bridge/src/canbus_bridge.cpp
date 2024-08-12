@@ -170,13 +170,12 @@ void CANBusBridge::setGearNeutral()
 
     neutral_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_NEUTRAL);
 
-    if (this->m_bSetNeutralValue)
-    {
+    if (this->m_bSetNeutralValue) {
         this->toggleNthBit(neutral_data, neutral_info.bit);
         this->m_bSetNeutralValue = false;
-    } else {
+    } 
+    else
         this->m_bSetNeutralValue = true;
-    }
 
     struct can_frame neutral_frame = {
         .can_id = neutral_info.id,
@@ -189,7 +188,6 @@ void CANBusBridge::setGearNeutral()
         RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
 
 }
-
 
 void CANBusBridge::setLaunchControl()
 {
@@ -211,13 +209,12 @@ void CANBusBridge::setLaunchControl()
 
     lc_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL);
 
-    if (this->m_bSetLCValue)
-    {
+    if (this->m_bSetLCValue) {
         this->toggleNthBit(lc_data, lc_info.bit);
         this->m_bSetLCValue = false;
-    } else {
+    } 
+    else
         this->m_bSetLCValue = true;
-    }
 
     struct can_frame lc_frame = {
         .can_id = lc_info.id,
