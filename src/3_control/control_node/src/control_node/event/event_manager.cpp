@@ -141,7 +141,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
     case EventState::Stop_EnsureStandstill:
       if (t - m_standstill_start_time >= m_standstill_time) {
         RCLCPP_INFO(m_logger, "Aaand we're done!");
-        m_event_state = EventState::Finished;
+        m_event_state = EventState::FinishedOrEmergency;
 
         auto msg = std_msgs::msg::Bool();
         msg.data = true;
@@ -159,10 +159,11 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
         control::Control::LaunchControl::Unset
       );
 
-    case EventState::Finished:
-      // Congratulations :)
+    case EventState::FinishedOrEmergency:
+      // Congratulations :) ... or maybe not :(
+
       // We don't expect any actuator to actuate this...
-      return control::Control(0.0, 0.0, m_stop_brake, control::Control::Clutch::Disengaged, 0, control::Control::LaunchControl::Unset);
+      return control::Control(0.0, 0.0, 0.0, control::Control::Clutch::Engaged, 0, control::Control::LaunchControl::Unset);
 
     default:
       assert(false && "Entered an invalid EventState.");
@@ -170,12 +171,21 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
 }
 
 control::Control EventManager::tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u) {
+  // If the EventManager is not active
   if (!m_enabled) {
+    // Then we should enable all actuators (once)
     if (!m_self_is_disabled_but_requested_actuators_enable) {
       m_self_is_disabled_but_requested_actuators_enable = true;
       m_actuators.request_enable_all();
     }
     return u;
+  }
+
+  // If we just entered AS Emergency
+  if (m_as_state == AS::STATE::EMERGENCY && m_event_state != EventState::FinishedOrEmergency) {
+    // Disable all actuators and enter the FinishedOrEmergency (final) state
+    m_actuators.request_disable_all();
+    m_event_state = EventState::FinishedOrEmergency;
   }
 
   auto old_state = EventState::Invalid;
