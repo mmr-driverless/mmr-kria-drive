@@ -23,6 +23,7 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_launch_speed(p.get<double>("launch_speed")),
     m_standstill_speed(p.get<double>("standstill_speed")),
     m_stop_brake(p.get<double>("stop_brake")),
+    m_lc_timeout(std::chrono::milliseconds(p.get<int>("launch_control_timeout_ms"))),
     m_self_is_disabled_but_requested_actuators_enable(false)
 {
 
@@ -59,8 +60,9 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
 
     case EventState::WaitingForActuators:
       if (m_actuators.all_enabled()) {
-        RCLCPP_INFO(m_logger, "Revving the engine to %d RPM.", m_launch_rpm);
-        m_event_state = EventState::Launch_Rev;
+        RCLCPP_INFO(m_logger, "Preparing the launch control.");
+        m_wait_lc_start_time = t;
+        m_event_state = EventState::Launch_SetLaunchControl;
       }
       // Actuators may start actuating this input at any time. We mantain the base state that we previously ensured the car was in.
       return control::Control(
@@ -70,6 +72,32 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
         control::Control::Clutch::Disengaged,
         1,
         control::Control::LaunchControl::Unset
+      );
+    
+    case EventState::Launch_SetLaunchControl:
+      if (m_use_lc) {
+        if (x.lc_is_active().has_value() && x.lc_is_active().value()) {
+          RCLCPP_INFO(m_logger, "Succesfully activated the Launch Control");
+          m_event_state = EventState::Launch_Rev;
+        } else if (t - m_wait_lc_start_time > m_lc_timeout) {
+          RCLCPP_WARN(m_logger, "The Launch Control check has timed out!");
+          m_event_state = EventState::Launch_Rev;
+        }
+      } else {
+        RCLCPP_WARN(m_logger, "Launch Control is disabled from config!");
+        m_event_state = EventState::Launch_Rev;
+      }
+
+      if (m_event_state == EventState::Launch_Rev)
+        RCLCPP_INFO(m_logger, "Revving the engine to %d RPM.", m_launch_rpm);
+
+      return control::Control(
+        u.steer,
+        0.0,
+        m_launch_brake,
+        control::Control::Clutch::Disengaged,
+        1,
+        m_use_lc? control::Control::LaunchControl::Set : control::Control::LaunchControl::Unset
       );
 
     case EventState::Launch_Rev:
