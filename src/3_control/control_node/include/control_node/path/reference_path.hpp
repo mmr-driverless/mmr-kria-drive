@@ -420,9 +420,65 @@ public:
       m_data[curr_idx](PointData::Curvature) = geometry_helpers::menger_curvature(m_waypoints[prev_idx], m_waypoints[curr_idx], m_waypoints[next_idx]);
     }
 
-    // Smooth the curvature
-    /* ... */
+    //this->dump("suca_not_smooth.csv");
 
+    // Smoothen path curvature
+    int half_window_size = 3; //Meters in front and meters behind point at curr_idx (is an arbitrary value)
+  
+    std::vector<double> curvs;
+    curvs.resize(n_waypoints());
+
+    //for each waypoint
+    for (int curr_idx = 0; curr_idx < n_waypoints(); ++curr_idx) 
+    { 
+      std::cout << curr_idx << '\n';
+      //likely not waypoints:
+      PointRef first_elem = trace_back_point(curr_idx, half_window_size); 
+      PointRef last_elem = advance_point(curr_idx, half_window_size);
+
+      //TODO: Add control on the PointRefs to see if they are valid
+      int first_waypoint_idx = compute_index(first_elem.get_waypoint_idx(),1); //index of first waypoint in the window
+      int last_waypoint_idx = last_elem.get_waypoint_idx(); //index of last waypoint in the window
+      //Find the curvature on the pointRefs with linear interpolation
+
+      // if(first_waypoint_idx < 0 || last_waypoint_idx >= n_waypoints())
+      // {
+      //   continue;
+      // }
+
+      std::cout << "first waypoint idx is: " << first_waypoint_idx << " " << "last_waypoint_idx is"<< " " << last_waypoint_idx << '\n';
+      std::cout << "n waypoints is "<< n_waypoints() << '\n';
+
+      double first_elem_curv = 0;
+      double last_elem_curv = 0;
+
+      double avg_curv = 0;
+
+      double distance_covered = 0;
+
+      if(get_data(first_elem).has_value() && get_data(last_elem).has_value())
+      {
+        first_elem_curv = get_data(first_elem).value().curvature;
+        last_elem_curv = get_data(last_elem).value().curvature;
+        avg_curv += ((first_elem_curv + m_data[first_waypoint_idx](PointData::Curvature)) / 2) * (m_data[first_waypoint_idx](PointData::S) - get_data(first_elem).value().s);
+        avg_curv += ((last_elem_curv + m_data[last_waypoint_idx](PointData::Curvature)) / 2) * (get_data(last_elem).value().s - m_data[last_waypoint_idx](PointData::S));
+        distance_covered += m_data[first_waypoint_idx](PointData::S) - get_data(first_elem).value().s;
+        distance_covered += get_data(last_elem).value().s - m_data[last_waypoint_idx](PointData::S);
+      }
+     
+      //Compute all other waypoints curvatures
+      for(int j = first_waypoint_idx; j < last_waypoint_idx - 1; ++j)
+      {
+        avg_curv += ((m_data[j](PointData::Curvature) + m_data[compute_index(j,1)](PointData::Curvature)) / 2) * (m_data[compute_index(j,1)](PointData::S) - m_data[j](PointData::S));
+        distance_covered += m_data[compute_index(j,1)](PointData::S) - m_data[j](PointData::S);
+      }
+
+      curvs[curr_idx] = avg_curv / distance_covered;
+    }
+    for(int curr_idx = 0; curr_idx < n_waypoints(); ++curr_idx)
+    {
+      m_data[curr_idx](PointData::Curvature) = curvs[curr_idx];
+    }
     m_is_data_valid = true;
   }
 
