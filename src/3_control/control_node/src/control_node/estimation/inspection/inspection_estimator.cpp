@@ -25,6 +25,6 @@ void InspectionEstimator::act_status_cb(std::shared_ptr<const mmr_base::msg::Act
   m_state.m_clutch_is_engaged = static_cast<MOTOR::ACTUATOR_STATUS>(msg->clutch_status) == MOTOR::ACTUATOR_STATUS::ENGAGE;
 }
 
-};
-};
-};
+}; // namespace inspection
+}; // namespace estimation
+}; // namespace control_node
