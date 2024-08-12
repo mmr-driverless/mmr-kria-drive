@@ -54,6 +54,7 @@
       standstill_speed: 0.3
       stop_brake: 10.0
       lap_to_stop: 12 # Stop when lap counter publishes this lap
+      launch_control_timeout_ms: 2000
 
     control:
       type: PurePursuit2023

@@ -35,6 +35,7 @@ class EventManager {
     WaitingForDriving,
     WaitingForBaseState,
     WaitingForActuators,
+    Launch_SetLaunchControl,
     Launch_Rev,
     Launch_EngageClutch,
     Driving,
@@ -57,6 +58,9 @@ class EventManager {
   double m_stop_brake;
   std::chrono::milliseconds m_standstill_time;
   std::chrono::milliseconds m_standstill_start_time;
+
+  std::chrono::milliseconds m_wait_lc_start_time;
+  std::chrono::milliseconds m_lc_timeout;
   
   bool m_self_is_disabled_but_requested_actuators_enable; // fuck me
 
