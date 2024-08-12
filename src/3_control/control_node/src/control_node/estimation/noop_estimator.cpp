@@ -1,5 +1,6 @@
-#include <mmr_base/configuration.hpp>
 #include <rclcpp/qos.hpp>
+
+#include <mmr_base/configuration.hpp>
 
 #include <control_node/estimation/noop_estimator/noop_estimator.hpp>
 

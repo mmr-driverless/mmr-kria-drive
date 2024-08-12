@@ -1,13 +1,11 @@
 #ifndef CONTROLNODE_ESTIMATION_NOOPESTIMATOR_NOOPESTIMATOR_HPP
 #define CONTROLNODE_ESTIMATION_NOOPESTIMATOR_NOOPESTIMATOR_HPP
 
-#include <mmr_base/msg/detail/actuator_status__struct.hpp>
-#include <mmr_base/msg/ecu_status.hpp>
-#include <mmr_base/msg/actuator_status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <mmr_base/msg/ecu_status.hpp>
+#include <mmr_base/msg/actuator_status.hpp>
 
 #include <control_node/estimation/istate_estimator.hpp>
 #include <control_node/parameters.hpp>
