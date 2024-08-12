@@ -1,0 +1,151 @@
+/control_node:
+  ros__parameters:
+    tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
+    wcet_ns: 5000000 # 5ms
+
+    tracking:
+      threshold: 8.0 # Meters. If the path doesn't pass through a circle of this radius centered on the vehicle, the tracking problem is restarted (which is a problem ONLY in Skidpad) and takes longer to execute
+      projection_marker:
+        diameter: 1.0
+        color:
+          r: 1.0
+          g: 0.0
+          b: 0.0
+          a: 1.0
+      threshold_marker:
+        color:
+          r: 1.0
+          g: 1.0
+          b: 1.0
+          a: 0.3
+      search_start_marker:
+        length: 0.7
+        color:
+          r: 0.0
+          g: 1.0
+          b: 0.0
+          a: 0.8
+      search_end_marker:
+        length: 0.7
+        color:
+          r: 1.0
+          g: 0.0
+          b: 0.0
+          a: 0.8
+
+    estimation:
+      type: Noop
+      params:
+        odometry_topic: "/Odometry"
+
+    event_manager:
+      enabled: false # Disable this on the sim or when you're using the HUMAN POWERTRAIN
+      as_state:
+        topic: "/as/state"
+      race_status:
+        topic: "/planning/race_status"
+      stop:
+        topic: "/stop"
+      use_lc: true
+      launch_throttle: 0.1
+      launch_brake: 10.0
+      launch_rpm: 3000
+      launch_speed: 4.0
+      standstill_speed: 0.3
+      stop_brake: 10.0
+      lap_to_stop: 12 # Stop when lap counter publishes this lap
+
+    control:
+      type: PurePursuit2023
+      params:
+        minLookForward: 5.0
+        minLookForwardGain: 0.4
+        steerGain: 1.0
+        targetVelocity: 3.33 # This gets overwritten after current lap > dynamicTargetSpeed.slowLaps if dynamicTargetSpeed.enabled is true!
+
+        dynamicTargetSpeed:
+          enabled: true # If this is false, then targetVelocity is used.
+          slowLaps: 1
+          minSpeedDistance: 5
+          k_smooth: 0.1
+          minSpeed: 3.33
+          maxSpeed: 8.0
+          targetSpeedWeight:  0.85
+          velocityCoeffs: [0.5051, 1.063, -0.02495, 0.0003832, -3.251e-6, 1.494e-8, -3.511e-11, 3.32e-14]
+
+        target_marker:
+          diameter: 1.0
+          color:
+            r: 0.0
+            g: 1.0
+            b: 0.0
+            a: 1.0
+
+
+    # Actuation settings
+    actuation:
+      actuators:
+        0:
+          enabled: false
+          type: CANOpenBridge
+          params:
+            steer_topic: "/command/steer"
+            brake_topic: "/command/brake"
+            clutch_topic: "/command/clutch"
+            actuator_status_topic: "/actuator_status"
+
+        1:
+          enabled: false
+          type: Sim
+          params:
+            topic: "/sim/drive_parameters"
+
+        2:
+          enabled: false
+          type: SpiApps
+          params:
+            spi_interface: /dev/spidev1.0
+            spi_frequency: 50000
+            v_ref: 5.0
+            v_apps_min: 1.0
+            v_apps_max: 3.0
+
+
+    # Reference path settings
+    reference_path_manager:
+      # Reference path sources in order of priority, 0 is highest
+      # Whenever a path from a higher priority source is received, any lower priority source is destroyed
+      sources:
+        0:
+          enabled: false
+          type: "ROS_SpeedProfilePoints"
+          params:
+            topic: "/planning/global"
+            is_closed: true
+
+        1:
+          enabled: true
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line_completed"
+            is_closed: true
+            qos_override:
+              durability: transient_local
+              reliability: reliable
+
+        2:
+          enabled: true
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line"
+            is_closed: false
+
+    vehicle_parameters:
+      wheelbase: 1.541 # distance between front and rear axle [m]
+      lr: 0.75 # distance between CoM and rear axle [m]
+      max_steering_angle: 0.3979351 # maximum angle at the wheel [rad]
+    
+    viz:
+      enabled: true
+      topic: "/control/viz"
+      min_interval_ms: 100
