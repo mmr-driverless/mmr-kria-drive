@@ -41,7 +41,7 @@ class EventManager {
     Stop_DisengageClutch,
     Stop_Halt,
     Stop_EnsureStandstill,
-    Finished,
+    FinishedOrEmergency,
     Invalid
   } m_event_state;
 
