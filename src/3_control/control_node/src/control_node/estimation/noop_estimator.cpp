@@ -10,6 +10,8 @@ namespace noop {
 
 void NoopEstimator::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters&) {
   m_odom_sub = node.create_subscription<nav_msgs::msg::Odometry>(p.get<std::string>("odometry_topic"), rclcpp::SensorDataQoS(), std::bind(&NoopEstimator::odom_cb, this, std::placeholders::_1));
+  m_ecu_status_sub = node.create_subscription<mmr_base::msg::EcuStatus>(p.get<std::string>("ecu_status.topic"), p.parse_qos("ecu_status.qos"), std::bind(&NoopEstimator::ecu_status_cb, this, std::placeholders::_1));
+  m_act_status_sub = node.create_subscription<mmr_base::msg::ActuatorStatus>(p.get<std::string>("actuator_status.topic"), p.parse_qos("actuator_status.qos"), std::bind(&NoopEstimator::act_status_cb, this, std::placeholders::_1));
 }
 
 void NoopEstimator::ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus> msg) {
