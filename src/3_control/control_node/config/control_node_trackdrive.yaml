@@ -37,6 +37,10 @@
       type: Noop
       params:
         odometry_topic: "/Odometry"
+        ecu_status:
+          topic: "/ecu_status"
+        actuator_status:
+          topic: "/actuator_status"
 
     event_manager:
       enabled: false # Disable this on the sim or when you're using the HUMAN POWERTRAIN
