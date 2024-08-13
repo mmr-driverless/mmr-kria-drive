@@ -67,6 +67,8 @@ class CANOpenBridge : public EDFNode
         void msgSelectorCallback(mmr_base::msg::EcuStatus::SharedPtr msg);
         void msgEngageInitClutch(mmr_base::msg::EcuStatus::SharedPtr msg);
         void msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg);
+        
+        void uploadVoltage();
 
         rclcpp::Publisher<mmr_base::msg::ActuatorStatus>::SharedPtr m_pubActuatorStatus;
         rclcpp::Publisher<mmr_base::msg::ActuatorStatus>::SharedPtr m_pubCANBusTx;

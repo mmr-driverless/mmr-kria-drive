@@ -173,15 +173,16 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 
 void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 {
+    
     if (msg->enable && (this->m_mBrake == nullptr)) {
         /* Enables the brake motor in CST */
         this->m_mBrake = new MaxonBrake(
             this->m_nSocket, this->m_nBrakeId, this->m_nTimeoutMsgBrake,
             this->m_nMaxTorque, m_nReturnPedalTorque
         );
-
+        uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);
         if (this->m_bDebug)
-            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE");
+            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE, MAX TORQUE: %d", nMaxTorqueNominal );
         
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::TORQUE_MODE);
         return;
@@ -302,7 +303,15 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
 
 void CANOpenBridge::sendActuatorStatus()
 {
+    this->uploadVoltage();
     this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
     this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
     this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); 
+}
+
+
+void CANOpenBridge::uploadVoltage()
+{
+    uint16_t m_uVoltage = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
+    this->m_msgActuatorStatus.voltage = m_uVoltage / 10.0;    
 }
