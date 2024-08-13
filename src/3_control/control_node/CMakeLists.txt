@@ -30,6 +30,7 @@ add_executable(control_node
   src/control_node/control_node.cpp
 
   src/control_node/estimation/noop_estimator.cpp
+  src/control_node/estimation/inspection/inspection_estimator.cpp
   src/control_node/estimation/state_estimator_factory.cpp
 
   src/control_node/path/sources/ros/sources_factory.cpp
