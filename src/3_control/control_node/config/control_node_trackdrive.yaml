@@ -110,6 +110,12 @@
             v_apps_min: 1.0
             v_apps_max: 3.0
 
+        3:
+          enabled: true
+          type: Ecu
+          params:
+            topic: "/command/ecu"
+
 
     # Reference path settings
     reference_path_manager:
