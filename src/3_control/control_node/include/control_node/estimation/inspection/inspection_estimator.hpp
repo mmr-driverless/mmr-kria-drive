@@ -1,5 +1,5 @@
-#ifndef CONTROLNODE_ESTIMATION_NOOPESTIMATOR_NOOPESTIMATOR_HPP
-#define CONTROLNODE_ESTIMATION_NOOPESTIMATOR_NOOPESTIMATOR_HPP
+#ifndef CONTROLNODE_ESTIMATION_INSPECTIONESTIMATOR_INSPECTIONESTIMATOR_HPP
+#define CONTROLNODE_ESTIMATION_INSPECTIONESTIMATOR_INSPECTIONESTIMATOR_HPP
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -12,21 +12,17 @@
 
 namespace control_node {
 namespace estimation {
-namespace noop {
+namespace inspection {
 
-class NoopEstimator : public IStateEstimator {
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
+class InspectionEstimator : public IStateEstimator {
   rclcpp::Subscription<mmr_base::msg::EcuStatus>::SharedPtr m_ecu_status_sub;
   rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr m_act_status_sub;
 
-  void odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg);
   void ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus> msg);
   void act_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg);
 
 public:
   class VehicleState : public IVehicleState {
-    std::optional<Eigen::Vector2d> m_position;
-    std::optional<double> m_yaw;
     std::optional<bool> m_clutch_is_engaged;
     std::optional<int> m_gear;
     std::optional<double> m_speed;
@@ -34,9 +30,9 @@ public:
     std::optional<bool> m_lc_is_active;
     
   public:
-    friend NoopEstimator;
-    virtual std::optional<Eigen::Vector2d> position() const override { return m_position; }
-    virtual std::optional<double> yaw() const override { return m_yaw; }
+    friend InspectionEstimator;
+    virtual std::optional<Eigen::Vector2d> position() const override { return std::nullopt; }
+    virtual std::optional<double> yaw() const override { return std::nullopt; }
     virtual std::optional<int> rpm() const override { return m_rpm; }
     virtual std::optional<double> speed() const override { return m_speed; }
     virtual std::optional<bool> lc_is_active() const override { return m_lc_is_active; }
@@ -48,8 +44,8 @@ public:
   virtual const IVehicleState& update_and_get_current_state() override { return m_state; }
 };
 
-}; // namespace noop
+}; // namespace inspection
 }; // namespace estimation
 }; // namespace control_node
 
-#endif // !CONTROLNODE_ESTIMATION_NOOPESTIMATOR_NOOPESTIMATOR_HPP
+#endif // !CONTROLNODE_ESTIMATION_INSPECTIONESTIMATOR_INSPECTIONESTIMATOR_HPP
