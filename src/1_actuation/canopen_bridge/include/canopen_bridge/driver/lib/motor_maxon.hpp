@@ -7,6 +7,7 @@
 #include <cmath>
 #include <unistd.h>
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 
 class MaxonMotor

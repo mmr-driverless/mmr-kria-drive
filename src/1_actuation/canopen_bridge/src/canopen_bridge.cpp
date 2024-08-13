@@ -9,7 +9,7 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     if (this->m_bDebug) {
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN INTERFACE: %s", this->m_sInterface.c_str());
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN BITRATE: %d", this->m_nBitrate);
-        RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH; %d", this->m_nMonitorClutch);
+        RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH: %d", this->m_nMonitorClutch);
     }
 
     this->m_subCmdSteer = this->create_subscription<mmr_base::msg::CmdMotor>(

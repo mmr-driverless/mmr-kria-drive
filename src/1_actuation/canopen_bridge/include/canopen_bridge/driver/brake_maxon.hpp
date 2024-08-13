@@ -33,13 +33,19 @@ class MaxonBrake : public MaxonMotor
 
         void writeTargetTorque(double fTargetTorque) {
 
-            fTargetTorque = (fTargetTorque * 1000.0) / 928.0;
-            int nTorque = std::clamp<double>(fTargetTorque, 0.0, this->m_nMaxTorque);
+            fTargetTorque = (fTargetTorque * 1000.0 * 1000.0) / 928.0;
+            std::cerr << "torque target: " << fTargetTorque << std::endl;
+            std::cerr << "max torque: " << this->m_nMaxTorque << std::endl;
+            int nTorque = std::clamp<double>(fTargetTorque, 0, this->m_nMaxTorque) * -1.0;
 
-            uint16_t unTorque = std::clamp<int>(nTorque, 0, std::numeric_limits<uint16_t>::max());
+            std::cerr << nTorque << std::endl;
+
+            int16_t unTorque = std::clamp<int>(nTorque, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max());
+
+            std::cerr << unTorque << std::endl;
 
             /* set velocity */
-            this->download<uint16_t>(0x60B2, 0x00, unTorque);
+            this->download<int16_t>(0x60B2, 0x00, unTorque);
         }
 
         void returnToZero() {
