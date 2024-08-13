@@ -143,8 +143,19 @@ void CANBusBridge::changeGearUpDown()
 
     memcpy(gear_frame.data, &(gear_data.at(0)), gear_data.size());
 
-    for (uint8_t i=0; i < m_unGearCtrLimit; i++)
-    {
+    for (uint8_t i = 0; i < this->m_unGearCtrLimit; i++) {
+        if (write(this->m_nSocket, &gear_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    }
+
+    gear_frame = {
+        .can_id = gear_info.id,
+        .len = 8,
+    };
+
+    memset(gear_frame.data, 0x00, gear_data.size());
+
+    for (uint8_t i = 0; i < this->m_unGearCtrLimit; i++) {
         if (write(this->m_nSocket, &gear_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
             RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
     }
