@@ -35,10 +35,10 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
     this->m_pubImuData = this->create_publisher<sensor_msgs::msg::Imu>(this->m_sOutImuDataTopic, qos);
 
-    this->m_ecGearUp = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_UP));
-    this->m_ecGearDown = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_DOWN));
-    this->m_ecSetLaunchCtr = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, this->m_nLaunchControlCtr, this->m_nLaunchControlCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL));
-    this->m_ecSetNeutral = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, this->m_nNeutralCtr, this->m_nNeutralCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_NEUTRAL));
+    this->m_ecGearUp.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_UP));
+    this->m_ecGearDown.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_DOWN));
+    this->m_ecSetLaunchCtr.emplace(this->m_nSocket, &this->m_mutexOnSocket, this->m_nLaunchControlCtr, this->m_nLaunchControlCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL));
+    this->m_ecSetNeutral.emplace(this->m_nSocket, &this->m_mutexOnSocket, this->m_nNeutralCtr, this->m_nNeutralCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_NEUTRAL));
 
 }
 
@@ -171,17 +171,14 @@ void CANBusBridge::setGearNeutral()
 
     this->m_lLastNeutralTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
 
-    if (!this->m_ecSetNeutral->isRunning())
+    if ((!this->m_ecSetNeutral->isRunning()) && (!this->m_ecSetLaunchCtr->isRunning()))
         this->m_ecSetNeutral->startCtr();
 
 }
 
 void CANBusBridge::setLaunchControl()
 {
-    if (!this->m_msgCmdEcu.set_launch_control)
-        return;
-
-    if ((this->m_msgCmdEcu.set_launch_control) && (this->m_msgEcuStatus.bool_ack_ideal_launch_control))
+    if ((this->m_msgCmdEcu.set_launch_control == this->m_msgEcuStatus.bool_ack_ideal_launch_control))
         return;
 
     auto act_time = timing::Clock::get_time<std::chrono::milliseconds>().count();
@@ -190,7 +187,7 @@ void CANBusBridge::setLaunchControl()
 
     this->m_lLastLCTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
 
-    if (!this->m_ecSetLaunchCtr->isRunning())
+    if ((!this->m_ecSetLaunchCtr->isRunning()) && (!this->m_ecSetNeutral->isRunning()))
         this->m_ecSetLaunchCtr->startCtr();
 
 }

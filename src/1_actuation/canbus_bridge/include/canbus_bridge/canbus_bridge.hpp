@@ -37,7 +37,8 @@ class CANBusBridge : public EDFNode
 
     private:
 
-        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic, m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic, m_sActuatorsStatusTopic, m_sOutImuDataTopic;
+        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic;
+        std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic, m_sActuatorsStatusTopic, m_sOutImuDataTopic;
         int m_nBitrate, m_nMaxMsgs;
         bool m_bDebug;
 
@@ -83,17 +84,15 @@ class CANBusBridge : public EDFNode
 
         /* Gear Parameters */
         bool m_bWorkOnGearUpDown = false;
-        uint8_t m_unGearCtrLimit, m_unGearCtrOnce = 0, m_unGearCtrZeros = 0;
+        uint8_t m_unGearCtrLimit;
         long int m_lLastGearTime = 0, m_lGearChangeDeltaTime;
 
         /* Launch Control Parameters */
         long int m_lLastLCTime = 0, m_lLCChangeDeltaTime;
-        bool m_bSetLCValue = false;
         int m_nLaunchControlCtr;
 
         /* Set Neutral Parameters */
         long int m_lLastNeutralTime = 0, m_lNeutralChangeDeltaTime;
-        bool m_bSetNeutralValue = false;
         int m_nNeutralCtr;
 
         int m_nSocket;
@@ -101,7 +100,7 @@ class CANBusBridge : public EDFNode
         struct ifreq m_ifr;
         struct sockaddr_can m_addr;
 
-        EcuControl *m_ecGearUp, *m_ecGearDown, *m_ecSetLaunchCtr, *m_ecSetNeutral;
+        std::optional<EcuControl> m_ecGearUp, m_ecGearDown, m_ecSetLaunchCtr, m_ecSetNeutral;
 
         /**
         @param vec Output parameters that represents a string of bytes

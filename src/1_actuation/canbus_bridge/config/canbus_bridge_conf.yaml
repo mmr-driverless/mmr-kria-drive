@@ -1,7 +1,7 @@
 /canbus_bridge_node:
   ros__parameters:
     generic:
-      interface: vcan0
+      interface: can0
       bitrate: 1000000
       debug: true
       WCET: 5000000 # 5ms
@@ -20,11 +20,9 @@
     gear:
       ctrLimit: 5
       changeDeltaTime: 200 #ms
-
     launch_control:
       ctrLimit: 2
       changeDeltaTime: 200 #ms
-
     neutral:
       ctrLimit: 2
       changeDeltaTime: 100 #ms
