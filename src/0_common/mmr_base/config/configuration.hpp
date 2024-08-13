@@ -67,7 +67,7 @@ namespace ECU {
             { CMD::ACTIONS::GEAR_DOWN, 8 },
             { CMD::ACTIONS::SET_LAUNCH_CONTROL, 5 },
             { CMD::ACTIONS::UNSET_LAUNCH_CONTROL, 5 },
-            { CMD::ACTIONS::SET_NEUTRAL, 32 },
+            { CMD::ACTIONS::SET_NEUTRAL, 31 },
         };
 
         struct DATA {

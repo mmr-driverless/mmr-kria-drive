@@ -34,6 +34,12 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
     this->m_pubImuData = this->create_publisher<sensor_msgs::msg::Imu>(this->m_sOutImuDataTopic, qos);
+
+    this->m_ecGearUp = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_UP));
+    this->m_ecGearDown = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_DOWN));
+    this->m_ecSetLaunchCtr = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, this->m_nLaunchControlCtr, this->m_nLaunchControlCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL));
+    this->m_ecSetNeutral = new EcuControl(this->m_nSocket, &this->m_mutexOnSocket, this->m_nNeutralCtr, this->m_nNeutralCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_NEUTRAL));
+
 }
 
 void CANBusBridge::loadParameters()
@@ -59,8 +65,10 @@ void CANBusBridge::loadParameters()
     declare_parameter("gear.changeDeltaTime", 200);
 
     declare_parameter("launch_control.changeDeltaTime", 100);
+    declare_parameter("launch_control.ctrLimit", 2);
     
     declare_parameter("neutral.changeDeltaTime", 100);
+    declare_parameter("neutral.ctrLimit", 2);
 
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
@@ -83,11 +91,11 @@ void CANBusBridge::loadParameters()
     get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
 
     get_parameter("launch_control.changeDeltaTime", this->m_lLCChangeDeltaTime);
+    get_parameter("launch_control.ctrLimit", this->m_nLaunchControlCtr);
 
     get_parameter("neutral.changeDeltaTime", this->m_lNeutralChangeDeltaTime);
-
+    get_parameter("neutral.ctrLimit", this->m_nNeutralCtr);
 }
-
 
 void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg)
 {
@@ -105,8 +113,11 @@ void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg
 
     memcpy(frame.data, &msg->data, CAN_MAX_DLEN);
 
-    if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    {
+        std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
+        if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    }
 }
 
 void CANBusBridge::changeGearUpDown()
@@ -126,38 +137,23 @@ void CANBusBridge::changeGearUpDown()
 
     this->m_lLastGearTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
 
-    ECU::CMD::DATA gear_info;
-    std::vector<uint8_t> gear_data(8);
-    std::fill(gear_data.begin(), gear_data.end(), 0);
+    ECU::CMD::ACTIONS gear_info;
 
     gear_info = (this->m_msgCmdEcu.gear_target < this->m_msgEcuStatus.gear) ? 
-        ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::GEAR_DOWN) :
-        ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::GEAR_UP);
+        ECU::CMD::ACTIONS::GEAR_DOWN :
+        ECU::CMD::ACTIONS::GEAR_UP;
 
-    this->toggleNthBit(gear_data, gear_info.bit);
-
-    struct can_frame gear_frame = {
-        .can_id = gear_info.id,
-        .len = 8,
-    };
-
-    memcpy(gear_frame.data, &(gear_data.at(0)), gear_data.size());
-
-    for (uint8_t i = 0; i < this->m_unGearCtrLimit; i++) {
-        if (write(this->m_nSocket, &gear_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
-    }
-
-    gear_frame = {
-        .can_id = gear_info.id,
-        .len = 8,
-    };
-
-    memset(gear_frame.data, 0x00, gear_data.size());
-
-    for (uint8_t i = 0; i < this->m_unGearCtrLimit; i++) {
-        if (write(this->m_nSocket, &gear_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    switch (gear_info)
+    {
+        case ECU::CMD::ACTIONS::GEAR_DOWN:
+            if (!this->m_ecGearDown->isRunning())
+                this->m_ecGearDown->startCtr();
+            break;
+            
+        case ECU::CMD::ACTIONS::GEAR_UP:
+            if (!this->m_ecGearUp->isRunning())
+                this->m_ecGearUp->startCtr();
+            break;    
     }
 }
 
@@ -175,28 +171,8 @@ void CANBusBridge::setGearNeutral()
 
     this->m_lLastNeutralTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
 
-    ECU::CMD::DATA neutral_info;
-    std::vector<uint8_t> neutral_data(8);
-    std::fill(neutral_data.begin(), neutral_data.end(), 0);
-
-    neutral_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_NEUTRAL);
-
-    if (this->m_bSetNeutralValue) {
-        this->toggleNthBit(neutral_data, neutral_info.bit);
-        this->m_bSetNeutralValue = false;
-    } 
-    else
-        this->m_bSetNeutralValue = true;
-
-    struct can_frame neutral_frame = {
-        .can_id = neutral_info.id,
-        .len = 8,
-    };
-
-    memcpy(neutral_frame.data, &(neutral_data.at(0)), neutral_data.size());
-
-    if (write(this->m_nSocket, &neutral_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    if (!this->m_ecSetNeutral->isRunning())
+        this->m_ecSetNeutral->startCtr();
 
 }
 
@@ -214,28 +190,8 @@ void CANBusBridge::setLaunchControl()
 
     this->m_lLastLCTime = timing::Clock::get_time<std::chrono::milliseconds>().count();
 
-    ECU::CMD::DATA lc_info;
-    std::vector<uint8_t> lc_data(8);
-    std::fill(lc_data.begin(), lc_data.end(), 0);
-
-    lc_info = ECU::CmdEcuLookup.at(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL);
-
-    if (this->m_bSetLCValue) {
-        this->toggleNthBit(lc_data, lc_info.bit);
-        this->m_bSetLCValue = false;
-    } 
-    else
-        this->m_bSetLCValue = true;
-
-    struct can_frame lc_frame = {
-        .can_id = lc_info.id,
-        .len = 8,
-    };
-
-    memcpy(lc_frame.data, &(lc_data.at(0)), lc_data.size());
-
-    if (write(this->m_nSocket, &lc_frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+    if (!this->m_ecSetLaunchCtr->isRunning())
+        this->m_ecSetLaunchCtr->startCtr();
 
 }
 
@@ -268,8 +224,11 @@ void CANBusBridge::readMsgFromCANBus()
 
     while (nMsgRead < this->m_nMaxMsgs) {
         
-        if (read(this->m_nSocket, &frame, sizeof(struct can_frame)) <= 0)
-            break;
+        {
+            std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
+            if (read(this->m_nSocket, &frame, sizeof(struct can_frame)) <= 0)
+                break;
+        }
 
         txMsg.id = frame.can_id;
         txMsg.dlc = frame.can_dlc;

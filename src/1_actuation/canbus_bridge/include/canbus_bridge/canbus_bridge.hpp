@@ -15,12 +15,14 @@
 #include <std_msgs/msg/int8.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <mmr_base/configuration.hpp>
+#include <canbus_bridge/ecu_control.hpp>
 #include "imu_helper.hpp"
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
 #include <sys/socket.h>
+#include <mutex>
 
 #include <string.h>
 #include <net/if.h>
@@ -73,7 +75,6 @@ class CANBusBridge : public EDFNode
         /* Message for output IMU Data */
         sensor_msgs::msg::Imu m_msgOutImuData;
 
-
         /* Message for CmdEcu */
         mmr_base::msg::CmdEcu m_msgCmdEcu;
 
@@ -81,20 +82,26 @@ class CANBusBridge : public EDFNode
         mmr_base::msg::ActuatorStatus m_msgActuatorsStatus;
 
         /* Gear Parameters */
-        uint8_t m_unGearCtrLimit;
+        bool m_bWorkOnGearUpDown = false;
+        uint8_t m_unGearCtrLimit, m_unGearCtrOnce = 0, m_unGearCtrZeros = 0;
         long int m_lLastGearTime = 0, m_lGearChangeDeltaTime;
 
         /* Launch Control Parameters */
         long int m_lLastLCTime = 0, m_lLCChangeDeltaTime;
         bool m_bSetLCValue = false;
+        int m_nLaunchControlCtr;
 
         /* Set Neutral Parameters */
         long int m_lLastNeutralTime = 0, m_lNeutralChangeDeltaTime;
         bool m_bSetNeutralValue = false;
+        int m_nNeutralCtr;
 
         int m_nSocket;
+        std::mutex m_mutexOnSocket;
         struct ifreq m_ifr;
         struct sockaddr_can m_addr;
+
+        EcuControl *m_ecGearUp, *m_ecGearDown, *m_ecSetLaunchCtr, *m_ecSetNeutral;
 
         /**
         @param vec Output parameters that represents a string of bytes
@@ -106,6 +113,22 @@ class CANBusBridge : public EDFNode
             assert(vec.capacity() >= index);
             uint8_t bit = 7 - n%8;
             vec.at(index) ^= ((uint8_t) 1 << bit);
+        }
+
+        inline struct can_frame getCanFrame(int nMission) {
+            ECU::CMD::DATA info;
+            std::vector<uint8_t> data(8);
+            std::fill(data.begin(), data.end(), 0);
+            info = ECU::CmdEcuLookup.at(static_cast<ECU::CMD::ACTIONS>(nMission));
+            this->toggleNthBit(data, info.bit);
+
+            struct can_frame frame = {
+                .can_id = info.id,
+                .len = 8,
+            };
+
+            memcpy(frame.data, &(data.at(0)), data.size());
+            return frame;
         }
 
         void connectCANBus();

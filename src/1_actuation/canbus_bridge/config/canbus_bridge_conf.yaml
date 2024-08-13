@@ -22,7 +22,9 @@
       changeDeltaTime: 200 #ms
 
     launch_control:
-      changeDeltaTime: 100 #ms
+      ctrLimit: 2
+      changeDeltaTime: 200 #ms
 
     neutral:
+      ctrLimit: 2
       changeDeltaTime: 100 #ms
