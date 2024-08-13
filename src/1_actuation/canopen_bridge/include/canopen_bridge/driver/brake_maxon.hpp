@@ -31,12 +31,15 @@ class MaxonBrake : public MaxonMotor
 
         ~MaxonBrake() { this->disable(); };
 
-        void writeTargetTorque(int nTargetTorque) {
-            uint16_t nTarget = nTargetTorque > 0 ? static_cast<uint16_t>(nTargetTorque) : 0;
-            nTarget = nTarget < this->m_nMaxTorque ? nTarget : this->m_nMaxTorque;
+        void writeTargetTorque(double fTargetTorque) {
+
+            fTargetTorque = (fTargetTorque * 1000.0) / 928.0;
+            int nTorque = std::clamp<double>(fTargetTorque, 0.0, this->m_nMaxTorque);
+
+            uint16_t unTorque = std::clamp<int>(nTorque, 0, std::numeric_limits<uint16_t>::max());
 
             /* set velocity */
-            this->download<uint16_t>(0x60B2, 0x00, nTargetTorque);
+            this->download<uint16_t>(0x60B2, 0x00, unTorque);
         }
 
         void returnToZero() {

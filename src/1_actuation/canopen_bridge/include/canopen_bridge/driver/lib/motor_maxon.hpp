@@ -6,6 +6,8 @@
 #include <ctime>
 #include <cmath>
 #include <unistd.h>
+#include <algorithm>
+#include <numeric>
 
 class MaxonMotor
 {

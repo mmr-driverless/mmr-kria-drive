@@ -182,8 +182,12 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         );
 
         uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);
+        uint32_t nNominalCurrent = this->m_mBrake->upload<uint32_t>(0x3031, 0x01);
         if (this->m_bDebug)
-            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE, MAX TORQUE: %lu", nMaxTorqueNominal );
+            RCLCPP_INFO(
+                this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE, [ MAX TORQUE ]: %lu uNm, [ NOMINAL CURRENT ]: %lu mA", 
+                nMaxTorqueNominal, nNominalCurrent 
+            );
         
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::TORQUE_MODE);
         return;
@@ -194,12 +198,12 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         this->m_mBrake = nullptr;
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     }
-
-    msg->brake_torque *= 1000;
-    int nTorque = std::abs(std::round(msg->brake_torque));
     
+    if (this->m_bDebug)
+        RCLCPP_INFO(this->get_logger(), "[ TORQUE REQUEST ]: %lf", msg->brake_torque);
+
     if (this->m_mBrake != nullptr)
-        this->m_mBrake->writeTargetTorque(nTorque);
+        this->m_mBrake->writeTargetTorque(msg->brake_torque);
 }
 
 void CANOpenBridge::msgCmdClutchCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
@@ -304,8 +308,8 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
 
 void CANOpenBridge::sendActuatorStatus()
 {
-    if (this->m_mBrake != nullptr)
-        this->uploadVoltage();
+    // if (this->m_mBrake != nullptr)
+        // this->uploadVoltage();
 
     this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
     this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
