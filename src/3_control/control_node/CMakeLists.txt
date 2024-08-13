@@ -46,6 +46,7 @@ add_executable(control_node
   src/control_node/actuation/sim.cpp
   src/control_node/actuation/spi_apps/mcp4921.cpp
   src/control_node/actuation/spi_apps/spi_apps.cpp
+  src/control_node/actuation/ecu/ecu.cpp
   src/control_node/actuation/actuator_factory.cpp
   src/control_node/actuation/actuator_manager.cpp
 
