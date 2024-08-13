@@ -1,7 +1,7 @@
 /canopen_bridge_node:
   ros__parameters:
     generic:
-      interface: can0
+      interface: can1
       bitrate: 1000000
       debug: true
       WCET: 5000000 # ms
@@ -32,8 +32,8 @@
       timeout_msgs: 2
       step_maxon:
         - -200
-        - 500
-        - -300
+        - 900
+        - -600
         - -100
         - -600
         - -400
