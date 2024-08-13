@@ -180,6 +180,7 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
             this->m_nSocket, this->m_nBrakeId, this->m_nTimeoutMsgBrake,
             this->m_nMaxTorque, m_nReturnPedalTorque
         );
+
         uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE, MAX TORQUE: %d", nMaxTorqueNominal );
@@ -303,7 +304,9 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
 
 void CANOpenBridge::sendActuatorStatus()
 {
-    this->uploadVoltage();
+    if (this->m_mBrake != nullptr)
+        this->uploadVoltage();
+        
     this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
     this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
     this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); 
