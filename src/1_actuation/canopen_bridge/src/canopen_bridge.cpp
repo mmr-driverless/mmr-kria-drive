@@ -60,6 +60,7 @@ void CANOpenBridge::loadParameters()
     declare_parameter("brake.max_torque", 1500);
     declare_parameter("brake.return_pedal_torque", -20);
     declare_parameter("brake.timeout_msgs", 5);
+    declare_parameter("brake.monitor_freq", 5);
 
     declare_parameter("clutch.node_id", 16);
     declare_parameter("clutch.velocity", 3500);
@@ -92,6 +93,7 @@ void CANOpenBridge::loadParameters()
     get_parameter("brake.max_torque", this->m_nMaxTorque);
     get_parameter("brake.return_pedal_torque", this->m_nReturnPedalTorque);
     get_parameter("brake.timeout_msgs", this->m_nTimeoutMsgBrake);
+    get_parameter("brake.monitor_freq", this->m_nFreqScaleBrake);
 
     get_parameter("clutch.node_id", this->m_nClutchId);
     get_parameter("clutch.velocity", this->m_nVelocityClutch);
@@ -308,8 +310,12 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
 
 void CANOpenBridge::sendActuatorStatus()
 {
-    if (this->m_mBrake != nullptr)
-        this->uploadVoltage();
+    if ((this->m_nCtrBrake % this->m_nFreqScaleBrake) == 0) {
+        if (this->m_mBrake != nullptr)
+            this->uploadVoltage();
+        this->m_nCtrBrake = 1;
+    }
+    else this->m_nCtrBrake ++;
 
     this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
     this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
