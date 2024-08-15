@@ -1,11 +1,13 @@
 #ifndef REFERENCE_PATH_HPP
 #define REFERENCE_PATH_HPP
 
+#include <functional>
 #include <optional>
 #include <algorithm>
 #include <eigen3/Eigen/Dense>
 #include <span>
 #include <fstream>
+#include <ranges>
 
 #include <control_node/path/geometry_helpers.hpp>
 
@@ -29,22 +31,20 @@ public:
   };
 
   struct PointData {
-    using StorageT = Eigen::Vector3d;
+    using StorageT = Eigen::Vector2d;
 
-    double s;
+    double dist_to_next;
     double curvature;
-    double max_speed;
 
     friend ReferencePath;
 
     enum {
-      S = 0,
-      Curvature = 1,
-      MaxSpeed = 2
+      DistToNext = 0,
+      Curvature = 1
     };
 
   private:
-    PointData(StorageT data) : s(data(S)), curvature(data(Curvature)), max_speed(data(MaxSpeed)) {}
+    PointData(StorageT data) : dist_to_next(data(DistToNext)), curvature(data(Curvature)) {}
   };
 
 private:
@@ -112,6 +112,19 @@ private:
     } else {
       return end - start;
     }
+  }
+
+  PointData get_data_impl(const PointRef& at) const {
+    assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints());
+
+    std::optional<SegmentRef> seg = compute_segment(at.prev_waypoint_idx);
+    if (!seg.has_value()) // There's no segment at that index (that waypoint doesn't have a successor)
+      return PointData(m_data[at.prev_waypoint_idx]); // return the waypoint data itself
+
+    // Interpolate the data for this segment
+    return PointData(
+      m_data[seg->start] + at.t * (m_data[seg->end] - m_data[seg->start])
+    );
   }
 
 public:
@@ -365,17 +378,7 @@ public:
     if (n_waypoints() <= 0 || !is_data_valid())
       return {};
 
-    // prev_waypoint_idx must be a valid waypoint
-    assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints());
-
-    std::optional<SegmentRef> seg = compute_segment(at.prev_waypoint_idx);
-    if (!seg.has_value()) // There's no segment at that index (that waypoint doesn't have a successor)
-      return PointData(m_data[at.prev_waypoint_idx]); // return the waypoint data itself
-
-    // Interpolate the data for this segment
-    return PointData(
-      m_data[seg->start] + at.t * (m_data[seg->end] - m_data[seg->start])
-    );
+    return get_data_impl(at);
   }
 
   std::array<std::span<Eigen::Vector2d>, 2> get_subpath(const PointRef& start, const PointRef& end) const {
@@ -396,89 +399,78 @@ public:
   }
 
   void compute_data() {
-    // Compute s
-    double s_acc = 0;
-    m_data[0](PointData::S) = s_acc;
-    for (int i = 1; i < n_waypoints(); ++i) {
-      s_acc += (m_waypoints[i] - m_waypoints[i-1]).norm();
-      m_data[i](PointData::S) = s_acc;
+    // Compute, for each waypoint, the length of the segment that connects it to the next waypoint
+    for (int i = 0; i < n_waypoints(); ++i) {
+      int next_i = compute_index(i, 1);
+      m_data[i](PointData::DistToNext) = next_i >= 0? (m_waypoints[next_i] - m_waypoints[i]).norm() : NAN;
     }
   
     // Compute path curvature
-    m_data[0](PointData::Curvature) = 0;
+    m_data[0](PointData::Curvature) = 0; // This remains 0 unless the path is closed.
     for (int prev_idx = 0; prev_idx < n_waypoints(); ++prev_idx) {
       int curr_idx = compute_index(prev_idx, 1);
       if (curr_idx == -1)
         break;
-
+      
       int next_idx = compute_index(curr_idx, 1);
       if (next_idx == -1) {
+        // Keep the last curvature.
         m_data[curr_idx](PointData::Curvature) = m_data[prev_idx](PointData::Curvature);
         break;
       }
 
       m_data[curr_idx](PointData::Curvature) = geometry_helpers::menger_curvature(m_waypoints[prev_idx], m_waypoints[curr_idx], m_waypoints[next_idx]);
     }
-
-    //this->dump("suca_not_smooth.csv");
-
+    
     // Smoothen path curvature
-    int half_window_size = 3; //Meters in front and meters behind point at curr_idx (is an arbitrary value)
-  
-    std::vector<double> curvs;
-    curvs.resize(n_waypoints());
+    int half_window_size = 10; //Meters in front and meters behind point at curr_idx (is an arbitrary value)
+
+    std::vector<double> filtered_k;
+    filtered_k.resize(m_data.size());
 
     //for each waypoint
     for (int curr_idx = 0; curr_idx < n_waypoints(); ++curr_idx) 
     { 
-      std::cout << curr_idx << '\n';
-      //likely not waypoints:
-      PointRef first_elem = trace_back_point(curr_idx, half_window_size); 
-      PointRef last_elem = advance_point(curr_idx, half_window_size);
+      // Compute the start and end of the window.
+      PointRef window_start = trace_back_point(curr_idx, half_window_size); 
+      PointRef window_end = advance_point(curr_idx, half_window_size);
 
-      //TODO: Add control on the PointRefs to see if they are valid
-      int first_waypoint_idx = compute_index(first_elem.get_waypoint_idx(),1); //index of first waypoint in the window
-      int last_waypoint_idx = last_elem.get_waypoint_idx(); //index of last waypoint in the window
-      //Find the curvature on the pointRefs with linear interpolation
+      // Compute the first and last waypoints s.t. PointRef(first_waypoint_idx) >= window_start && PointRef(last_window_idx) <= window_end
+      int last_waypoint_idx = window_end.prev_waypoint_idx;
+      int first_waypoint_idx = compute_index(window_start.prev_waypoint_idx, 1);
+      if (first_waypoint_idx < 0 || first_waypoint_idx >= last_waypoint_idx)
+        first_waypoint_idx = last_waypoint_idx;
 
-      // if(first_waypoint_idx < 0 || last_waypoint_idx >= n_waypoints())
-      // {
-      //   continue;
-      // }
+      // Compute the area under the curve and the cumulative distance, in order to later compute a weighted average.
+      auto compute_area_fn = [](double fa, double fb, double ab) { return 0.5 * (fa + fb) * ab; };
+      double area_under_curve = 0.0;
+      double actual_window_width = 0.0;
 
-      std::cout << "first waypoint idx is: " << first_waypoint_idx << " " << "last_waypoint_idx is"<< " " << last_waypoint_idx << '\n';
-      std::cout << "n waypoints is "<< n_waypoints() << '\n';
+      // The start and end of the window are (possibly) not waypoints.
+      double d_start = (get_position(window_start) - m_waypoints[first_waypoint_idx]).norm();
+      double d_end = (get_position(window_end) - m_waypoints[last_waypoint_idx]).norm();
 
-      double first_elem_curv = 0;
-      double last_elem_curv = 0;
+      area_under_curve += compute_area_fn(get_data_impl(window_start).curvature, m_data[first_waypoint_idx](PointData::Curvature), d_start);
+      area_under_curve += compute_area_fn(get_data_impl(window_end).curvature, m_data[last_waypoint_idx](PointData::Curvature), d_end);
+      actual_window_width += d_start + d_end;
 
-      double avg_curv = 0;
+      for (int i = first_waypoint_idx; i < last_waypoint_idx; ++i) {
+        int next_waypoint_idx = compute_index(i, 1);
 
-      double distance_covered = 0;
-
-      if(get_data(first_elem).has_value() && get_data(last_elem).has_value())
-      {
-        first_elem_curv = get_data(first_elem).value().curvature;
-        last_elem_curv = get_data(last_elem).value().curvature;
-        avg_curv += ((first_elem_curv + m_data[first_waypoint_idx](PointData::Curvature)) / 2) * (m_data[first_waypoint_idx](PointData::S) - get_data(first_elem).value().s);
-        avg_curv += ((last_elem_curv + m_data[last_waypoint_idx](PointData::Curvature)) / 2) * (get_data(last_elem).value().s - m_data[last_waypoint_idx](PointData::S));
-        distance_covered += m_data[first_waypoint_idx](PointData::S) - get_data(first_elem).value().s;
-        distance_covered += get_data(last_elem).value().s - m_data[last_waypoint_idx](PointData::S);
-      }
-     
-      //Compute all other waypoints curvatures
-      for(int j = first_waypoint_idx; j < last_waypoint_idx - 1; ++j)
-      {
-        avg_curv += ((m_data[j](PointData::Curvature) + m_data[compute_index(j,1)](PointData::Curvature)) / 2) * (m_data[compute_index(j,1)](PointData::S) - m_data[j](PointData::S));
-        distance_covered += m_data[compute_index(j,1)](PointData::S) - m_data[j](PointData::S);
+        // We're inside the window, so it's impossible that we find the path end (otherwise the window would be malformed)
+        assert(next_waypoint_idx > 0 && "Malformed window! At waypoint < window end but found the path end??");
+        
+        double d = m_data[i](PointData::DistToNext);
+        actual_window_width += d;
+        area_under_curve += compute_area_fn(m_data[i](PointData::Curvature), m_data[next_waypoint_idx](PointData::Curvature), d);
       }
 
-      curvs[curr_idx] = avg_curv / distance_covered;
+      filtered_k[curr_idx] = area_under_curve / actual_window_width;
     }
-    for(int curr_idx = 0; curr_idx < n_waypoints(); ++curr_idx)
-    {
-      m_data[curr_idx](PointData::Curvature) = curvs[curr_idx];
-    }
+    
+    for (int i = 0; i < n_waypoints(); ++i)
+      m_data[i](PointData::Curvature) = filtered_k[i];
+
     m_is_data_valid = true;
   }
 
@@ -486,7 +478,7 @@ public:
     Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", ", ");
     
     std::ofstream f(path);
-    f << "x,y,s,k,vx_max\n";
+    f << "x,y,seg_len,k\n";
 
     for (int i = 0; i < n_waypoints(); ++i)
       f << m_waypoints[i].format(CSVFormat) << ", " << m_data[i].format(CSVFormat) << "\n";
