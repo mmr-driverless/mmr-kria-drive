@@ -483,7 +483,7 @@ public:
       auto fil2 = FILTER_PROTOTYPE;
       for (int i = 1; i < n_waypoints(); ++i) {
         double ds = m_data[i-1](PointData::DistToNext);
-        m_data[i](PointData::Curvature) = fil1(m_data[i](PointData::Curvature), ds), ds);
+        m_data[i](PointData::Curvature) = fil2(fil1(m_data[i](PointData::Curvature), ds), ds);
       }
     }
 
