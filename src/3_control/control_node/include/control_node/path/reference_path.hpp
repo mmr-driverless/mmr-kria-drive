@@ -1,6 +1,7 @@
 #ifndef REFERENCE_PATH_HPP
 #define REFERENCE_PATH_HPP
 
+#include <functional>
 #include <optional>
 #include <algorithm>
 #include <eigen3/Eigen/Dense>
@@ -8,6 +9,7 @@
 #include <fstream>
 
 #include <control_node/path/geometry_helpers.hpp>
+#include <control_node/path/non_uniform_first_order_filter.hpp>
 
 namespace control_node {
 namespace path {
@@ -29,22 +31,20 @@ public:
   };
 
   struct PointData {
-    using StorageT = Eigen::Vector3d;
+    using StorageT = Eigen::Vector2d;
 
-    double s;
+    double dist_to_next;
     double curvature;
-    double max_speed;
 
     friend ReferencePath;
 
     enum {
-      S = 0,
-      Curvature = 1,
-      MaxSpeed = 2
+      DistToNext = 0,
+      Curvature = 1
     };
 
   private:
-    PointData(StorageT data) : s(data(S)), curvature(data(Curvature)), max_speed(data(MaxSpeed)) {}
+    PointData(StorageT data) : dist_to_next(data(DistToNext)), curvature(data(Curvature)) {}
   };
 
 private:
@@ -112,6 +112,19 @@ private:
     } else {
       return end - start;
     }
+  }
+
+  PointData get_data_impl(const PointRef& at) const {
+    assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints());
+
+    std::optional<SegmentRef> seg = compute_segment(at.prev_waypoint_idx);
+    if (!seg.has_value()) // There's no segment at that index (that waypoint doesn't have a successor)
+      return PointData(m_data[at.prev_waypoint_idx]); // return the waypoint data itself
+
+    // Interpolate the data for this segment
+    return PointData(
+      m_data[seg->start] + at.t * (m_data[seg->end] - m_data[seg->start])
+    );
   }
 
 public:
@@ -365,17 +378,7 @@ public:
     if (n_waypoints() <= 0 || !is_data_valid())
       return {};
 
-    // prev_waypoint_idx must be a valid waypoint
-    assert(at.prev_waypoint_idx >= 0 && at.prev_waypoint_idx < n_waypoints());
-
-    std::optional<SegmentRef> seg = compute_segment(at.prev_waypoint_idx);
-    if (!seg.has_value()) // There's no segment at that index (that waypoint doesn't have a successor)
-      return PointData(m_data[at.prev_waypoint_idx]); // return the waypoint data itself
-
-    // Interpolate the data for this segment
-    return PointData(
-      m_data[seg->start] + at.t * (m_data[seg->end] - m_data[seg->start])
-    );
+    return get_data_impl(at);
   }
 
   std::array<std::span<Eigen::Vector2d>, 2> get_subpath(const PointRef& start, const PointRef& end) const {
@@ -396,32 +399,102 @@ public:
   }
 
   void compute_data() {
-    // Compute s
-    double s_acc = 0;
-    m_data[0](PointData::S) = s_acc;
-    for (int i = 1; i < n_waypoints(); ++i) {
-      s_acc += (m_waypoints[i] - m_waypoints[i-1]).norm();
-      m_data[i](PointData::S) = s_acc;
+    // Compute, for each waypoint, the length of the segment that connects it to the next waypoint
+    for (int i = 0; i < n_waypoints(); ++i) {
+      int next_i = compute_index(i, 1);
+      m_data[i](PointData::DistToNext) = next_i >= 0? (m_waypoints[next_i] - m_waypoints[i]).norm() : NAN;
     }
   
-    // Compute path curvature
+    // Compute the path curvature
     m_data[0](PointData::Curvature) = 0;
     for (int prev_idx = 0; prev_idx < n_waypoints(); ++prev_idx) {
       int curr_idx = compute_index(prev_idx, 1);
       if (curr_idx == -1)
         break;
-
+      
       int next_idx = compute_index(curr_idx, 1);
       if (next_idx == -1) {
-        m_data[curr_idx](PointData::Curvature) = m_data[prev_idx](PointData::Curvature);
+        m_data[curr_idx](PointData::Curvature) = 0;
         break;
+      }
+
+      // Handle the degenerate case in which the planner spits out duplicate waypoints.
+      // TODO: we shouldn't just set curvature to 0, but instead filter out duplicate waypoints.
+      if (m_data[prev_idx](PointData::DistToNext) <= 0 || m_data[curr_idx](PointData::DistToNext) <= 0) {
+        m_data[curr_idx](PointData::Curvature) = 0;
+        continue;
       }
 
       m_data[curr_idx](PointData::Curvature) = geometry_helpers::menger_curvature(m_waypoints[prev_idx], m_waypoints[curr_idx], m_waypoints[next_idx]);
     }
 
-    // Smooth the curvature
-    /* ... */
+
+    /*
+    Filter the path curvature.
+    We have a nonuniformly sampled signal k(s), or the curvature at a certain arc length.
+    The signal is extremely noisy, as we're computing the instantaneous, local curvature at each waypoint.
+    This results in a lot of high-frequency noise.
+    
+    Our filter:
+    - must have zero-phase
+        ^ we don't want the speed profile to be late
+    - must be quick
+        ^ we don't want to resample the signal (if you want to try, good luck with aliasing)
+    - must be a low pass filter
+        ^ we tried a simple weighted moving average, but unfortunately it doesn't cut it
+
+    Due to the non-uniform sampling we use a standard causal continuous IIR filter with a bilinear approximation
+    (see the NonUniformBilinearApproxIIRFilter class). This is kind of expensive, but it's hard to get wrong.
+
+    Obviously, being a causal filter it does not have a non-zero phase, 
+    so we perform one forward pass and a backwards one, just like "filtfilt" from MATLAB.
+
+    As a filter, we chose a Butterworth filter. 3rd is the highest order that takes a reasonable computational time (see the NonUniformBi... whatever).
+    Cascading two of them results in a reasonable computation cost and a good response.
+
+    Achieving a similar result with a single 4th order filter takes double the time (ouch)!
+
+    The filter state-space matrices were obtained with:
+    [A,B,C,D] = butter(3, 0.7, 's')
+
+    Please note that you need to design a CONTINUOUS time (ANALOG) filter!
+    */
+
+    const NonUniformBilinearApproxIIRFilter<3> FILTER_PROTOTYPE(
+      0, Eigen::Matrix<double, 3, 1>::Zero(),
+      Eigen::Matrix<double, 3, 3> {
+        { -0.7, 0, 0 },
+        { 0.7, -0.7, -0.7 },
+        { 0, 0.7, 0 }
+      },
+      Eigen::Matrix<double, 3, 1> {
+        { 0.7 },
+        { 0 },
+        { 0 }
+      },
+      Eigen::Matrix<double, 1, 3> {
+        { 0, 0, 1 }
+      },
+      0
+    );
+
+    {
+      auto fil1 = FILTER_PROTOTYPE;
+      auto fil2 = FILTER_PROTOTYPE;
+      for (int i = 1; i < n_waypoints(); ++i) {
+        double ds = m_data[i-1](PointData::DistToNext);
+        m_data[i](PointData::Curvature) = fil2(fil1(m_data[i](PointData::Curvature), ds), ds);
+      }
+    }
+
+    {
+      auto fil1 = FILTER_PROTOTYPE;
+      auto fil2 = FILTER_PROTOTYPE;
+      for (int i = n_waypoints() - 1; i >= 0; --i) {
+        double ds = m_data[i](PointData::DistToNext);
+        m_data[i](PointData::Curvature) = fil2(fil1(m_data[i](PointData::Curvature), ds), ds);
+      }
+    }
 
     m_is_data_valid = true;
   }
@@ -430,7 +503,7 @@ public:
     Eigen::IOFormat CSVFormat(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", ", ");
     
     std::ofstream f(path);
-    f << "x,y,s,k,vx_max\n";
+    f << "x,y,seg_len,k\n";
 
     for (int i = 0; i < n_waypoints(); ++i)
       f << m_waypoints[i].format(CSVFormat) << ", " << m_data[i].format(CSVFormat) << "\n";

@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(control_node)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Whether to use the custom visualization msgs or the standard ones
 set(USE_KRIA_MSGS ON)
