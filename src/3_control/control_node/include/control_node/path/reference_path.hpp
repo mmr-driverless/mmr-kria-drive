@@ -7,9 +7,9 @@
 #include <eigen3/Eigen/Dense>
 #include <span>
 #include <fstream>
-#include <ranges>
 
 #include <control_node/path/geometry_helpers.hpp>
+#include <control_node/path/non_uniform_first_order_filter.hpp>
 
 namespace control_node {
 namespace path {
@@ -405,8 +405,8 @@ public:
       m_data[i](PointData::DistToNext) = next_i >= 0? (m_waypoints[next_i] - m_waypoints[i]).norm() : NAN;
     }
   
-    // Compute path curvature
-    m_data[0](PointData::Curvature) = 0; // This remains 0 unless the path is closed.
+    // Compute the path curvature
+    m_data[0](PointData::Curvature) = 0;
     for (int prev_idx = 0; prev_idx < n_waypoints(); ++prev_idx) {
       int curr_idx = compute_index(prev_idx, 1);
       if (curr_idx == -1)
@@ -414,62 +414,87 @@ public:
       
       int next_idx = compute_index(curr_idx, 1);
       if (next_idx == -1) {
-        // Keep the last curvature.
-        m_data[curr_idx](PointData::Curvature) = m_data[prev_idx](PointData::Curvature);
+        m_data[curr_idx](PointData::Curvature) = 0;
         break;
+      }
+
+      // Handle the degenerate case in which the planner spits out duplicate waypoints.
+      // TODO: we shouldn't just set curvature to 0, but instead filter out duplicate waypoints.
+      if (m_data[prev_idx](PointData::DistToNext) <= 0 || m_data[curr_idx](PointData::DistToNext) <= 0) {
+        m_data[curr_idx](PointData::Curvature) = 0;
+        continue;
       }
 
       m_data[curr_idx](PointData::Curvature) = geometry_helpers::menger_curvature(m_waypoints[prev_idx], m_waypoints[curr_idx], m_waypoints[next_idx]);
     }
+
+
+    /*
+    Filter the path curvature.
+    We have a nonuniformly sampled signal k(s), or the curvature at a certain arc length.
+    The signal is extremely noisy, as we're computing the instantaneous, local curvature at each waypoint.
+    This results in a lot of high-frequency noise.
     
-    // Smoothen path curvature
-    int half_window_size = 10; //Meters in front and meters behind point at curr_idx (is an arbitrary value)
+    Our filter:
+    - must have zero-phase
+        ^ we don't want the speed profile to be late
+    - must be quick
+        ^ we don't want to resample the signal (if you want to try, good luck with aliasing)
+    - must be a low pass filter
+        ^ we tried a simple weighted moving average, but unfortunately it doesn't cut it
 
-    std::vector<double> filtered_k;
-    filtered_k.resize(m_data.size());
+    Due to the non-uniform sampling we use a standard causal continuous IIR filter with a bilinear approximation
+    (see the NonUniformBilinearApproxIIRFilter class). This is kind of expensive, but it's hard to get wrong.
 
-    //for each waypoint
-    for (int curr_idx = 0; curr_idx < n_waypoints(); ++curr_idx) 
-    { 
-      // Compute the start and end of the window.
-      PointRef window_start = trace_back_point(curr_idx, half_window_size); 
-      PointRef window_end = advance_point(curr_idx, half_window_size);
+    Obviously, being a causal filter it does not have a non-zero phase, 
+    so we perform one forward pass and a backwards one, just like "filtfilt" from MATLAB.
 
-      // Compute the first and last waypoints s.t. PointRef(first_waypoint_idx) >= window_start && PointRef(last_window_idx) <= window_end
-      int last_waypoint_idx = window_end.prev_waypoint_idx;
-      int first_waypoint_idx = compute_index(window_start.prev_waypoint_idx, 1);
-      if (first_waypoint_idx < 0 || first_waypoint_idx >= last_waypoint_idx)
-        first_waypoint_idx = last_waypoint_idx;
+    As a filter, we chose a Butterworth filter. 3rd is the highest order that takes a reasonable computational time (see the NonUniformBi... whatever).
+    Cascading two of them results in a reasonable computation cost and a good response.
 
-      // Compute the area under the curve and the cumulative distance, in order to later compute a weighted average.
-      auto compute_area_fn = [](double fa, double fb, double ab) { return 0.5 * (fa + fb) * ab; };
-      double area_under_curve = 0.0;
-      double actual_window_width = 0.0;
+    Achieving a similar result with a single 4th order filter takes double the time (ouch)!
 
-      // The start and end of the window are (possibly) not waypoints.
-      double d_start = (get_position(window_start) - m_waypoints[first_waypoint_idx]).norm();
-      double d_end = (get_position(window_end) - m_waypoints[last_waypoint_idx]).norm();
+    The filter state-space matrices were obtained with:
+    [A,B,C,D] = butter(3, 0.7, 's')
 
-      area_under_curve += compute_area_fn(get_data_impl(window_start).curvature, m_data[first_waypoint_idx](PointData::Curvature), d_start);
-      area_under_curve += compute_area_fn(get_data_impl(window_end).curvature, m_data[last_waypoint_idx](PointData::Curvature), d_end);
-      actual_window_width += d_start + d_end;
+    Please note that you need to design a CONTINUOUS time (ANALOG) filter!
+    */
 
-      for (int i = first_waypoint_idx; i < last_waypoint_idx; ++i) {
-        int next_waypoint_idx = compute_index(i, 1);
+    const NonUniformBilinearApproxIIRFilter<3> FILTER_PROTOTYPE(
+      0, Eigen::Matrix<double, 3, 1>::Zero(),
+      Eigen::Matrix<double, 3, 3> {
+        { -0.7, 0, 0 },
+        { 0.7, -0.7, -0.7 },
+        { 0, 0.7, 0 }
+      },
+      Eigen::Matrix<double, 3, 1> {
+        { 0.7 },
+        { 0 },
+        { 0 }
+      },
+      Eigen::Matrix<double, 1, 3> {
+        { 0, 0, 1 }
+      },
+      0
+    );
 
-        // We're inside the window, so it's impossible that we find the path end (otherwise the window would be malformed)
-        assert(next_waypoint_idx > 0 && "Malformed window! At waypoint < window end but found the path end??");
-        
-        double d = m_data[i](PointData::DistToNext);
-        actual_window_width += d;
-        area_under_curve += compute_area_fn(m_data[i](PointData::Curvature), m_data[next_waypoint_idx](PointData::Curvature), d);
+    {
+      auto fil1 = FILTER_PROTOTYPE;
+      auto fil2 = FILTER_PROTOTYPE;
+      for (int i = 1; i < n_waypoints(); ++i) {
+        double ds = m_data[i-1](PointData::DistToNext);
+        m_data[i](PointData::Curvature) = fil1(m_data[i](PointData::Curvature), ds), ds);
       }
-
-      filtered_k[curr_idx] = area_under_curve / actual_window_width;
     }
-    
-    for (int i = 0; i < n_waypoints(); ++i)
-      m_data[i](PointData::Curvature) = filtered_k[i];
+
+    {
+      auto fil1 = FILTER_PROTOTYPE;
+      auto fil2 = FILTER_PROTOTYPE;
+      for (int i = n_waypoints() - 1; i >= 0; --i) {
+        double ds = m_data[i](PointData::DistToNext);
+        m_data[i](PointData::Curvature) = fil2(fil1(m_data[i](PointData::Curvature), ds), ds);
+      }
+    }
 
     m_is_data_valid = true;
   }
