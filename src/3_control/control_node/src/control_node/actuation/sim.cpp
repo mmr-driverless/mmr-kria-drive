@@ -12,6 +12,11 @@ void Sim::actuate(const control::Control& u) {
   if (m_enabled) {
     ackermann_msgs::msg::AckermannDrive msg;
     msg.steering_angle = u.steer;
+    if (u.brake > 0) {
+      msg.speed = -u.brake;
+    } else {
+      msg.speed = u.throttle;
+    }
     m_pub->publish(msg);
   }
 }
