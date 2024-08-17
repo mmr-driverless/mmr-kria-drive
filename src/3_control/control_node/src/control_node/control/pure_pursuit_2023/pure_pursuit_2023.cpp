@@ -1,3 +1,4 @@
+#include <cmath>
 #include <control_node/viz/viz_manager.hpp>
 #include <control_node/parameters.hpp>
 #include <control_node/viz/msgs/viz_msgs.hpp>
@@ -32,9 +33,30 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
 
 void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) {
   m_vp = &vp;
+
+  m_targetSpeedPub = node.create_publisher<sensor_msgs::msg::Temperature>("/control/targetSpeed", 1);
+
   m_logger = logger;
   m_minLookForward = p.get<double>("minLookForward");
+  m_minLookForwardGain = p.get<double>("minLookForwardGain");
   m_steerGain = p.get<double>("steerGain");
+  m_minSpeedDistance = p.get<double>("minSpeedDistance");
+  m_minSpeed = p.get<double>("minSpeed");
+  m_accel_apps_p = p.get<double>("accel_apps_p");
+  m_accel_brake_p = p.get<double>("accel_brake_p");
+  m_accel_lookforward = p.get<double>("accel_lookforward");
+  m_accel_k_smooth = p.get<double>("accel_k_smooth");
+
+  auto dyn_speed_p = p.subparams("dynamicTargetSpeed");
+  m_dynamicTargetSpeed.enabled = dyn_speed_p.get<bool>("enabled");
+  if (m_dynamicTargetSpeed.enabled) {
+    m_dynamicTargetSpeed.slowLaps = dyn_speed_p.get<int>("slowLaps");
+    m_dynamicTargetSpeed.k_smooth = dyn_speed_p.get<double>("k_smooth");
+    m_dynamicTargetSpeed.maxSpeed = dyn_speed_p.get<double>("maxSpeed");
+    m_dynamicTargetSpeed.targetSpeedWeight = dyn_speed_p.get<double>("targetSpeedWeight");
+  }
+
+  m_smoothedSpeed = m_minSpeed;
 
   m_viz_mgr = &viz_mgr;
 
@@ -45,6 +67,13 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
     viz_p.parse_rgba("color", m_viz_lookforward_alpha),
     { scale, scale, 0.01 }
   );
+}
+
+void PurePursuit2023::pub_target_speed(std::chrono::nanoseconds t, double speed) {
+  sensor_msgs::msg::Temperature msg;
+  msg.header.stamp = rclcpp::Time(t.count());
+  msg.temperature = speed;
+  m_targetSpeedPub->publish(msg);
 }
 
 void PurePursuit2023::viz(std::optional<Eigen::Vector2d> target) {
@@ -70,16 +99,88 @@ Control PurePursuit2023::control(
   int lap
 ) {
 
-  viz(target);
+  // If we have a speed estimate, compute the dynamic lookforward
+  double dynamic_lookforward = 0.0;
+  if (state.speed().has_value())
+    dynamic_lookforward = m_minLookForwardGain * state.speed().value();
+  
+  // Compute the steer and speed lookforward.
+  double steer_lookforward = m_minLookForward + dynamic_lookforward;
+  double speed_lookforward = m_minSpeedDistance + dynamic_lookforward;
+
+  // Do we know where we are on the track?
+  bool is_projection_valid = vehicle_path_projection.has_value();
+
+  // Get the steer target position
+  std::optional<Eigen::Vector2d> targetPosition;
+  if (is_projection_valid) {
+    auto steer_target_ref = reference_path.advance_point(*vehicle_path_projection, steer_lookforward);
+    targetPosition = reference_path.get_position(steer_target_ref);
+  }
+
+  // Compute the target speed
+  double targetSpeed;
+  if (m_dynamicTargetSpeed.enabled && lap > m_dynamicTargetSpeed.slowLaps) {
+    // Use dynamic target speed
+
+    if (!m_using_dynamic_speed) {
+      RCLCPP_INFO(*this->m_logger, "Transitioning to dynamic target speed!");
+      m_using_dynamic_speed = true;
+    }
+
+    // Get the target speed at the lookforward point
+    double new_target_speed = m_minSpeed;
+    if (is_projection_valid) {
+      auto speed_target_ref = reference_path.advance_point(*vehicle_path_projection, speed_lookforward);
+
+      if (auto tgt_speed = reference_path.get_target_speed(speed_target_ref))
+        new_target_speed = *tgt_speed;
+    }
+
+    // Smooth the target speed in the time-domain with a first order IIR filter
+    double smoothed = m_smoothedSpeed * (1 - m_dynamicTargetSpeed.k_smooth) + new_target_speed * m_dynamicTargetSpeed.k_smooth;
+    if (std::isnan(smoothed)) {
+      RCLCPP_ERROR(*m_logger, "NAN target speed!!!");
+      smoothed = m_minSpeed;
+    }
+
+    m_smoothedSpeed = std::clamp<double>(smoothed, m_minSpeed, m_dynamicTargetSpeed.maxSpeed);
+    targetSpeed = m_smoothedSpeed;
+  } else {
+    // Use static speed
+    targetSpeed = m_minSpeed;
+  }
+
+  pub_target_speed(t, targetSpeed);
+  viz(targetPosition);
 
   Control u(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
-  if (state.position().has_value() && state.yaw().has_value() && target.has_value()) {
+  if (state.speed().has_value()) {
+    double accv = (std::pow(targetSpeed, 2) - std::pow(*state.speed(), 2)) / (2 * m_accel_lookforward);
+
+    // Smooth the target acceleration in the time-domain with yet another first order IIR filter
+    m_smoothedAccel = m_smoothedAccel * (1 - m_accel_k_smooth) + accv * m_accel_k_smooth;
+
+    // TODO: Use the low level controller from canbusbridge, this is just a placeholder
+    auto apps_brake_from_accel = [this](double accel) -> std::pair<double, double> {
+      if (accel >= 0)
+        return { this->m_accel_apps_p * accel, 0.0 };
+      else
+        return { 0.0, this->m_accel_brake_p * (-accel) };
+    };
+
+    auto [apps, brake_torque] = apps_brake_from_accel(m_smoothedAccel);
+    u.throttle = std::clamp<double>(apps, 0.0, 1.0);
+    u.brake = brake_torque;
+  }
+
+  if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
     u.steer = calculateSteeringTarget(
-      *target,
+      *targetPosition,
       *state.position(),
       *state.yaw(),
-      lookforward,
+      steer_lookforward,
       m_steerGain,
       m_vp->max_steering_angle(),
       m_vp->lr(),
