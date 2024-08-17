@@ -404,6 +404,21 @@ public:
       };
   }
 
+  std::optional<double> get_target_speed(const PointRef& at) const {
+    if (n_waypoints() <= 0 || !m_data.metadata.is_target_speed_valid)
+      return std::nullopt;
+
+    assert(is_valid_reference(at) && "at must be a valid reference.");
+
+    double speed = m_data.data.target_speed[at.prev_waypoint_idx];
+
+    int succ_idx = compute_index(at.prev_waypoint_idx, 1);
+    if (succ_idx < 0)
+      return speed;
+
+    return speed + (m_data.data.target_speed[succ_idx] - speed) * at.t;
+  }
+
   void compute_data() {
     if (!m_data.metadata.is_dist_to_next_valid) {
       // Compute, for each waypoint, the length of the segment that connects it to the next waypoint
@@ -417,6 +432,10 @@ public:
 
     if (!m_data.metadata.is_curvature_valid) {
       geometry_helpers::curvature(is_closed(), m_data.data.dist_to_next, m_waypoints, m_data.data.curvature);
+
+      // For simplicity, we assume the start and end are straights.
+      m_data.data.curvature.front() = 0;
+      m_data.data.curvature.back() = 0;
 
       /*
       Filter the path curvature.
@@ -450,7 +469,7 @@ public:
       */
 
       const NonUniformBilinearApproxIIRFilter<3> FILTER_PROTOTYPE(
-        0, Eigen::Matrix<double, 3, 1>::Zero(),
+        0, Eigen::Matrix<double, 3, 1>::Zero(), // We assume that the start and end are straights!!
         Eigen::Matrix<double, 3, 3> {
           { -0.7, 0, 0 },
           { 0.7, -0.7, -0.7 },
@@ -479,7 +498,7 @@ public:
       {
         auto fil1 = FILTER_PROTOTYPE;
         auto fil2 = FILTER_PROTOTYPE;
-        for (int i = n_waypoints() - 1; i >= 0; --i) {
+        for (int i = n_waypoints() - 2; i >= 0; --i) {
           double ds = m_data.data.dist_to_next[i];
           m_data.data.curvature[i] = fil2(fil1(m_data.data.curvature[i], ds), ds);
         }
