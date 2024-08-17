@@ -32,7 +32,7 @@ inline static void update_marker(viz::VizManager& mgr, int mid, std::optional<Ei
 }
 
 void ControlNode::tick() {
-  std::chrono::nanoseconds t((this->get_clock()->now() - m_start_time).nanoseconds());
+  std::chrono::nanoseconds t(this->get_clock()->now().nanoseconds());
   RCLCPP_DEBUG(this->get_logger(), "Tick @%ld.%03lds", std::chrono::duration_cast<std::chrono::seconds>(t).count(), std::chrono::duration_cast<std::chrono::milliseconds>(t).count() % 1000);
 
   m_viz_mgr.pre_tick(t);
@@ -107,7 +107,6 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_path_threshold2 = path_threshold * path_threshold;
 
   m_has_completed_path = false;
-  m_start_time = this->get_clock()->now();
 
   auto projection_marker_p = tracking_p.subparams("projection_marker");
   m_path_projection_marker = m_viz_mgr.get_new(viz::msgs::Marker::CYLINDER, projection_marker_p.parse_rgba("color", m_path_projection_marker_alpha), flat_scale(projection_marker_p.get<double>("diameter")));
