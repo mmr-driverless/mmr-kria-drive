@@ -18,7 +18,7 @@ class Inspection : public IController {
 public:
     Inspection();
 
-    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) override;
+    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger) override;
 
     virtual Control control(
         std::chrono::nanoseconds t,

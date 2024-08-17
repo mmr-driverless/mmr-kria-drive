@@ -10,7 +10,7 @@ Inspection::Inspection()
     m_steer_fraction(0.0)
 { }
 
-void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) {
+void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger) {
   m_vp = &vp;
   m_frequency = p.get<double>("frequency");
   m_steer_fraction = p.get<double>("steer_fraction");

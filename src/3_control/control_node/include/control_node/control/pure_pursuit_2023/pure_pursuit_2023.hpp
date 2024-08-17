@@ -9,6 +9,7 @@ namespace control {
 namespace pure_pursuit_2023 {
 
 class PurePursuit2023 : public IController {
+  std::optional<rclcpp::Logger> m_logger;
   const VehicleParameters* m_vp;
   double m_minLookForward;
   double m_steerGain;
@@ -20,7 +21,8 @@ class PurePursuit2023 : public IController {
   void viz(std::optional<Eigen::Vector2d> target);
 
 public:
-  virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr) override;
+  
+  virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) override;
 
   virtual Control control(
     std::chrono::nanoseconds t,

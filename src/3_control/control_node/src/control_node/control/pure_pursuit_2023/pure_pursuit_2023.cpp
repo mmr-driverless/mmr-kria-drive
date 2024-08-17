@@ -30,8 +30,9 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
   return std::clamp(wheelRotation, -max_steer, max_steer);
 }
 
-void PurePursuit2023::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr) {
+void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) {
   m_vp = &vp;
+  m_logger = logger;
   m_minLookForward = p.get<double>("minLookForward");
   m_steerGain = p.get<double>("steerGain");
 

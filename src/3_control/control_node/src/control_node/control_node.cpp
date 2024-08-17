@@ -147,7 +147,7 @@ void ControlNode::setup_controller() {
   }
   
   RCLCPP_INFO(this->get_logger(), "INITIALIZING controller '%s'.", type.c_str());
-  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr);
+  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr, this->get_logger().get_child(type));
 }
 
 };
