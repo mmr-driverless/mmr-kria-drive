@@ -20,7 +20,8 @@ Control Inspection::control(
   std::chrono::nanoseconds t,
   const estimation::IVehicleState&,
   const path::ReferencePath&,
-  const std::optional<path::ReferencePath::PointRef>&
+  const std::optional<path::ReferencePath::PointRef>&,
+  int
 ) {
   if (!m_start_t.has_value())
     m_start_t = t;

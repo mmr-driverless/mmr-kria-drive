@@ -24,7 +24,8 @@ public:
         std::chrono::nanoseconds t,
         const estimation::IVehicleState& state,
         const path::ReferencePath& reference_path,
-        const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
+        const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
+        int lap
     ) override;
 };
 

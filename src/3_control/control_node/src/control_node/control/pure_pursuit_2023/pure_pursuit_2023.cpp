@@ -62,18 +62,12 @@ void PurePursuit2023::viz(std::optional<Eigen::Vector2d> target) {
 }
 
 Control PurePursuit2023::control(
-  std::chrono::nanoseconds,
+  std::chrono::nanoseconds t,
   const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,
-  const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
+  const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
+  int lap
 ) {
-  double lookforward = m_minLookForward;
-  std::optional<Eigen::Vector2d> target;
-
-  if (vehicle_path_projection.has_value() && vehicle_path_projection.has_value()) {
-    auto target_ref = reference_path.advance_point(*vehicle_path_projection, lookforward);
-    target = reference_path.get_position(target_ref);
-  }
 
   viz(target);
 

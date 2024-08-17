@@ -73,6 +73,8 @@ public:
   void race_status_cb(std::shared_ptr<const std_msgs::msg::Int8> msg) { m_lap = msg->data; }
 
   control::Control tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u);
+
+  inline int lap() const { return m_lap.value_or(0); }
 };
 
 }; // namespace event

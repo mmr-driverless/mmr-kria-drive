@@ -62,7 +62,7 @@ void ControlNode::tick() {
   }
 
   // Decide what inputs to apply based on the current vehicle state and position relative to the path.
-  control::Control u = m_controller->control(t, x, path, closest_point);
+  control::Control u = m_controller->control(t, x, path, closest_point, m_event_mgr.lap());
 
   // Override the controls to perform the start and stop maneuvers.
   u = m_event_mgr.tick(t, x, u);
