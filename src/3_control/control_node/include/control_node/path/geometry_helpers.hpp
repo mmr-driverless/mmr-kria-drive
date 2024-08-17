@@ -48,8 +48,10 @@ inline double menger_curvature(Eigen::Vector2d prev, Eigen::Vector2d curr, Eigen
   );
 }
 
-void curvature(bool is_loop, std::span<const double> ds, std::span<const Eigen::Vector2d> pts, std::span<double> k) {
-    if (pts.size() < 3) {
+static void curvature(bool is_loop, std::span<const double> ds, std::span<const Eigen::Vector2d> pts, std::span<double> k) {
+    int N = pts.size();
+
+    if (N < 3) {
         std::fill(k.begin(), k.end(), 0);
         return;
     }
@@ -66,7 +68,7 @@ void curvature(bool is_loop, std::span<const double> ds, std::span<const Eigen::
         Eigen::Vector2d fpp;
 
         if (is_loop) {
-            int pred_idx = pts.size() - 1;
+            int pred_idx = N - 1;
 
             // Use central difference if we have a predecessor.
             fp_prev = (pts[0] - pts[pred_idx - 1]) / (ds[pred_idx - 1] + ds[pred_idx]);
@@ -86,7 +88,7 @@ void curvature(bool is_loop, std::span<const double> ds, std::span<const Eigen::
     }
 
     // Compute the middle part with central differences.
-    for (int i = 1; i < pts.size() - 2; ++i) {
+    for (int i = 1; i < N - 2; ++i) {
         fp_prev = fp;
         fp = fp_next;
         fp_next = (pts[i+2] - pts[i]) / (ds[i] + ds[i+1]);
@@ -99,7 +101,7 @@ void curvature(bool is_loop, std::span<const double> ds, std::span<const Eigen::
     {
         fp_prev = fp;
         fp = fp_next;
-        int curr_idx = pts.size() - 2;
+        int curr_idx = N - 2;
 
         if (is_loop) {
             fp_next = fp_last;

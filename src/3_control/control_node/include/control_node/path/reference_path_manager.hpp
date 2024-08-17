@@ -16,7 +16,9 @@ namespace path {
 
 class ReferencePathManager {
   std::vector<Eigen::Vector2d> m_waypoints;
-  std::vector<ReferencePath::PointData::StorageT> m_data;
+  std::vector<double> m_data_dist_to_next;
+  std::vector<double> m_data_curvature;
+  std::vector<double> m_data_target_speed;
 
   std::vector<std::pair<int, std::unique_ptr<sources::ReferencePathSource>>> m_sources;
   int m_max_activated_source_idx;

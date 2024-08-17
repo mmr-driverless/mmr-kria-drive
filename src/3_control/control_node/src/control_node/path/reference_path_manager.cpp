@@ -49,7 +49,7 @@ void ReferencePathManager::on_source_notification(int source_id, size_t path_siz
     return;
   }
   
-  RCLCPP_INFO(m_logger, "RECEIVED path from source %d.", source_id);
+  RCLCPP_INFO(m_logger, "RECEIVED path from source %d (%zu waypoints)", source_id, path_size);
   if (source_id >= m_max_activated_source_idx)
     m_max_activated_source_idx = source_id;
 
@@ -57,14 +57,18 @@ void ReferencePathManager::on_source_notification(int source_id, size_t path_siz
 
   // Accomodate for the path size
   m_waypoints.resize(path_size);
-  m_data.resize(path_size);
-
-  auto waypoints_view = std::span<decltype(m_waypoints)::value_type>(m_waypoints);
-  auto data_view = std::span<decltype(m_data)::value_type>(m_data);
+  m_data_curvature.resize(path_size);
+  m_data_dist_to_next.resize(path_size);
+  m_data_target_speed.resize(path_size);
 
   // Update the path
-  auto props = ufn.get()(waypoints_view, data_view);
-  m_path = ReferencePath(waypoints_view, data_view, props);
+  auto data = ReferencePath::PathData(m_data_dist_to_next, m_data_curvature, m_data_target_speed);
+  auto result = ufn.get()(
+    m_waypoints,
+    data.data
+  );
+  data.metadata = result.data_metadata;
+  m_path = ReferencePath(m_waypoints, data, result.is_closed);
   m_path.compute_data();
 
   if (m_dump_paths_dir.has_value()) {
