@@ -39,6 +39,7 @@ class EventManager {
     Launch_RevBeforeEngage,
     Launch_EngageClutch,
     Launch_RevAfterEngage,
+    Driving_WithLC,
     Driving,
     Stop_DisengageClutch,
     Stop_WaitForNeutral,
@@ -61,6 +62,7 @@ class EventManager {
   std::chrono::milliseconds m_rev_duration_after_engage;
 
   std::chrono::milliseconds m_fsm_step_start_time;
+  std::chrono::milliseconds m_lc_duration_after_launch;
 
   double m_stop_light_brake;
   double m_stop_hard_brake;

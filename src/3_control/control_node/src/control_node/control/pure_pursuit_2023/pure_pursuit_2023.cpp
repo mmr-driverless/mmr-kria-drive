@@ -77,7 +77,7 @@ Control PurePursuit2023::control(
 
   viz(target);
 
-  Control u(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
+  Control u(0.0, 0.1, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
   if (state.position().has_value() && state.yaw().has_value() && target.has_value()) {
     u.steer = calculateSteeringTarget(

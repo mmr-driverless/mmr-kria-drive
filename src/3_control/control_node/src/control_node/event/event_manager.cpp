@@ -22,6 +22,7 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_standstill_time(std::chrono::milliseconds(p.get<int>("standstill_time_ms"))),
     m_rev_duration_before_engage(std::chrono::milliseconds(p.get<int>("rev_duration_before_engage_ms"))),
     m_rev_duration_after_engage(std::chrono::milliseconds(p.get<int>("rev_duration_after_engage_ms"))),
+    m_lc_duration_after_launch(std::chrono::milliseconds(p.get<int>("lc_duration_after_launch_ms"))),
     m_stop_light_brake(p.get<double>("stop_light_brake")),
     m_stop_hard_brake(p.get<double>("stop_hard_brake")),
     m_self_is_disabled_but_requested_actuators_enable(false)
@@ -120,8 +121,9 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
 
     case EventState::Launch_RevAfterEngage:
       if ((t - m_fsm_step_start_time) >= m_rev_duration_after_engage) {
-        RCLCPP_INFO(m_logger, "Launch finished. Letting the controller drive until lap %d.", m_lap_to_stop);
-        m_event_state = EventState::Driving;
+        RCLCPP_INFO(m_logger, "Launch finished. Waiting %ld milliseconds before disabling LC...", m_lc_duration_after_launch.count());
+        m_fsm_step_start_time = t;
+        m_event_state = EventState::Driving_WithLC;
       }
       return control::Control(
         u.steer,
@@ -132,12 +134,23 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
         control::Control::LaunchControl::Set
       );
     
+    case EventState::Driving_WithLC:
+      if ((t - m_fsm_step_start_time) >= m_lc_duration_after_launch) {
+        RCLCPP_INFO(m_logger, "Launch finished. Letting the controller drive until lap %d.", m_lap_to_stop);
+        m_event_state = EventState::Driving;
+      }
+      {
+        control::Control ctrl(u);
+        ctrl.launch = control::Control::LaunchControl::Set;
+        return ctrl;
+      }
+
     case EventState::Driving:
       if (m_lap.has_value() && m_lap.value() >= m_lap_to_stop) {
         RCLCPP_INFO(m_logger, "Target lap reached. Disengaging clutch.");
         m_event_state = EventState::Stop_DisengageClutch;
       }
-      return u; // woah
+      return u;
 
     case EventState::Stop_DisengageClutch:
       if (x.clutch_is_engaged().has_value() && !x.clutch_is_engaged().value()) {
@@ -179,7 +192,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
         u.steer,
         0.0,
         m_stop_hard_brake,
-        control::Control::Clutch::Disengaged,
+        control::Control::Clutch::Engaged,
         0,
         control::Control::LaunchControl::Unset
       );
@@ -200,7 +213,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
         0.0,
         0.0,
         m_stop_hard_brake,
-        control::Control::Clutch::Disengaged,
+        control::Control::Clutch::Engaged,
         0,
         control::Control::LaunchControl::Unset
       );

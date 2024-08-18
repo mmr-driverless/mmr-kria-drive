@@ -39,6 +39,8 @@
         odometry_topic: "/Odometry"
         ecu_status:
           topic: "/status/ecu"
+          qos:
+            reliability: best_effort
         actuator_status:
           topic: "/actuator/status"
 
@@ -51,12 +53,13 @@
       stop:
         topic: "/stop"
       
-      rev_duration_before_engage_ms: 2000
+      rev_duration_before_engage_ms: 1000
       launch_throttle: 0.3
       launch_brake: 0.15
-      rev_duration_after_engage_ms: 2000
+      rev_duration_after_engage_ms: 1000
       stop_light_brake: 0.15
       stop_hard_brake: 0.4
+      interval_between_engage_disable_lc_ms: 1000
       
       standstill_speed_m_s: 0.3
       standstill_time_ms: 2000
