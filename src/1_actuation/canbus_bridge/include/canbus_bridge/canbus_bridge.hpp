@@ -85,14 +85,14 @@ class CANBusBridge : public EDFNode
         /* Gear Parameters */
         bool m_bWorkOnGearUpDown = false;
         uint8_t m_unGearCtrLimit;
-        long int m_lLastGearTime = 0, m_lGearChangeDeltaTime;
+        long int m_lLastGearTime = 0, m_lGearChangeDeltaTime, m_lDelayCmdEcuGear;
 
         /* Launch Control Parameters */
-        long int m_lLastLCTime = 0, m_lLCChangeDeltaTime;
+        long int m_lLastLCTime = 0, m_lLCChangeDeltaTime, m_lDelayCmdEcuLaunch;
         int m_nLaunchControlCtr;
 
         /* Set Neutral Parameters */
-        long int m_lLastNeutralTime = 0, m_lNeutralChangeDeltaTime;
+        long int m_lLastNeutralTime = 0, m_lNeutralChangeDeltaTime, m_lDelayCmdEcuNeutral;
         int m_nNeutralCtr;
 
         int m_nSocket;

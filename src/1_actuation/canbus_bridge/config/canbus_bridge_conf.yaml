@@ -19,10 +19,13 @@
       outputImuTopic: "/canbus/imu/data"
     gear:
       ctrLimit: 5
-      changeDeltaTime: 200 #ms
+      changeDeltaTime: 500 #ms
+      delayCmdEcu: 1 #ms
     launch_control:
       ctrLimit: 2
-      changeDeltaTime: 200 #ms
+      changeDeltaTime: 500 #ms
+      delayCmdEcu: 50 #ms
     neutral:
       ctrLimit: 2
-      changeDeltaTime: 100 #ms
+      changeDeltaTime: 500 #ms
+      delayCmdEcu: 50 #ms

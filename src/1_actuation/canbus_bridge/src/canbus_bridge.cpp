@@ -17,6 +17,13 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
         this->m_sTopicTx.c_str(), this->m_sCmdEcuTopic.c_str(), this->m_sTopicRx.c_str(), this->m_sEcuStatusTopic.c_str(), this->m_sResStatusTopic.c_str()
     );
 
+    if (this->m_bDebug)
+        RCLCPP_INFO(
+            this->get_logger(),
+            "[ PERIOD GEAR UP/DOWN ]: %ld, [ PERIOD SET LAUNCH CONTROL ]: %ld, [ PERIOD SET NEUTRAL GEAR ]: %ld",
+            this->m_lDelayCmdEcuGear, this->m_lDelayCmdEcuLaunch, this->m_lDelayCmdEcuNeutral
+        );
+
     this->connectCANBus();
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
@@ -35,10 +42,10 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
     this->m_pubImuData = this->create_publisher<sensor_msgs::msg::Imu>(this->m_sOutImuDataTopic, qos);
 
-    this->m_ecGearUp.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_UP));
-    this->m_ecGearDown.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), 1, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_DOWN));
-    this->m_ecSetLaunchCtr.emplace(this->m_nSocket, &this->m_mutexOnSocket, this->m_nLaunchControlCtr, this->m_nLaunchControlCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL));
-    this->m_ecSetNeutral.emplace(this->m_nSocket, &this->m_mutexOnSocket, this->m_nNeutralCtr, this->m_nNeutralCtr, 50, this->getCanFrame(ECU::CMD::ACTIONS::SET_NEUTRAL));
+    this->m_ecGearUp.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), this->m_lDelayCmdEcuGear, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_UP));
+    this->m_ecGearDown.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), this->m_lDelayCmdEcuGear, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_DOWN));
+    this->m_ecSetLaunchCtr.emplace(this->m_nSocket, &this->m_mutexOnSocket, this->m_nLaunchControlCtr, this->m_nLaunchControlCtr, this->m_lDelayCmdEcuLaunch, this->getCanFrame(ECU::CMD::ACTIONS::SET_LAUNCH_CONTROL));
+    this->m_ecSetNeutral.emplace(this->m_nSocket, &this->m_mutexOnSocket, this->m_nNeutralCtr, this->m_nNeutralCtr, this->m_lDelayCmdEcuNeutral, this->getCanFrame(ECU::CMD::ACTIONS::SET_NEUTRAL));
 
 }
 
@@ -63,12 +70,15 @@ void CANBusBridge::loadParameters()
 
     declare_parameter("gear.ctrLimit", 5);
     declare_parameter("gear.changeDeltaTime", 200);
+    declare_parameter("gear.delayCmdEcu", 1);
 
     declare_parameter("launch_control.changeDeltaTime", 100);
     declare_parameter("launch_control.ctrLimit", 2);
+    declare_parameter("launch_control.delayCmdEcu", 50);
     
     declare_parameter("neutral.changeDeltaTime", 100);
     declare_parameter("neutral.ctrLimit", 2);
+    declare_parameter("neutral.delayCmdEcu", 50);
 
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
@@ -89,12 +99,15 @@ void CANBusBridge::loadParameters()
 
     get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
     get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
+    get_parameter("gear.delayCmdEcu", this->m_lDelayCmdEcuGear);
 
     get_parameter("launch_control.changeDeltaTime", this->m_lLCChangeDeltaTime);
     get_parameter("launch_control.ctrLimit", this->m_nLaunchControlCtr);
+    get_parameter("launch_control.delayCmdEcu", this->m_lDelayCmdEcuLaunch);
 
     get_parameter("neutral.changeDeltaTime", this->m_lNeutralChangeDeltaTime);
     get_parameter("neutral.ctrLimit", this->m_nNeutralCtr);
+    get_parameter("neutral.delayCmdEcu", this->m_lDelayCmdEcuNeutral);
 }
 
 void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg)
@@ -210,6 +223,18 @@ void CANBusBridge::connectCANBus()
     if (bind(this->m_nSocket, (struct sockaddr *)&this->m_addr, sizeof(this->m_addr)) < 0) {
         RCLCPP_ERROR(this->get_logger(), "Error on socker association");
         throw 1;        
+    }
+
+    can_frame frame = {
+        .can_id = 0x00,
+        .can_dlc = 1,
+        .data = { 0x01 }
+    };
+
+    {
+        std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
+        if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+            return;
     }
 }
 
