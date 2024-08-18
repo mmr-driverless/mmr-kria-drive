@@ -297,14 +297,16 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ]: engaged clutch");
 
-        this->m_mClutch->engage(fClutchPot);
+        if (this->m_mClutch != nullptr)
+            this->m_mClutch->engage(fClutchPot);
     }
     else { 
     
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ]: disengaged clutch");
-
-        this->m_mClutch->disengage(fClutchPot);
+        
+        if (this->m_mClutch != nullptr)
+            this->m_mClutch->disengage(fClutchPot);
     }
 }
 
