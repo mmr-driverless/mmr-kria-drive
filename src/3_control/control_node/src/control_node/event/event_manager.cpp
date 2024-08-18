@@ -108,7 +108,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
       return control::Control(
         u.steer,
         m_launch_throttle,
-        0.0,
+        m_launch_brake,
         control::Control::Clutch::Disengaged,
         1,
         m_use_lc? control::Control::LaunchControl::Set : control::Control::LaunchControl::Unset
@@ -136,7 +136,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
       return u; // woah
 
     case EventState::Stop_DisengageClutch:
-      if (x.clutch_is_engaged().has_value() && !x.clutch_is_engaged()) {
+      if (x.clutch_is_engaged().has_value() && !x.clutch_is_engaged().value()) {
         RCLCPP_INFO(m_logger, "Clutch disengaged. Stopping the car.");
         m_event_state = EventState::Stop_Halt;
       }

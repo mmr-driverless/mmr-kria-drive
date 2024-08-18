@@ -100,7 +100,7 @@ void CANOpenBridge::actuate(const control::Control& u) {
   if (m_status.clutch.is_enabled()) {
     mmr_base::msg::CmdMotor msg;
     msg.disengaged = (u.clutch == control::Control::Clutch::Disengaged);
-    m_steer_pub->publish(msg);
+    m_clutch_pub->publish(msg);
   }
 }
 
