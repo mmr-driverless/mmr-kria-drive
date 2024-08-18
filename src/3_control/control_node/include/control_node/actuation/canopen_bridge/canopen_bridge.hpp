@@ -21,6 +21,8 @@ class CANOpenBridge : public IActuator {
 
   std::optional<rclcpp::Logger> m_logger;
 
+  bool m_soft_enabled = false;
+
   enum class EnableRequest {
     None,
     Enable,
