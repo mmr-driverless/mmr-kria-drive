@@ -43,7 +43,7 @@
           topic: "/actuator/status"
 
     event_manager:
-      enabled: false # Disable this on the sim or when you're using the HUMAN POWERTRAIN
+      enabled: true # Disable this on the sim or when you're using the HUMAN POWERTRAIN
       as_state:
         topic: "/as/state"
       race_status:
@@ -56,6 +56,7 @@
       launch_rpm: 3000
       launch_speed: 4.0
       standstill_speed: 0.3
+      standstill_time_ms: 2000
       stop_brake: 0.15
       lap_to_stop: 12 # Stop when lap counter publishes this lap
       launch_control_timeout_ms: 2000

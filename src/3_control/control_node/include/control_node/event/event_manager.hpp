@@ -55,12 +55,13 @@ class EventManager {
   double m_launch_speed;
   
   double m_standstill_speed;
-  double m_stop_brake;
   std::chrono::milliseconds m_standstill_time;
-  std::chrono::milliseconds m_standstill_start_time;
-
-  std::chrono::milliseconds m_wait_lc_start_time;
   std::chrono::milliseconds m_lc_timeout;
+
+  double m_stop_brake;
+
+  std::chrono::milliseconds m_standstill_start_time;
+  std::chrono::milliseconds m_wait_lc_start_time;
   
   bool m_self_is_disabled_but_requested_actuators_enable; // fuck me
 

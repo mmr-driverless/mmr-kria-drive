@@ -22,8 +22,9 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_lap_to_stop(p.get<int>("lap_to_stop")),
     m_launch_speed(p.get<double>("launch_speed")),
     m_standstill_speed(p.get<double>("standstill_speed")),
-    m_stop_brake(p.get<double>("stop_brake")),
+    m_standstill_time(std::chrono::milliseconds(p.get<int>("standstill_time_ms"))),
     m_lc_timeout(std::chrono::milliseconds(p.get<int>("launch_control_timeout_ms"))),
+    m_stop_brake(p.get<double>("stop_brake")),
     m_self_is_disabled_but_requested_actuators_enable(false)
 {
 
