@@ -14,6 +14,7 @@ class Inspection : public IController {
     std::optional<std::chrono::nanoseconds> m_start_t;
     double m_frequency;
     double m_steer_fraction;
+    double m_throttle;
     
 public:
     Inspection();

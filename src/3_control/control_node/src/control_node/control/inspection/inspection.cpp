@@ -14,6 +14,7 @@ void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameter
   m_vp = &vp;
   m_frequency = p.get<double>("frequency");
   m_steer_fraction = p.get<double>("steer_fraction");
+  m_throttle = p.get<double>("throttle");
 }
 
 Control Inspection::control(
@@ -26,7 +27,7 @@ Control Inspection::control(
     m_start_t = t;
 
   double steering = std::sin(m_frequency * std::chrono::duration<double>(t - *m_start_t).count()) * m_vp->max_steering_angle() * m_steer_fraction;
-  return Control(steering, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
+  return Control(steering, 0.1, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 }
 
 }; // namespace inspection

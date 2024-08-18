@@ -59,7 +59,7 @@
       rev_duration_after_engage_ms: 1000
       stop_light_brake: 0.15
       stop_hard_brake: 0.4
-      interval_between_engage_disable_lc_ms: 1000
+      lc_duration_after_launch_ms: 1000
       
       standstill_speed_m_s: 0.3
       standstill_time_ms: 2000
