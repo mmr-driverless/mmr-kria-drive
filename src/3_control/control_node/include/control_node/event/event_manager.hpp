@@ -36,10 +36,12 @@ class EventManager {
     WaitingForBaseState,
     WaitingForActuators,
     Launch_SetLaunchControl,
-    Launch_Rev,
+    Launch_RevBeforeEngage,
     Launch_EngageClutch,
+    Launch_RevAfterEngage,
     Driving,
     Stop_DisengageClutch,
+    Stop_WaitForNeutral,
     Stop_Halt,
     Stop_EnsureStandstill,
     FinishedOrEmergency,
@@ -47,21 +49,21 @@ class EventManager {
   } m_event_state;
 
   bool m_enabled;
-  bool m_use_lc;
   double m_launch_throttle;
   double m_launch_brake;
-  int m_launch_rpm;
   int m_lap_to_stop;
-  double m_launch_speed;
   
   double m_standstill_speed;
+  
   std::chrono::milliseconds m_standstill_time;
-  std::chrono::milliseconds m_lc_timeout;
 
-  double m_stop_brake;
+  std::chrono::milliseconds m_rev_duration_before_engage;
+  std::chrono::milliseconds m_rev_duration_after_engage;
 
-  std::chrono::milliseconds m_standstill_start_time;
-  std::chrono::milliseconds m_wait_lc_start_time;
+  std::chrono::milliseconds m_fsm_step_start_time;
+
+  double m_stop_light_brake;
+  double m_stop_hard_brake;
   
   bool m_self_is_disabled_but_requested_actuators_enable; // fuck me
 

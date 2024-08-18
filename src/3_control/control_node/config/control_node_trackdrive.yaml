@@ -50,16 +50,17 @@
         topic: "/planning/race_status"
       stop:
         topic: "/stop"
-      use_lc: true
+      
+      rev_duration_before_engage_ms: 2000
       launch_throttle: 0.3
       launch_brake: 0.15
-      launch_rpm: 3000
-      launch_speed: 4.0
-      standstill_speed: 0.3
+      rev_duration_after_engage_ms: 2000
+      stop_light_brake: 0.15
+      stop_hard_brake: 0.4
+      
+      standstill_speed_m_s: 0.3
       standstill_time_ms: 2000
-      stop_brake: 0.15
       lap_to_stop: 12 # Stop when lap counter publishes this lap
-      launch_control_timeout_ms: 2000
 
     control:
       type: PurePursuit2023
