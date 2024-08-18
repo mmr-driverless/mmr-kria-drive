@@ -1,11 +1,15 @@
 #ifndef CONTROLNODE_PATH_REFERENCEPATHMANAGER_HPP
 #define CONTROLNODE_PATH_REFERENCEPATHMANAGER_HPP
 
+#include <vector>
+#include <filesystem>
+#include <optional>
+
 #include <rclcpp/rclcpp.hpp>
+
 #include <control_node/parameters.hpp>
 #include <control_node/path/reference_path.hpp>
 #include <control_node/path/sources/reference_path_source.hpp>
-#include <vector>
 
 namespace control_node {
 namespace path {
@@ -18,6 +22,9 @@ class ReferencePathManager {
   int m_max_activated_source_idx;
 
   bool m_changed;
+
+  unsigned int m_dump_paths_uid;
+  std::optional<std::filesystem::path> m_dump_paths_dir;
 
   ReferencePath m_path;
 

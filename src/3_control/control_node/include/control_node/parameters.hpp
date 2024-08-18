@@ -4,8 +4,10 @@
 #include <exception>
 #include <rclcpp/parameter_value.hpp>
 #include <rclcpp/qos.hpp>
+#include <rmw/qos_profiles.h>
 #include <rmw/qos_string_conversions.h>
 #include <rmw/time.h>
+#include <rmw/types.h>
 #include <string>
 #include <rclcpp/rclcpp.hpp>
 
@@ -102,23 +104,21 @@ public:
     return s;
   }
 
-  rclcpp::QoS parse_qos(const std::string& prefix, rclcpp::QoS default_qos = rclcpp::SystemDefaultsQoS()) const {
+  rclcpp::QoS parse_qos(const std::string& prefix, rmw_qos_profile_t default_qos = rmw_qos_profile_default) const {
     const Parameters p = subparams(prefix);
 
-    auto DEFAULT = default_qos.get_rmw_qos_profile();
+    rmw_qos_profile_t profile;
+    profile.history = rmw_qos_history_policy_from_str(p.get<std::string>("history", rmw_qos_history_policy_to_str(default_qos.history)).c_str());
+    profile.reliability = rmw_qos_reliability_policy_from_str(p.get<std::string>("reliability", rmw_qos_reliability_policy_to_str(default_qos.reliability)).c_str());
+    profile.durability = rmw_qos_durability_policy_from_str(p.get<std::string>("durability", rmw_qos_durability_policy_to_str(default_qos.durability)).c_str());
+    profile.liveliness = rmw_qos_liveliness_policy_from_str(p.get<std::string>("liveliness", rmw_qos_liveliness_policy_to_str(default_qos.liveliness)).c_str());
+    profile.depth = p.get<int>("depth", default_qos.depth);
+    profile.deadline = p.parse_rmw_time("deadline", default_qos.deadline);
+    profile.lifespan = p.parse_rmw_time("lifespan", default_qos.lifespan);
+    profile.liveliness_lease_duration = p.parse_rmw_time("liveliness_lease_duration", default_qos.liveliness_lease_duration);
+    profile.avoid_ros_namespace_conventions = p.get<bool>("avoid_ros_namespace_conventions", default_qos.avoid_ros_namespace_conventions);
 
-    rclcpp::QoS qos = default_qos;
-    qos
-      .history(rmw_qos_history_policy_from_str(p.get<std::string>("history", rmw_qos_history_policy_to_str(DEFAULT.history)).c_str()))
-      .reliability(rmw_qos_reliability_policy_from_str(p.get<std::string>("reliability", rmw_qos_reliability_policy_to_str(DEFAULT.reliability)).c_str()))
-      .durability(rmw_qos_durability_policy_from_str(p.get<std::string>("durability", rmw_qos_durability_policy_to_str(DEFAULT.durability)).c_str()))
-      .liveliness(rmw_qos_liveliness_policy_from_str(p.get<std::string>("liveliness", rmw_qos_liveliness_policy_to_str(DEFAULT.liveliness)).c_str()))
-      .keep_last(p.get<int>("depth", DEFAULT.depth))
-      .deadline(p.parse_rmw_time("deadline", DEFAULT.deadline))
-      .lifespan(p.parse_rmw_time("lifespan", DEFAULT.lifespan))
-      .liveliness_lease_duration(p.parse_rmw_time("liveliness_lease_duration", DEFAULT.liveliness_lease_duration))
-      .avoid_ros_namespace_conventions(p.get<bool>("avoid_ros_namespace_conventions", DEFAULT.avoid_ros_namespace_conventions));
-    return qos;
+    return rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(profile), profile);
   }
 
   template<typename SentinelFieldT>
