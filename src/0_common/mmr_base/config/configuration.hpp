@@ -33,6 +33,7 @@ namespace ECU {
         MMR_STEERING_ANGLE = 0x8A,
         MMR_BRAKING_PERCENTAGE,
         MMR_ACCELERATOR_PERCENTAGE = 0x8c,
+        MMR_LAP_COUNTER = 0x91,
 
         MMR_CLUTCH_PULL_OK = 0xE1,
         MMR_CLUTCH_RELEASE_OK = 0xE3,
@@ -188,7 +189,7 @@ namespace timing {
 
 namespace IMU {
     enum MMR_CAN_MASK {
-        MMR_ECU_MASK = 0x400,
+        MMR_IMU_MASK = 0x400,
     };
 
     enum MMR_CAN_MSG_ID {
