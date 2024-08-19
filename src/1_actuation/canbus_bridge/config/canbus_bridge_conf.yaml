@@ -4,13 +4,28 @@
       interface: can0
       bitrate: 1000000
       debug: true
-      WCET: 2500000 # ms
-      period: 5000000 # 5ms
-      deadline: 5000000
+      WCET: 5000000 # 5ms
+      period: 10000000 # 10ms
+      deadline: 10000000
       max_msgs: 25
     topic:
       canTxTopic: "/canbus/tx/msg"
       canRxTopic: "/canbus/rx/msg"
+      cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"
       resStatusTopic: "/status/res"
+      ActuatorsStatusTopic: "/actuator/status"
       missionSelectTopic: "/mission/selected"
+      outputImuTopic: "/canbus/imu/data"
+    gear:
+      ctrLimit: 5
+      changeDeltaTime: 500 #ms
+      delayCmdEcu: 1 #ms
+    launch_control:
+      ctrLimit: 2
+      changeDeltaTime: 500 #ms
+      delayCmdEcu: 50 #ms
+    neutral:
+      ctrLimit: 2
+      changeDeltaTime: 500 #ms
+      delayCmdEcu: 50 #ms
