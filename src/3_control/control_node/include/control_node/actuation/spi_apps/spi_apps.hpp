@@ -20,7 +20,7 @@ public:
   SpiApps();
 
   virtual void init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger);
-  virtual void actuate(const control::Control& control);
+  virtual void actuate(std::chrono::nanoseconds t, const control::Control& control);
 
   virtual void request_enable() { m_soft_enabled = true; };
   virtual void request_disable() { m_soft_enabled = false; };

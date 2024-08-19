@@ -25,7 +25,7 @@ public:
 
   bool all_enabled() const;
 
-  void actuate_all(const control::Control &u) const;
+  void actuate_all(std::chrono::nanoseconds t, const control::Control &u) const;
 };
 
 }; // namespace actuation

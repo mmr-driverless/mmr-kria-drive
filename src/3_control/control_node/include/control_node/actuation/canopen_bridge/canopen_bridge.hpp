@@ -70,7 +70,7 @@ class CANOpenBridge : public IActuator {
 
 public:
   virtual void init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger) override;
-  virtual void actuate(const control::Control& control) override;
+  virtual void actuate(std::chrono::nanoseconds t, const control::Control& control) override;
   ~CANOpenBridge();
 
   virtual void request_enable() override;

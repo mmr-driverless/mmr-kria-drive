@@ -87,7 +87,7 @@ void CANOpenBridge::actuator_status_cb(std::shared_ptr<const mmr_base::msg::Actu
   serve_enable_request();
 }
 
-void CANOpenBridge::actuate(const control::Control& u) {
+void CANOpenBridge::actuate(std::chrono::nanoseconds, const control::Control& u) {
   if (m_soft_enabled) {
     if (m_status.steer.is_enabled()) {
       mmr_base::msg::CmdMotor msg;

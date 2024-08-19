@@ -68,7 +68,7 @@ void ControlNode::tick() {
   u = m_event_mgr.tick(t, x, u);
 
   // Actuate the control input.
-  m_actuator_mgr.actuate_all(u);
+  m_actuator_mgr.actuate_all(t, u);
 
   if (m_viz_mgr.is_viz_tick()) {
     update_marker(m_viz_mgr, m_path_projection_marker, closest_point.has_value()? std::make_optional(path.get_position(*closest_point)) : std::nullopt, m_path_projection_marker_alpha, 0);
