@@ -70,7 +70,7 @@
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 8.0
+        minLookForward: 5.0
         minLookForwardGain: 0.4
         steerGain: 1.0
         targetVelocity: 3.33 # This gets overwritten after current lap > dynamicTargetSpeed.slowLaps if dynamicTargetSpeed.enabled is true!
@@ -138,16 +138,16 @@
 
     # Reference path settings
     reference_path_manager:
-      # Reference path sources in order of priority, 0 is highest
+      # Reference path sources in order of priority, 0 is lowest
       # Whenever a path from a higher priority source is received, any lower priority source is destroyed
       sources:
         0:
-          enabled: false
-          type: "ROS_SpeedProfilePoints"
+          enabled: true
+          type: "ROS_Marker"
           params:
-            topic: "/planning/global"
-            is_closed: true
-
+            topic: "/planning/center_line"
+            is_closed: false
+            
         1:
           enabled: true
           type: "ROS_Marker"
@@ -157,14 +157,6 @@
             qos_override:
               durability: transient_local
               reliability: reliable
-
-        2:
-          enabled: true
-          type: "ROS_Marker"
-          params:
-            topic: "/planning/center_line"
-            is_closed: false
-            
       # Uncomment this to dump paths to file
       # dump_paths_dir: '/home/simonebondi/Desktop/dump_dir'
 

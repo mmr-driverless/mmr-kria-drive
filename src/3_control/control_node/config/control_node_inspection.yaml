@@ -1,0 +1,121 @@
+/control_node:
+  ros__parameters:
+    tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
+    wcet_ns: 5000000 # 5ms
+
+    estimation:
+      type: Inspection
+      params:
+        ecu_status:
+          topic: "/status/ecu"
+          qos:
+            reliability: best_effort
+        actuator_status:
+          topic: "/actuator/status"
+
+    event_manager:
+      enabled: true # Disable this on the sim or when you're using the HUMAN POWERTRAIN
+      as_state:
+        topic: "/as/status"
+        qos:
+          durability: transient_local
+      race_status:
+        topic: "/planning/race_status"
+      stop:
+        topic: "/stop"
+      
+      rev_duration_before_engage_ms: 1000
+      launch_throttle: 0.3
+      launch_brake: 0.15
+      rev_duration_after_engage_ms: 1000
+      stop_light_brake: 0.15
+      stop_hard_brake: 0.4
+      lc_duration_after_launch_ms: 1000
+      
+      standstill_speed_m_s: 0.3
+      standstill_time_ms: 2000
+      mission_duration_ms: 10000
+
+    control:
+      type: Inspection
+      params:
+        frequency: 3.14
+        steer_fraction: 0.2
+        throttle: 0.15
+        launch_control: false
+        gear: 1
+
+
+    # Actuation settings
+    actuation:
+      actuators:
+        0:
+          enabled: true
+          type: CANOpenBridge
+          params:
+            steer_topic: "/command/steer"
+            brake_topic: "/command/brake"
+            clutch_topic: "/command/clutch"
+            actuator_status_topic: "/actuator/status"
+
+        1:
+          enabled: true
+          type: SpiApps
+          params:
+            spi_interface: /dev/spidev1.0
+            spi_frequency: 50000
+            v_ref: 5.0
+            v_apps_min: 0.96
+            v_apps_max: 2.53
+            buffered: false
+
+        2:
+          enabled: true
+          type: Ecu
+          params:
+            topic: "/command/ecu"
+
+        3:
+          enabled: true
+          type: Logger
+          params:
+            topic: "/control/log"
+
+    vehicle_parameters:
+      wheelbase: 1.541 # distance between front and rear axle [m]
+      lr: 0.75 # distance between CoM and rear axle [m]
+      max_steering_angle: 0.3979351 # maximum angle at the wheel [rad]
+
+    tracking:
+      threshold: 8.0 # Meters. If the path doesn't pass through a circle of this radius centered on the vehicle, the tracking problem is restarted (which is a problem ONLY in Skidpad) and takes longer to execute
+      projection_marker:
+        diameter: 1.0
+        color:
+          r: 1.0
+          g: 0.0
+          b: 0.0
+          a: 1.0
+      threshold_marker:
+        color:
+          r: 1.0
+          g: 1.0
+          b: 1.0
+          a: 0.3
+      search_start_marker:
+        length: 0.7
+        color:
+          r: 0.0
+          g: 1.0
+          b: 0.0
+          a: 0.8
+      search_end_marker:
+        length: 0.7
+        color:
+          r: 1.0
+          g: 0.0
+          b: 0.0
+          a: 0.8
+
+    viz:
+      enabled: false
+      min_interval_ms: 100
