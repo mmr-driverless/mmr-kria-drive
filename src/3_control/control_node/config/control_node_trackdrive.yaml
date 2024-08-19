@@ -48,6 +48,8 @@
       enabled: true # Disable this on the sim or when you're using the HUMAN POWERTRAIN
       as_state:
         topic: "/as/status"
+        qos:
+          durability: transient_local
       race_status:
         topic: "/planning/race_status"
       stop:
