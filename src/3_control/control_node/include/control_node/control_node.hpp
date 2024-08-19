@@ -41,8 +41,6 @@ class ControlNode : public NodeBase
 
   double m_path_threshold2;
 
-  rclcpp::Time m_start_time;
-
   std::optional<path::ReferencePath::PointRef> m_last_path_ref;
 
   bool m_has_completed_path;
