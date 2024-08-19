@@ -47,7 +47,7 @@
     event_manager:
       enabled: true # Disable this on the sim or when you're using the HUMAN POWERTRAIN
       as_state:
-        topic: "/as/state"
+        topic: "/as/status"
       race_status:
         topic: "/planning/race_status"
       stop:

@@ -9,7 +9,7 @@ namespace event {
 
 EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger, const actuation::ActuatorManager& actuators)
   : m_logger(logger),
-    m_as_state_sub(node->create_subscription<std_msgs::msg::Int8>(p.get<std::string>("as_state.topic"), p.parse_qos("as_state.qos"), std::bind(&EventManager::as_state_cb, this, std::placeholders::_1))),
+    m_as_state_sub(node->create_subscription<std_msgs::msg::UInt8>(p.get<std::string>("as_state.topic"), p.parse_qos("as_state.qos"), std::bind(&EventManager::as_state_cb, this, std::placeholders::_1))),
     m_race_status_sub(node->create_subscription<std_msgs::msg::Int8>(p.get<std::string>("race_status.topic"), p.parse_qos("race_status.qos"), std::bind(&EventManager::race_status_cb, this, std::placeholders::_1))),
     m_stop_pub(node->create_publisher<std_msgs::msg::Bool>(p.get<std::string>("stop.topic"), p.parse_qos("stop.qos"))),
     m_actuators(actuators),

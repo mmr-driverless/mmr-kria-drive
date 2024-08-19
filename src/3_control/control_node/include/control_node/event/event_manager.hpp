@@ -12,6 +12,7 @@
 #include <control_node/actuation/actuator_manager.hpp>
 
 #include <std_msgs/msg/int8.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <mmr_base/msg/res_status.hpp>
 
@@ -21,7 +22,7 @@ namespace event {
 class EventManager {
   rclcpp::Logger m_logger;
 
-  rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr m_as_state_sub;
+  rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr m_as_state_sub;
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr m_race_status_sub;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_stop_pub;
 
@@ -74,7 +75,7 @@ class EventManager {
 public:
   EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger, const actuation::ActuatorManager& actuators);
   
-  void as_state_cb(std::shared_ptr<const std_msgs::msg::Int8> msg) { m_as_state = (AS::STATE)msg->data; }
+  void as_state_cb(std::shared_ptr<const std_msgs::msg::UInt8> msg) { m_as_state = (AS::STATE)msg->data; }
   void race_status_cb(std::shared_ptr<const std_msgs::msg::Int8> msg) { m_lap = msg->data; }
 
   control::Control tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u);
