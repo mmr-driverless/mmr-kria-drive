@@ -12,6 +12,7 @@ class PurePursuit2023 : public IController {
   const VehicleParameters* m_vp;
   double m_minLookForward;
   double m_steerGain;
+  double m_throttle;
 
   viz::VizManager* m_viz_mgr;
   float m_viz_lookforward_alpha;

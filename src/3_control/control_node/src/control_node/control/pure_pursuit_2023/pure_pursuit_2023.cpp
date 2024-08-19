@@ -34,6 +34,7 @@ void PurePursuit2023::init(rclcpp::Node&, const Parameters& p, const VehiclePara
   m_vp = &vp;
   m_minLookForward = p.get<double>("minLookForward");
   m_steerGain = p.get<double>("steerGain");
+  m_throttle = p.get<double>("throttle");
 
   m_viz_mgr = &viz_mgr;
 
@@ -77,7 +78,7 @@ Control PurePursuit2023::control(
 
   viz(target);
 
-  Control u(0.0, 0.1, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
+  Control u(0.0, m_throttle, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
   if (state.position().has_value() && state.yaw().has_value() && target.has_value()) {
     u.steer = calculateSteeringTarget(

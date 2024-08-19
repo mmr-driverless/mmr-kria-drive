@@ -70,6 +70,7 @@
     control:
       type: PurePursuit2023
       params:
+        throttle: 0.15
         minLookForward: 5.0
         minLookForwardGain: 0.4
         steerGain: 1.0
