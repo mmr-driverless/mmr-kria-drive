@@ -490,7 +490,7 @@ public:
     {
       auto fil1 = FILTER_PROTOTYPE;
       auto fil2 = FILTER_PROTOTYPE;
-      for (int i = n_waypoints() - 1; i >= 0; --i) {
+      for (int i = n_waypoints() - 2; i > 0; --i) {
         double ds = m_data[i](PointData::DistToNext);
         m_data[i](PointData::Curvature) = fil2(fil1(m_data[i](PointData::Curvature), ds), ds);
       }
