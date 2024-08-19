@@ -121,6 +121,7 @@
             v_ref: 5.0
             v_apps_min: 0.96
             v_apps_max: 2.53
+            buffered: false
 
         3:
           enabled: true

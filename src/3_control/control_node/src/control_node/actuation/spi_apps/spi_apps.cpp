@@ -13,13 +13,6 @@ static inline uint16_t voltage_to_value(double v, uint16_t max_value, double vre
   return static_cast<uint16_t>(value);
 }
 
-SpiApps::SpiApps()
-  : m_soft_enabled(false),
-    m_v_range(0.0),
-    m_v_min(0.0),
-    m_v_ref(5.0)  
-{ }
-
 void SpiApps::init(rclcpp::Node&, const Parameters& p, rclcpp::Logger logger) {
   auto vref = p.get<double>("v_ref");
   auto vmin = p.get<double>("v_apps_min");
@@ -27,6 +20,11 @@ void SpiApps::init(rclcpp::Node&, const Parameters& p, rclcpp::Logger logger) {
   auto iface = p.get<std::string>("spi_interface");
   auto freq = p.get<int>("spi_frequency");
 
+  if (p.get<bool>("buffered"))
+    m_flags = m_flags | MCP4921::ConfigFlags::FLAG_BUFFERED;
+
+  RCLCPP_INFO(logger, "Flags: %x", (uint8_t)m_flags);
+  
   if (vmin < 0) {
     RCLCPP_ERROR(logger, "v_apps_min (%.1lf) must be greater than 0.", vmin);
     throw std::invalid_argument("voltages");
@@ -62,7 +60,7 @@ void SpiApps::actuate(std::chrono::nanoseconds, const control::Control& u) {
   
   uint16_t data = voltage_to_value(voltage, decltype(m_device)::value_type::MAX_VALUE, m_v_ref);
   RCLCPP_DEBUG(*m_logger, "Writing %d.", data);
-  if (m_device->write(data) < 0)
+  if (m_device->write(data, m_flags) < 0)
     RCLCPP_ERROR(*m_logger, "Could not write APPS 0x%03x: %s", data, strerror(errno));
 }
 
