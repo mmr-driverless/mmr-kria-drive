@@ -53,10 +53,7 @@ void SpiApps::init(rclcpp::Node&, const Parameters& p, rclcpp::Logger logger) {
   RCLCPP_INFO(logger, "SPI device '%s' successfully initialized!", iface.c_str());
 }
 
-void SpiApps::actuate(const control::Control& u) {
-  if (!m_device.has_value())
-    return;
-
+void SpiApps::actuate(std::chrono::nanoseconds, const control::Control& u) {
   double throttle = 0.0;
   if (m_soft_enabled)
     throttle = std::clamp(u.throttle, 0.0, 1.0);
@@ -64,6 +61,7 @@ void SpiApps::actuate(const control::Control& u) {
   double voltage = m_v_min + (throttle * m_v_range);
   
   uint16_t data = voltage_to_value(voltage, decltype(m_device)::value_type::MAX_VALUE, m_v_ref);
+  RCLCPP_DEBUG(*m_logger, "Writing %d.", data);
   if (m_device->write(data) < 0)
     RCLCPP_ERROR(*m_logger, "Could not write APPS 0x%03x: %s", data, strerror(errno));
 }
