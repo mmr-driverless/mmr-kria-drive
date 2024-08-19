@@ -53,7 +53,7 @@ class EventManager {
   bool m_enabled;
   double m_launch_throttle;
   double m_launch_brake;
-  int m_lap_to_stop;
+  std::optional<int> m_lap_to_stop;
   
   double m_standstill_speed;
   
@@ -64,6 +64,8 @@ class EventManager {
 
   std::chrono::milliseconds m_fsm_step_start_time;
   std::chrono::milliseconds m_lc_duration_after_launch;
+
+  std::optional<std::chrono::milliseconds> m_mission_duration;
 
   double m_stop_light_brake;
   double m_stop_hard_brake;

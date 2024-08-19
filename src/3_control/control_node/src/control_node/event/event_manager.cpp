@@ -3,6 +3,8 @@
 #include <control_node/event/event_manager.hpp>
 #include <mmr_base/configuration.hpp>
 #include <std_msgs/msg/detail/bool__struct.hpp>
+#include <stdexcept>
+#include <cassert>
 
 namespace control_node {
 namespace event {
@@ -17,7 +19,7 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_enabled(p.get<bool>("enabled")),
     m_launch_throttle(p.get<double>("launch_throttle")),
     m_launch_brake(p.get<double>("launch_brake")),
-    m_lap_to_stop(p.get<int>("lap_to_stop")),
+    m_lap_to_stop(p.get_maybe<int>("lap_to_stop")),
     m_standstill_speed(p.get<double>("standstill_speed_m_s")),
     m_standstill_time(std::chrono::milliseconds(p.get<int>("standstill_time_ms"))),
     m_rev_duration_before_engage(std::chrono::milliseconds(p.get<int>("rev_duration_before_engage_ms"))),
@@ -27,7 +29,13 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_stop_hard_brake(p.get<double>("stop_hard_brake")),
     m_self_is_disabled_but_requested_actuators_enable(false)
 {
+  auto dur = p.get_maybe<int>("mission_duration_ms");
+  m_mission_duration = dur.has_value()? std::optional<std::chrono::milliseconds>(std::chrono::milliseconds(dur.value())) : std::nullopt;
 
+  if (m_mission_duration.has_value() && m_lap_to_stop.has_value()) {
+    RCLCPP_FATAL(logger, "Both mission_duration_ms and lap_to_stop are set!! Aborting!");
+    throw std::invalid_argument("Only one between lap_to_stop and mission_duration_ms can be set.");
+  }
 }
 
 control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estimation::IVehicleState& x, const control::Control& u) {
@@ -136,7 +144,13 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
     
     case EventState::Driving_WithLC:
       if ((t - m_fsm_step_start_time) >= m_lc_duration_after_launch) {
-        RCLCPP_INFO(m_logger, "Launch finished. Letting the controller drive until lap %d.", m_lap_to_stop);
+        if (m_mission_duration.has_value()) {
+          RCLCPP_INFO(m_logger, "Launch finished. Letting the controller drive for %ld milliseconds.", m_mission_duration.value().count());
+          m_fsm_step_start_time = t;
+        }
+        else
+          RCLCPP_INFO(m_logger, "Launch finished. Letting the controller drive until lap %d.", m_lap_to_stop.value());
+
         m_event_state = EventState::Driving;
       }
       {
@@ -146,7 +160,12 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
       }
 
     case EventState::Driving:
-      if (m_lap.has_value() && m_lap.value() >= m_lap_to_stop) {
+      assert(m_lap.has_value() || m_mission_duration.has_value() && "Either must be set. This should be checked during initialization.");
+      if (
+          (m_lap.has_value() && m_lap.value() >= m_lap_to_stop.value()) || 
+          (m_mission_duration.has_value() && (t - m_fsm_step_start_time) >= m_mission_duration.value())
+         )
+      {
         RCLCPP_INFO(m_logger, "Target lap reached. Disengaging clutch.");
         m_event_state = EventState::Stop_DisengageClutch;
       }
