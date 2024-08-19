@@ -1,5 +1,5 @@
 # Euler Angles Message Definition
 
-float32 roll
-float32 pitch
-float32 yaw
+int16 roll
+int16 pitch
+int16 yaw
