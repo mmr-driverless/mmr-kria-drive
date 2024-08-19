@@ -36,6 +36,11 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     RCLCPP_FATAL(logger, "Both mission_duration_ms and lap_to_stop are set!! Aborting!");
     throw std::invalid_argument("Only one between lap_to_stop and mission_duration_ms can be set.");
   }
+
+  if (!m_mission_duration.has_value() && !m_lap_to_stop.has_value()) {
+    RCLCPP_FATAL(logger, "Either mission_duration_ms and lap_to_stop must be set!! Aborting!");
+    throw std::invalid_argument("Either lap_to_stop or mission_duration_ms must be set.");
+  }
 }
 
 control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estimation::IVehicleState& x, const control::Control& u) {
@@ -160,7 +165,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
       }
 
     case EventState::Driving:
-      assert(m_lap.has_value() || m_mission_duration.has_value() && "Either must be set. This should be checked during initialization.");
+      assert((m_lap_to_stop.has_value() || m_mission_duration.has_value()) && "Either must be set. This should be checked during initialization.");
       if (
           (m_lap.has_value() && m_lap.value() >= m_lap_to_stop.value()) || 
           (m_mission_duration.has_value() && (t - m_fsm_step_start_time) >= m_mission_duration.value())
