@@ -38,27 +38,34 @@
       params:
         odometry_topic: "/Odometry"
         ecu_status:
-          topic: "/ecu_status"
+          topic: "/status/ecu"
+          qos:
+            reliability: best_effort
         actuator_status:
-          topic: "/actuator_status"
+          topic: "/actuator/status"
 
     event_manager:
-      enabled: false # Disable this on the sim or when you're using the HUMAN POWERTRAIN
+      enabled: true # Disable this on the sim or when you're using the HUMAN POWERTRAIN
       as_state:
-        topic: "/as/state"
+        topic: "/as/status"
+        qos:
+          durability: transient_local
       race_status:
         topic: "/planning/race_status"
       stop:
         topic: "/stop"
-      use_lc: true
-      launch_throttle: 0.1
-      launch_brake: 10.0
-      launch_rpm: 3000
-      launch_speed: 4.0
-      standstill_speed: 0.3
-      stop_brake: 10.0
+      
+      rev_duration_before_engage_ms: 1000
+      launch_throttle: 0.3
+      launch_brake: 0.15
+      rev_duration_after_engage_ms: 1000
+      stop_light_brake: 0.15
+      stop_hard_brake: 0.4
+      lc_duration_after_launch_ms: 1000
+      
+      standstill_speed_m_s: 0.3
+      standstill_time_ms: 2000
       lap_to_stop: 12 # Stop when lap counter publishes this lap
-      launch_control_timeout_ms: 2000
 
     control:
       type: PurePursuit2023
@@ -98,13 +105,13 @@
     actuation:
       actuators:
         0:
-          enabled: false
+          enabled: true
           type: CANOpenBridge
           params:
             steer_topic: "/command/steer"
             brake_topic: "/command/brake"
             clutch_topic: "/command/clutch"
-            actuator_status_topic: "/actuator_status"
+            actuator_status_topic: "/actuator/status"
 
         1:
           enabled: true
@@ -113,14 +120,15 @@
             topic: "/sim/drive_parameters"
 
         2:
-          enabled: false
+          enabled: true
           type: SpiApps
           params:
             spi_interface: /dev/spidev1.0
             spi_frequency: 50000
             v_ref: 5.0
-            v_apps_min: 1.0
-            v_apps_max: 3.0
+            v_apps_min: 0.96
+            v_apps_max: 2.53
+            buffered: false
 
         3:
           enabled: false
@@ -128,19 +136,25 @@
           params:
             topic: "/command/ecu"
 
+        4:
+          enabled: true
+          type: Logger
+          params:
+            topic: "/control/log"
+
 
     # Reference path settings
     reference_path_manager:
-      # Reference path sources in order of priority, 0 is highest
+      # Reference path sources in order of priority, 0 is lowest
       # Whenever a path from a higher priority source is received, any lower priority source is destroyed
       sources:
         0:
-          enabled: false
-          type: "ROS_SpeedProfilePoints"
+          enabled: true
+          type: "ROS_Marker"
           params:
-            topic: "/planning/global"
-            is_closed: true
-
+            topic: "/planning/center_line"
+            is_closed: false
+            
         1:
           enabled: true
           type: "ROS_Marker"
@@ -150,14 +164,6 @@
             qos_override:
               durability: transient_local
               reliability: reliable
-
-        2:
-          enabled: true
-          type: "ROS_Marker"
-          params:
-            topic: "/planning/center_line"
-            is_closed: false
-            
       # Uncomment this to dump paths to file
       # dump_paths_dir: '/home/simonebondi/Desktop/dump_dir'
 

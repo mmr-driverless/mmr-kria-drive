@@ -34,9 +34,9 @@ MCP4921::MCP4921(const std::string& interface, uint32_t frequency)
   m_io_device = dev;
 }
 
-int MCP4921::write(uint16_t value) {
+int MCP4921::write(uint16_t value, ConfigFlags flags) {
   uint16_t input_data = std::clamp<uint16_t>(value, 0, MAX_VALUE);
-  uint16_t command = (CONFIG << 12) | input_data;
+  uint16_t command = ((uint8_t)flags << 12) | input_data;
 
   uint8_t buf[] = { static_cast<uint8_t>(command >> 8), static_cast<uint8_t>(command) };
 

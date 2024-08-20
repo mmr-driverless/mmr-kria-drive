@@ -11,7 +11,7 @@ namespace actuation {
 struct IActuator {
   virtual ~IActuator() = default;
   virtual void init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger) = 0;
-  virtual void actuate(const control::Control& control) = 0;
+  virtual void actuate(std::chrono::nanoseconds t, const control::Control& control) = 0;
 
   virtual void request_enable() = 0;
   virtual void request_disable() = 0;

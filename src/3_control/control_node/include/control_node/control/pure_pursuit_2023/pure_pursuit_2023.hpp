@@ -19,6 +19,7 @@ class PurePursuit2023 : public IController {
   double m_minLookForward;
   double m_minLookForwardGain;
   double m_steerGain;
+
   double m_minSpeedDistance;
   double m_minSpeed;
 

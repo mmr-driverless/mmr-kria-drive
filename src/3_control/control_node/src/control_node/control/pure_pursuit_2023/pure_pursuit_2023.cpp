@@ -161,7 +161,7 @@ Control PurePursuit2023::control(
   pub_target_speed(t, targetSpeed);
   viz(targetPosition);
 
-  Control u(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
+  Control u(0.0, 0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
   if (state.speed().has_value()) {
     if (m_simplified_longitudinal_control_enabled) {

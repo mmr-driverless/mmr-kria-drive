@@ -8,7 +8,7 @@ void Ecu::init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger) {
   m_pub = node.create_publisher<mmr_base::msg::CmdEcu>(p.get<std::string>("topic"), p.parse_qos("qos"));
 }
 
-void Ecu::actuate(const control::Control& u) {
+void Ecu::actuate(std::chrono::nanoseconds, const control::Control& u) {
   if (m_enabled) {
     mmr_base::msg::CmdEcu msg;
     msg.gear_target = u.gear;

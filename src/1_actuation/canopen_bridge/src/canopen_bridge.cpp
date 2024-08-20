@@ -9,7 +9,7 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     if (this->m_bDebug) {
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN INTERFACE: %s", this->m_sInterface.c_str());
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN BITRATE: %d", this->m_nBitrate);
-        RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH; %d", this->m_nMonitorClutch);
+        RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH: %d", this->m_nMonitorClutch);
     }
 
     this->m_subCmdSteer = this->create_subscription<mmr_base::msg::CmdMotor>(
@@ -60,6 +60,7 @@ void CANOpenBridge::loadParameters()
     declare_parameter("brake.max_torque", 1500);
     declare_parameter("brake.return_pedal_torque", -20);
     declare_parameter("brake.timeout_msgs", 5);
+    declare_parameter("brake.monitor_freq", 5);
 
     declare_parameter("clutch.node_id", 16);
     declare_parameter("clutch.velocity", 3500);
@@ -92,6 +93,7 @@ void CANOpenBridge::loadParameters()
     get_parameter("brake.max_torque", this->m_nMaxTorque);
     get_parameter("brake.return_pedal_torque", this->m_nReturnPedalTorque);
     get_parameter("brake.timeout_msgs", this->m_nTimeoutMsgBrake);
+    get_parameter("brake.monitor_freq", this->m_nFreqScaleBrake);
 
     get_parameter("clutch.node_id", this->m_nClutchId);
     get_parameter("clutch.velocity", this->m_nVelocityClutch);
@@ -173,6 +175,7 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 
 void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 {
+    
     if (msg->enable && (this->m_mBrake == nullptr)) {
         /* Enables the brake motor in CST */
         this->m_mBrake = new MaxonBrake(
@@ -180,8 +183,13 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
             this->m_nMaxTorque, m_nReturnPedalTorque
         );
 
+        uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);
+        uint32_t nNominalCurrent = this->m_mBrake->upload<uint32_t>(0x3031, 0x01);
         if (this->m_bDebug)
-            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE");
+            RCLCPP_INFO(
+                this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE, [ MAX TORQUE ]: %lu uNm, [ NOMINAL CURRENT ]: %lu mA", 
+                nMaxTorqueNominal, nNominalCurrent 
+            );
         
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::TORQUE_MODE);
         return;
@@ -192,12 +200,12 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         this->m_mBrake = nullptr;
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     }
-
-    msg->brake_torque *= 1000;
-    int nTorque = std::abs(std::round(msg->brake_torque));
     
+    if (this->m_bDebug)
+        RCLCPP_INFO(this->get_logger(), "[ TORQUE REQUEST ]: %lf", msg->brake_torque);
+
     if (this->m_mBrake != nullptr)
-        this->m_mBrake->writeTargetTorque(nTorque);
+        this->m_mBrake->writeTargetTorque(msg->brake_torque);
 }
 
 void CANOpenBridge::msgCmdClutchCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
@@ -289,20 +297,36 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ]: engaged clutch");
 
-        this->m_mClutch->engage(fClutchPot);
+        if (this->m_mClutch != nullptr)
+            this->m_mClutch->engage(fClutchPot);
     }
     else { 
     
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ]: disengaged clutch");
-
-        this->m_mClutch->disengage(fClutchPot);
+        
+        if (this->m_mClutch != nullptr)
+            this->m_mClutch->disengage(fClutchPot);
     }
 }
 
 void CANOpenBridge::sendActuatorStatus()
 {
+    if ((this->m_nCtrBrake % this->m_nFreqScaleBrake) == 0) {
+        if (this->m_mBrake != nullptr)
+            this->uploadVoltage();
+        this->m_nCtrBrake = 1;
+    }
+    else this->m_nCtrBrake ++;
+
     this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
     this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
     this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); 
+}
+
+
+void CANOpenBridge::uploadVoltage()
+{
+    uint16_t m_uVoltage = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
+    this->m_msgActuatorStatus.voltage = ( (float) m_uVoltage / 10);
 }

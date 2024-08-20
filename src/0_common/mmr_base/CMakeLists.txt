@@ -23,6 +23,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Marker.msg"
   "msg/MarkerArray.msg"
   "msg/CmdEcu.msg"
+  "msg/ControlLog.msg"
+  "msg/RaceStatus.msg"
   ### IMU data dependecies ###
   "msg/Imu/Acceleration.msg"
   "msg/Imu/EulerAngles.msg"

@@ -45,6 +45,7 @@ void CANOpenBridge::serve_enable_request() {
   } else if (m_enable_request == EnableRequest::Disable) {
     if (m_status.clutch.is_disabled() && m_status.brake.is_disabled() && m_status.steer.is_disabled()) {
       RCLCPP_INFO(logger(), "Motors successfully disabled!");
+      m_enable_request = EnableRequest::None;
       return;
     }
 
@@ -86,21 +87,23 @@ void CANOpenBridge::actuator_status_cb(std::shared_ptr<const mmr_base::msg::Actu
   serve_enable_request();
 }
 
-void CANOpenBridge::actuate(const control::Control& u) {
-  if (m_status.steer.is_enabled()) {
-    mmr_base::msg::CmdMotor msg;
-    msg.wheel_angle = u.steer;
-    m_steer_pub->publish(msg);
-  }
-  if (m_status.brake.is_enabled()) {
-    mmr_base::msg::CmdMotor msg;
-    msg.brake_torque = u.brake;
-    m_brake_pub->publish(msg);
-  }
-  if (m_status.clutch.is_enabled()) {
-    mmr_base::msg::CmdMotor msg;
-    msg.disengaged = (u.clutch == control::Control::Clutch::Disengaged);
-    m_steer_pub->publish(msg);
+void CANOpenBridge::actuate(std::chrono::nanoseconds, const control::Control& u) {
+  if (m_soft_enabled) {
+    if (m_status.steer.is_enabled()) {
+      mmr_base::msg::CmdMotor msg;
+      msg.wheel_angle = u.steer;
+      m_steer_pub->publish(msg);
+    }
+    if (m_status.brake.is_enabled()) {
+      mmr_base::msg::CmdMotor msg;
+      msg.brake_torque = u.brake;
+      m_brake_pub->publish(msg);
+    }
+    if (m_status.clutch.is_enabled()) {
+      mmr_base::msg::CmdMotor msg;
+      msg.disengaged = (u.clutch == control::Control::Clutch::Disengaged);
+      m_clutch_pub->publish(msg);
+    }
   }
 }
 
@@ -109,10 +112,12 @@ bool CANOpenBridge::enabled() const {
 }
 
 void CANOpenBridge::request_disable() {
+  m_soft_enabled = false;
   m_enable_request = EnableRequest::Disable;
   RCLCPP_INFO(logger(), "Received disable request.");
 }
 void CANOpenBridge::request_enable() {
+  m_soft_enabled = true;
   m_enable_request = EnableRequest::Enable;
   RCLCPP_INFO(logger(), "Received enable request.");
 }

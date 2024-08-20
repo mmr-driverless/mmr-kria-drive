@@ -14,10 +14,11 @@ class Inspection : public IController {
     std::optional<std::chrono::nanoseconds> m_start_t;
     double m_frequency;
     double m_steer_fraction;
+    double m_throttle;
+    int m_gear;
+    Control::LaunchControl m_lc;
     
 public:
-    Inspection();
-
     virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger) override;
 
     virtual Control control(

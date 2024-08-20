@@ -24,23 +24,24 @@
       node_id: 17
       max_torque: 1500
       return_pedal_torque: -20
-      timeout_msgs: 5 # da testare
+      timeout_msgs: 2
+      monitor_freq: 100
     clutch:
       node_id: 16
       velocity: 3500
       monitoring_freq: 5
       timeout_msgs: 2
       step_maxon:
-        - 200
-        - -500
-        - 300
-        - 100
-        - 600
-        - 400
+        - -200
+        - 1800
+        - -1000
+        - -250
+        - -800
+        - -400
       pot_val: 
         - 2.5
-        - 90.0
-        - 42.5
+        - 80.0
+        - 55.0
         - 32.5
         - 12.5
         - 2.5

@@ -34,9 +34,9 @@ bool ActuatorManager::all_enabled() const {
   return std::all_of(m_actuators.begin(), m_actuators.end(), [](const auto& act) { return act.second->enabled(); });
 }
 
-void ActuatorManager::actuate_all(const control::Control &u) const {
+void ActuatorManager::actuate_all(std::chrono::nanoseconds t, const control::Control &u) const {
   for (const auto& act : m_actuators)
-    act.second->actuate(u);
+    act.second->actuate(t, u);
 }
 
 }; // namespace actuation
