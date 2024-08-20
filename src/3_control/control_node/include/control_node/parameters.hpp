@@ -11,6 +11,13 @@
 #include <string>
 #include <rclcpp/rclcpp.hpp>
 
+
+template<typename T>
+struct is_std_vector : std::false_type {};
+
+template<typename T>
+struct is_std_vector<std::vector<T>> : std::true_type {};
+
 namespace control_node {
 
 class Parameters {
@@ -29,6 +36,10 @@ class Parameters {
 
     if constexpr (std::is_same_v<T, std::string>)
       repr = val;
+    else if constexpr (is_std_vector<T>::value) {
+      for (auto& v : val)
+        repr += std::to_string(v) + " ";
+    }
     else
       repr = std::to_string(val);
 
