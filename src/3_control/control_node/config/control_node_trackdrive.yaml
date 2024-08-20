@@ -86,7 +86,7 @@
           accel_k_smooth: 0.05
 
         dynamicTargetSpeed:
-          enabled: true # If this is false, then minSpeed is used.
+          enabled: false # If this is false, then minSpeed is used.
           slowLaps: 1
           k_smooth: 0.1
           maxSpeed: 8.0
