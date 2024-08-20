@@ -24,7 +24,7 @@ Control Inspection::control(
     m_start_t = t;
     
   double steering = std::sin(m_frequency * std::chrono::duration<double>(t - *m_start_t).count()) * m_vp->max_steering_angle_rad() * m_steer_fraction;
-  return Control(steering, m_throttle, 0.0, Control::Clutch::Engaged, m_gear, Control::LaunchControl::Unset);
+  return Control(steering, m_throttle, 0.0, Control::Clutch::Engaged, m_gear, m_lc);
 }
 
 }; // namespace inspection
