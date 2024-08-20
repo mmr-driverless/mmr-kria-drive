@@ -13,11 +13,17 @@ namespace sources {
 class ReferencePathSource {
 public:
   using WaypointsT = std::span<Eigen::Vector2d>;
-  using DataT = std::span<ReferencePath::PointData::StorageT>;
+  struct UpdateFnResultT {
+    bool is_closed;
+    ReferencePath::PathData::Metadata data_metadata;
+
+    UpdateFnResultT(bool is_closed, ReferencePath::PathData::Metadata data_metadata)
+      : is_closed(is_closed), data_metadata(data_metadata) {}
+  };
 
   // Wrapper to prevent storing the function handle
   class UpdateFn {
-    using T = std::function<ReferencePath::PathProperties(WaypointsT, DataT)>;
+    using T = std::function<UpdateFnResultT(WaypointsT, ReferencePath::PathData::Data)>;
   private:
     T m_fn;
   public:

@@ -62,7 +62,7 @@ void ControlNode::tick() {
   }
 
   // Decide what inputs to apply based on the current vehicle state and position relative to the path.
-  control::Control u = m_controller->control(t, x, path, closest_point);
+  control::Control u = m_controller->control(t, x, path, closest_point, m_event_mgr.lap());
 
   // Override the controls to perform the start and stop maneuvers.
   u = m_event_mgr.tick(t, x, u);
@@ -146,7 +146,7 @@ void ControlNode::setup_controller() {
   }
   
   RCLCPP_INFO(this->get_logger(), "INITIALIZING controller '%s'.", type.c_str());
-  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr);
+  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr, this->get_logger().get_child(type));
 }
 
 };

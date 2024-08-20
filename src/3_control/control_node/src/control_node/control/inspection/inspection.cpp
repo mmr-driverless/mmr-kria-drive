@@ -4,7 +4,7 @@ namespace control_node {
 namespace control {
 namespace inspection {
 
-void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&) {
+void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger) {
   m_vp = &vp;
   m_frequency = p.get<double>("frequency");
   m_steer_fraction = p.get<double>("steer_fraction");
@@ -17,7 +17,8 @@ Control Inspection::control(
   std::chrono::nanoseconds t,
   const estimation::IVehicleState&,
   const path::ReferencePath&,
-  const std::optional<path::ReferencePath::PointRef>&
+  const std::optional<path::ReferencePath::PointRef>&,
+  int
 ) {
   if (!m_start_t.has_value())
     m_start_t = t;

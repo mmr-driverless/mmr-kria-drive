@@ -12,7 +12,7 @@ namespace ros {
 
 class PathFromMarkerMsg : public ReferencePathSource {
   rclcpp::Subscription<viz::msgs::Marker>::SharedPtr m_sub;
-  ReferencePath::PathProperties m_path_prop;
+  bool m_is_closed;
 
   void msg_cb(std::shared_ptr<const viz::msgs::Marker> msg);
 

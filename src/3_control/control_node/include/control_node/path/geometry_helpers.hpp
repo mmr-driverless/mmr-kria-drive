@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <utility>
+#include <span>
 
 namespace geometry_helpers {
   
@@ -25,6 +26,15 @@ inline double cross_2d(Eigen::Vector2d a, Eigen::Vector2d b) {
 }
 
 /**
+ * @returns The instantaneous curvature.
+ * @param fp The first derivative of the path with respect to space.
+ * @param fpp The second derivative of the path with respect to space.
+*/
+inline double curv(Eigen::Vector2d fp, Eigen::Vector2d fpp) {
+    return cross_2d(fp, fpp) / std::pow(fp.norm(), 3);
+}
+
+/**
  * @returns The curvature of the circle passing through the three (ordered) points, with sign following the right hand rule (>0 for positive angular velocity).
  */
 inline double menger_curvature(Eigen::Vector2d prev, Eigen::Vector2d curr, Eigen::Vector2d next) {
@@ -36,6 +46,90 @@ inline double menger_curvature(Eigen::Vector2d prev, Eigen::Vector2d curr, Eigen
     (next - curr).squaredNorm() *
     (prev - next).squaredNorm()
   );
+}
+
+static void curvature(bool is_loop, std::span<const double> ds, std::span<const Eigen::Vector2d> pts, std::span<double> k) {
+    int N = pts.size();
+
+    if (N < 3) {
+        std::fill(k.begin(), k.end(), 0);
+        return;
+    }
+
+    Eigen::Vector2d fp_first;
+    Eigen::Vector2d fp_last;
+
+    Eigen::Vector2d fp;
+    Eigen::Vector2d fp_prev;
+    Eigen::Vector2d fp_next = (pts[0] - pts[2]) / (ds[0] + ds[1]);
+    
+    // Compute the curvature at i = 0.
+    {
+        Eigen::Vector2d fpp;
+
+        if (is_loop) {
+            int pred_idx = N - 1;
+
+            // Use central difference if we have a predecessor.
+            fp_prev = (pts[0] - pts[pred_idx - 1]) / (ds[pred_idx - 1] + ds[pred_idx]);
+            fp = (pts[1] - pts[pred_idx]) / (ds[pred_idx] + ds[0]);
+            fpp = (fp_next - fp_prev) / (ds[pred_idx] + ds[0]);
+
+            // Store these to later compute the last two curvatures!
+            fp_first = fp;
+            fp_last = fp_prev;
+        } else {
+            // Use forward difference if there is no predecessor.
+            fp = (pts[1] - pts[0]) / ds[0];
+            fpp = (fp_next - fp) / ds[0];
+        }
+
+        k[0] = curv(fp, fpp);
+    }
+
+    // Compute the middle part with central differences.
+    for (int i = 1; i < N - 2; ++i) {
+        fp_prev = fp;
+        fp = fp_next;
+        fp_next = (pts[i+2] - pts[i]) / (ds[i] + ds[i+1]);
+        Eigen::Vector2d fpp = (fp_next - fp_prev) / (ds[i-1] + ds[i]);
+
+        k[i] = curv(fp, fpp);
+    }
+
+    // Compute the curvature at i = n-2, n-1
+    {
+        fp_prev = fp;
+        fp = fp_next;
+        int curr_idx = N - 2;
+
+        if (is_loop) {
+            fp_next = fp_last;
+        } else {
+            // Use backwards difference if there is no successor to the next waypoint.
+            fp_next = (pts[curr_idx + 1] - pts[curr_idx]) / ds[curr_idx];
+        }
+
+        // We can still use central difference for the second derivative (we're at the second to last element)
+        Eigen::Vector2d fpp = (fp_next - fp_prev) / (ds[curr_idx] + ds[curr_idx - 1]);
+        k[curr_idx] = curv(fp, fpp);
+
+        // Now we are at the last waypoint
+        fp_prev = fp;
+        fp = fp_next;
+        ++curr_idx;
+        
+        if (is_loop) {
+            // We can use central differences because we have a successor
+            fpp = (fp_first - fp_prev) / (ds[curr_idx - 1] + ds[curr_idx]);
+        }
+        else {
+            // We need to use backwards difference, there is no successor
+            fpp = (fp_prev - fp) / ds[curr_idx - 1];
+        }
+
+        k[curr_idx] = curv(fp, fpp);
+    }
 }
 
 };
