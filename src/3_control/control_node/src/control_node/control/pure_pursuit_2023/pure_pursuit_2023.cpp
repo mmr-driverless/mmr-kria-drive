@@ -43,10 +43,16 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_steerGain = p.get<double>("steerGain");
   m_minSpeedDistance = p.get<double>("minSpeedDistance");
   m_minSpeed = p.get<double>("minSpeed");
-  m_accel_apps_p = p.get<double>("accel_apps_p");
-  m_accel_brake_p = p.get<double>("accel_brake_p");
-  m_accel_lookforward = p.get<double>("accel_lookforward");
-  m_accel_k_smooth = p.get<double>("accel_k_smooth");
+  m_min_throttle = p.get<double>("min_throttle");
+  m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
+
+  if (m_simplified_longitudinal_control_enabled) {
+    m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
+    m_simple_long_brake_p = p.get<double>("low_level_longitudinal_controller.brake_p");
+  } else {
+    m_ll_accel_lookforward = p.get<double>("low_level_longitudinal_controller.accel_lookforward");
+    m_ll_accel_k_smooth = p.get<double>("low_level_longitudinal_controller.accel_k_smooth");
+  }
 
   auto dyn_speed_p = p.subparams("dynamicTargetSpeed");
   m_dynamicTargetSpeed.enabled = dyn_speed_p.get<bool>("enabled");
@@ -158,20 +164,29 @@ Control PurePursuit2023::control(
   Control u(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
   if (state.speed().has_value()) {
-    // Compute the target acceleration
-    double accv = (std::pow(targetSpeed, 2) - std::pow(*state.speed(), 2)) / (2 * m_accel_lookforward);
+    if (m_simplified_longitudinal_control_enabled) {
+      double error = targetSpeed - state.speed().value();
+      u.throttle = m_simple_long_apps_p * std::max(error, 0.0);
+      u.brake = m_simple_long_brake_p * std::max(-error, 0.0);
+    } else {
+      // Compute the target acceleration
+      double accv = (std::pow(targetSpeed, 2) - std::pow(*state.speed(), 2)) / (2 * m_ll_accel_lookforward);
 
-    // Smooth the target acceleration in the time-domain with yet another first order IIR filter
-    m_smoothedAccel = m_smoothedAccel * (1 - m_accel_k_smooth) + accv * m_accel_k_smooth;
+      // Smooth the target acceleration in the time-domain with yet another first order IIR filter
+      m_smoothedAccel = m_smoothedAccel * (1 - m_ll_accel_k_smooth) + accv * m_ll_accel_k_smooth;
 
-    // Determine the inputs from the low level controller
-    if (state.gear().has_value() && state.rpm().has_value() && state.speed().has_value()) {
-      AppsBrakePair ll_u = apps_brake_from_accel(accv, state.speed().value(), state.gear().value(), state.rpm().value(), *m_vp);
+      // Determine the inputs from the low level controller
+      if (state.gear().has_value() && state.rpm().has_value() && state.speed().has_value()) {
+        AppsBrakePair ll_u = apps_brake_from_accel(accv, state.speed().value(), state.gear().value(), state.rpm().value(), *m_vp);
 
-      u.throttle = ll_u.apps;
-      u.brake = ll_u.brake_torque;
+        u.throttle = ll_u.apps;
+        u.brake = ll_u.brake_torque;
+      }
     }
   }
+
+  // Apply minimum throttle
+  u.throttle = std::max(u.throttle, m_min_throttle);
 
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
     u.steer = calculateSteeringTarget(

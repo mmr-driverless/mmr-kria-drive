@@ -68,11 +68,15 @@
         steerGain: 1.0
         minSpeed: 3.33
         minSpeedDistance: 5.0
+        
+        min_throttle: 0.15
 
-        accel_apps_p: 0.15
-        accel_brake_p: 0.1
-        accel_lookforward: 6.2
-        accel_k_smooth: 0.05
+        low_level_longitudinal_controller:
+          simplified: false
+          # apps_p: 0.7
+          # brake_p: 0.2
+          accel_lookforward: 6.2
+          accel_k_smooth: 0.05
 
         dynamicTargetSpeed:
           enabled: true # If this is false, then minSpeed is used.
@@ -182,7 +186,7 @@
       nmotvet_rpm: [ 10, 2500, 3500, 4500, 5500, 6500, 7500, 8500, 9500, 10500, 11500, 18000 ]
       cdc_Nm: [ 23, 23, 36, 40, 38, 44, 46, 52, 56, 51, 47, 47 ]
       gear_ratios: [
-        0, # std::numeric_limits<int>::infinity()
+        0.0, # std::numeric_limits<int>::infinity()
         5.5, # 77/14,
         4.0, #.052631578947368, # 77/19
         3.0, #.3846153846153846, # 77*36/39/21
