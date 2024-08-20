@@ -4,7 +4,6 @@
 #include <rclcpp/exceptions.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/time.hpp>
-#include <can_msgs/msg/frame.hpp>
 
 #include <mmr_edf/mmr_edf.hpp>
 #include <mmr_base/msg/ecu_status.hpp>
@@ -12,6 +11,8 @@
 #include <mmr_base/msg/cmd_ecu.hpp>
 #include <mmr_base/msg/actuator_status.hpp>
 #include <mmr_base/msg/imu_can_data.hpp>
+#include <mmr_base/msg/control_log.hpp>
+#include <mmr_base/msg/race_status.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <mmr_base/configuration.hpp>
@@ -37,16 +38,13 @@ class CANBusBridge : public EDFNode
 
     private:
 
-        std::string m_sInterface, m_sTopicTx, m_sTopicRx, m_sCmdEcuTopic;
-        std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic, m_sActuatorsStatusTopic, m_sOutImuDataTopic;
-        int m_nBitrate, m_nMaxMsgs;
+        std::string m_sInterface, m_sCmdEcuTopic, m_sLapCounterTopic;
+        std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
+        std::string m_sActuatorsStatusTopic, m_sOutImuDataTopic, m_sControlLogTopic;
+        int m_nBitrate, m_nMaxMsgs, m_nControlFreqDiv, m_nCtrFreqControl = 1;
         bool m_bDebug;
 
         void loadParameters();
-
-        /* Subscriber for CANBus Msg */
-        rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr m_subCANRx;
-        void msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg);
 
         /* Subscriber for target ECU status */
         rclcpp::Subscription<mmr_base::msg::CmdEcu>::SharedPtr m_subCmdEcuTargetStatus;
@@ -56,8 +54,15 @@ class CANBusBridge : public EDFNode
         rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr m_subActuatorsStatus;
         void msgActuatorsStatusCallback(const mmr_base::msg::ActuatorStatus::SharedPtr msg) { this->m_msgActuatorsStatus = *msg; }
 
+        /* Subscriber for Control Log */
+        rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr m_subControlLog;
+        void msgControlLogCallback(const mmr_base::msg::ControlLog::SharedPtr msg);
+
+        /* Subscriber for Lap Counter */
+        rclcpp::Subscription<mmr_base::msg::RaceStatus>::SharedPtr m_subRaceStatus;
+        void msgRaceStatusCallback(const mmr_base::msg::RaceStatus::SharedPtr msg);
+
         /* Publisher for CANBus Msg */
-        rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr m_pubCANBusTx;
         rclcpp::Publisher<mmr_base::msg::EcuStatus>::SharedPtr m_pubEcuStatus;
         rclcpp::Publisher<mmr_base::msg::ResStatus>::SharedPtr m_pubResStatus;
 
@@ -128,6 +133,12 @@ class CANBusBridge : public EDFNode
 
             memcpy(frame.data, &(data.at(0)), data.size());
             return frame;
+        }
+
+        inline void writeMsg(struct can_frame frame) {
+            std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
+            if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+                return;
         }
 
         void connectCANBus();

@@ -11,12 +11,6 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
         this->m_sInterface.c_str(), this->m_nBitrate, this->m_bDebug
     );
 
-    RCLCPP_INFO(
-        this->get_logger(),
-        "[ TX Topic ]: %s, [ CMD ECU Topic ]: %s, [ RX Topic ]: %s, [ ECU TOPIC ], %s, [ RES TOPIC ]: %s",
-        this->m_sTopicTx.c_str(), this->m_sCmdEcuTopic.c_str(), this->m_sTopicRx.c_str(), this->m_sEcuStatusTopic.c_str(), this->m_sResStatusTopic.c_str()
-    );
-
     if (this->m_bDebug)
         RCLCPP_INFO(
             this->get_logger(),
@@ -28,15 +22,16 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
 
-    this->m_subCANRx = this->create_subscription<can_msgs::msg::Frame>(
-        this->m_sTopicRx, 1, std::bind(&CANBusBridge::msgCANBusRxCallback, this, std::placeholders::_1));
+
     this->m_subCmdEcuTargetStatus = this->create_subscription<mmr_base::msg::CmdEcu>(
         this->m_sCmdEcuTopic, 1, std::bind(&CANBusBridge::msgCmdEcuCallback, this, std::placeholders::_1));
     this->m_subActuatorsStatus = this->create_subscription<mmr_base::msg::ActuatorStatus>(
         this->m_sActuatorsStatusTopic, 1, std::bind(&CANBusBridge::msgActuatorsStatusCallback, this, std::placeholders::_1));
+    this->m_subControlLog = this->create_subscription<mmr_base::msg::ControlLog>(
+        this->m_sControlLogTopic, 1, std::bind(&CANBusBridge::msgControlLogCallback, this, std::placeholders::_1));
+    this->m_subRaceStatus = this->create_subscription<mmr_base::msg::RaceStatus>(
+        this->m_sLapCounterTopic, 1, std::bind(&CANBusBridge::msgRaceStatusCallback, this, std::placeholders::_1));
 
-
-    this->m_pubCANBusTx = this->create_publisher<can_msgs::msg::Frame>(this->m_sTopicTx, 1);
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
     this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
@@ -53,20 +48,21 @@ void CANBusBridge::loadParameters()
 {
     declare_parameter("generic.interface", "");
     declare_parameter("generic.bitrate", 5000000);
+    declare_parameter("generic.debug", false);
 	declare_parameter("generic.WCET", 5000000);
 	declare_parameter("generic.period", 10000000);
 	declare_parameter("generic.deadline", 10000000);
     declare_parameter("generic.max_msgs", 5);
-    declare_parameter("generic.debug", false);
+    declare_parameter("generic.control_freq_div", 5);
 
-    declare_parameter("topic.canTxTopic", "");
-    declare_parameter("topic.canRxTopic", "");
     declare_parameter("topic.cmdEcuTopic", "");
     declare_parameter("topic.ecuStatusTopic", "");
     declare_parameter("topic.resStatusTopic", "");
     declare_parameter("topic.ActuatorsStatusTopic", "");
     declare_parameter("topic.missionSelectTopic", "");
     declare_parameter("topic.outputImuTopic", "");
+    declare_parameter("topic.controlLogTopic", "");
+    declare_parameter("topic.raceStatusTopic", "");
 
     declare_parameter("gear.ctrLimit", 5);
     declare_parameter("gear.changeDeltaTime", 200);
@@ -82,20 +78,21 @@ void CANBusBridge::loadParameters()
 
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
+    get_parameter("generic.debug", this->m_bDebug);
 	get_parameter("generic.WCET", this->m_nWCET);
 	get_parameter("generic.period", this->m_nPeriod);
 	get_parameter("generic.deadline", this->m_nDeadline);
     get_parameter("generic.max_msgs", this->m_nMaxMsgs);
-    get_parameter("generic.debug", this->m_bDebug);
+    get_parameter("generic.control_freq_div", this->m_nControlFreqDiv);
 
-    get_parameter("topic.canTxTopic", this->m_sTopicTx);
-    get_parameter("topic.canRxTopic", this->m_sTopicRx);
     get_parameter("topic.cmdEcuTopic", this->m_sCmdEcuTopic);
     get_parameter("topic.ecuStatusTopic", this->m_sEcuStatusTopic);
     get_parameter("topic.resStatusTopic", this->m_sResStatusTopic);
     get_parameter("topic.ActuatorsStatusTopic", this->m_sActuatorsStatusTopic);
     get_parameter("topic.missionSelectTopic", this->m_sMissionSelectTopic);
     get_parameter("topic.outputImuTopic", this->m_sOutImuDataTopic);
+    get_parameter("topic.controlLogTopic", this->m_sControlLogTopic);
+    get_parameter("topic.raceStatusTopic", this->m_sLapCounterTopic);
 
     get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
     get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
@@ -110,27 +107,112 @@ void CANBusBridge::loadParameters()
     get_parameter("neutral.delayCmdEcu", this->m_lDelayCmdEcuNeutral);
 }
 
-void CANBusBridge::msgCANBusRxCallback(const can_msgs::msg::Frame::SharedPtr msg)
+void CANBusBridge::connectCANBus()
 {
-    if (this->m_bDebug)
-        RCLCPP_INFO(
-            this->get_logger(),
-            "[ RECV new MSG ] -> [ ID ]: %d, [ DLC ]: %d",
-            msg->id, msg->dlc
-        );
+    this->m_nSocket = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
+    if (this->m_nSocket < 0) {
+        RCLCPP_ERROR(this->get_logger(), "Error on socket define");
+        throw 1;
+    }
 
-    struct can_frame frame = {
-        .can_id = msg->id,
-        .len = msg->dlc,
+    strcpy(this->m_ifr.ifr_name, this->m_sInterface.c_str());
+    ioctl(this->m_nSocket, SIOCGIFINDEX, &this->m_ifr);
+
+    memset(&this->m_addr, 0, sizeof(this->m_addr));
+    this->m_addr.can_family = AF_CAN;
+    this->m_addr.can_ifindex = this->m_ifr.ifr_ifindex;
+
+    if (bind(this->m_nSocket, (struct sockaddr *)&this->m_addr, sizeof(this->m_addr)) < 0) {
+        RCLCPP_ERROR(this->get_logger(), "Error on socker association");
+        throw 1;        
+    }
+
+    can_frame frame = {
+        .can_id = 0x00,
+        .can_dlc = 1,
+        .data = { 0x01 }
     };
 
-    memcpy(frame.data, &msg->data, CAN_MAX_DLEN);
+    this->writeMsg(frame);
+}
 
-    {
-        std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
-        if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-            RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+void CANBusBridge::readMsgFromCANBus()
+{
+    struct can_frame frame;
+    int nMsgRead = 0;
+
+    while (nMsgRead < this->m_nMaxMsgs) {
+        
+        {
+            std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
+            if (read(this->m_nSocket, &frame, sizeof(struct can_frame)) <= 0)
+                break;
+        }
+
+        if ((frame.can_id & ECU::MMR_ECU_MASK) == ECU::MMR_ECU_MASK)
+            this->readEcuStatus(frame);
+
+        else if ((frame.can_id & IMU::MMR_IMU_MASK) == IMU::MMR_IMU_MASK)
+            this->readImuStatus(frame);
+        
+        if (frame.can_id == RES::MMR_RES_STATUS)
+            this->readResStatus(frame);
+
+        if (frame.can_id == COCKPIT::MMR_MISSION_SELECTED) {
+            std_msgs::msg::Int8 msgMission;
+            msgMission.data = frame.data[0];
+
+            this->m_pubMissionSelect->publish(msgMission);
+        }
+
+        nMsgRead ++;
     }
+}
+
+void CANBusBridge::msgControlLogCallback(const mmr_base::msg::ControlLog::SharedPtr msg)
+{
+
+    if ((this->m_nCtrFreqControl % this->m_nControlFreqDiv) != 0) {
+        this->m_nCtrFreqControl ++;
+        return;
+    }
+    this->m_nCtrFreqControl = 1;
+
+    float fSteerAngle = static_cast<float>(msg->steer);
+    float fBrakePerc = static_cast<float>(msg->brake);
+    float fThrottle = static_cast<float>(msg->throttle);
+
+    struct can_frame frame = {
+        .can_id = ECU::MMR_STEERING_ANGLE,
+        .len = sizeof(float)
+    };
+    memcpy(frame.data, &fSteerAngle, sizeof(float));
+    this->writeMsg(frame);
+
+    frame = {
+        .can_id = ECU::MMR_BRAKING_PERCENTAGE,
+        .len = sizeof(float)
+    };
+    memcpy(frame.data, &fBrakePerc, sizeof(float));
+    this->writeMsg(frame);
+
+    frame = {
+        .can_id = ECU::MMR_ACCELERATOR_PERCENTAGE,
+        .len = sizeof(float)
+    };
+    memcpy(frame.data, &fThrottle, sizeof(float));
+    this->writeMsg(frame);
+}
+
+void CANBusBridge::msgRaceStatusCallback(const mmr_base::msg::RaceStatus::SharedPtr msg)
+{
+    uint8_t nLapCounter = msg->current_lap;
+    struct can_frame frame = {
+        .can_id = ECU::MMR_LAP_COUNTER,
+        .len = sizeof(uint8_t),
+        .data = { nLapCounter }
+    };
+    this->writeMsg(frame);
 }
 
 void CANBusBridge::changeGearUpDown()
@@ -203,79 +285,6 @@ void CANBusBridge::setLaunchControl()
     if ((!this->m_ecSetLaunchCtr->isRunning()) && (!this->m_ecSetNeutral->isRunning()))
         this->m_ecSetLaunchCtr->startCtr();
 
-}
-
-void CANBusBridge::connectCANBus()
-{
-    this->m_nSocket = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
-    if (this->m_nSocket < 0) {
-        RCLCPP_ERROR(this->get_logger(), "Error on socket define");
-        throw 1;
-    }
-
-    strcpy(this->m_ifr.ifr_name, this->m_sInterface.c_str());
-    ioctl(this->m_nSocket, SIOCGIFINDEX, &this->m_ifr);
-
-    memset(&this->m_addr, 0, sizeof(this->m_addr));
-    this->m_addr.can_family = AF_CAN;
-    this->m_addr.can_ifindex = this->m_ifr.ifr_ifindex;
-
-    if (bind(this->m_nSocket, (struct sockaddr *)&this->m_addr, sizeof(this->m_addr)) < 0) {
-        RCLCPP_ERROR(this->get_logger(), "Error on socker association");
-        throw 1;        
-    }
-
-    can_frame frame = {
-        .can_id = 0x00,
-        .can_dlc = 1,
-        .data = { 0x01 }
-    };
-
-    {
-        std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
-        if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
-            return;
-    }
-}
-
-void CANBusBridge::readMsgFromCANBus()
-{
-    struct can_frame frame;
-    int nMsgRead = 0;
-    can_msgs::msg::Frame txMsg;
-
-    while (nMsgRead < this->m_nMaxMsgs) {
-        
-        {
-            std::unique_lock<std::mutex> lock(this->m_mutexOnSocket);
-            if (read(this->m_nSocket, &frame, sizeof(struct can_frame)) <= 0)
-                break;
-        }
-
-        txMsg.id = frame.can_id;
-        txMsg.dlc = frame.can_dlc;
-        memcpy(&txMsg.data, &frame.data, CAN_MAX_DLEN);
-
-        this->m_pubCANBusTx->publish(txMsg);
-
-        if ((frame.can_id & ECU::MMR_ECU_MASK) == ECU::MMR_ECU_MASK)
-            this->readEcuStatus(frame);
-
-        else if ((frame.can_id & IMU::MMR_ECU_MASK) == IMU::MMR_ECU_MASK)
-            this->readImuStatus(frame);
-        
-        if (frame.can_id == RES::MMR_RES_STATUS)
-            this->readResStatus(frame);
-
-        if (frame.can_id == COCKPIT::MMR_MISSION_SELECTED) {
-            std_msgs::msg::Int8 msgMission;
-            msgMission.data = frame.data[0];
-
-            this->m_pubMissionSelect->publish(msgMission);
-        }
-
-        nMsgRead ++;
-    }
 }
 
 void CANBusBridge::sendStatus()
