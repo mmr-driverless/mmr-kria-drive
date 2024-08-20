@@ -12,6 +12,7 @@
 #include <mmr_base/msg/actuator_status.hpp>
 #include <mmr_base/msg/imu_can_data.hpp>
 #include <mmr_base/msg/control_log.hpp>
+#include <mmr_base/msg/race_status.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <mmr_base/configuration.hpp>
@@ -37,7 +38,7 @@ class CANBusBridge : public EDFNode
 
     private:
 
-        std::string m_sInterface, m_sCmdEcuTopic;
+        std::string m_sInterface, m_sCmdEcuTopic, m_sLapCounterTopic;
         std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
         std::string m_sActuatorsStatusTopic, m_sOutImuDataTopic, m_sControlLogTopic;
         int m_nBitrate, m_nMaxMsgs, m_nControlFreqDiv, m_nCtrFreqControl = 1;
@@ -56,6 +57,10 @@ class CANBusBridge : public EDFNode
         /* Subscriber for Control Log */
         rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr m_subControlLog;
         void msgControlLogCallback(const mmr_base::msg::ControlLog::SharedPtr msg);
+
+        /* Subscriber for Lap Counter */
+        rclcpp::Subscription<mmr_base::msg::RaceStatus>::SharedPtr m_subRaceStatus;
+        void msgRaceStatusCallback(const mmr_base::msg::RaceStatus::SharedPtr msg);
 
         /* Publisher for CANBus Msg */
         rclcpp::Publisher<mmr_base::msg::EcuStatus>::SharedPtr m_pubEcuStatus;

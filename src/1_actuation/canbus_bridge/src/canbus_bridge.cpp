@@ -22,12 +22,15 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
 
+
     this->m_subCmdEcuTargetStatus = this->create_subscription<mmr_base::msg::CmdEcu>(
         this->m_sCmdEcuTopic, 1, std::bind(&CANBusBridge::msgCmdEcuCallback, this, std::placeholders::_1));
     this->m_subActuatorsStatus = this->create_subscription<mmr_base::msg::ActuatorStatus>(
         this->m_sActuatorsStatusTopic, 1, std::bind(&CANBusBridge::msgActuatorsStatusCallback, this, std::placeholders::_1));
     this->m_subControlLog = this->create_subscription<mmr_base::msg::ControlLog>(
         this->m_sControlLogTopic, 1, std::bind(&CANBusBridge::msgControlLogCallback, this, std::placeholders::_1));
+    this->m_subRaceStatus = this->create_subscription<mmr_base::msg::RaceStatus>(
+        this->m_sLapCounterTopic, 1, std::bind(&CANBusBridge::msgRaceStatusCallback, this, std::placeholders::_1));
 
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
     this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
@@ -57,7 +60,9 @@ void CANBusBridge::loadParameters()
     declare_parameter("topic.resStatusTopic", "");
     declare_parameter("topic.ActuatorsStatusTopic", "");
     declare_parameter("topic.missionSelectTopic", "");
+    declare_parameter("topic.outputImuTopic", "");
     declare_parameter("topic.controlLogTopic", "");
+    declare_parameter("topic.raceStatusTopic", "");
 
     declare_parameter("gear.ctrLimit", 5);
     declare_parameter("gear.changeDeltaTime", 200);
@@ -87,6 +92,7 @@ void CANBusBridge::loadParameters()
     get_parameter("topic.missionSelectTopic", this->m_sMissionSelectTopic);
     get_parameter("topic.outputImuTopic", this->m_sOutImuDataTopic);
     get_parameter("topic.controlLogTopic", this->m_sControlLogTopic);
+    get_parameter("topic.raceStatusTopic", this->m_sLapCounterTopic);
 
     get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
     get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
@@ -195,6 +201,17 @@ void CANBusBridge::msgControlLogCallback(const mmr_base::msg::ControlLog::Shared
         .len = sizeof(float)
     };
     memcpy(frame.data, &fThrottle, sizeof(float));
+    this->writeMsg(frame);
+}
+
+void CANBusBridge::msgRaceStatusCallback(const mmr_base::msg::RaceStatus::SharedPtr msg)
+{
+    uint8_t nLapCounter = msg->current_lap;
+    struct can_frame frame = {
+        .can_id = ECU::MMR_LAP_COUNTER,
+        .len = sizeof(uint8_t),
+        .data = { nLapCounter }
+    };
     this->writeMsg(frame);
 }
 
