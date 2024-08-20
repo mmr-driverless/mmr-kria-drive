@@ -8,7 +8,7 @@ class MaxonSteer : public MaxonMotor
     private:
     
         const int m_nModeOfOp = MOTOR::PPM;
-        int m_nVelocity, m_fMaxTarget;
+        int m_nVelocity, m_fMaxTargetMaxon;
 
         void initSteer() {
             /* set modes of operation */
@@ -23,11 +23,11 @@ class MaxonSteer : public MaxonMotor
 
     public:
 
-        MaxonSteer(int nSocket, int nNodeId, int nTimeOutMsg, float fMaxTarget, int nVelocity) 
+        MaxonSteer(int nSocket, int nNodeId, int nTimeOutMsg, float fMaxTargetMaxon, int nVelocity) 
             : MaxonMotor(nSocket, nNodeId, m_nModeOfOp, nTimeOutMsg) 
         {
             this->m_nVelocity = nVelocity;
-            this->m_fMaxTarget = fMaxTarget;
+            this->m_fMaxTargetMaxon = fMaxTargetMaxon;
 
             for (int i = 0; i < 10; i++)
                 this->initSteer();
@@ -52,8 +52,8 @@ class MaxonSteer : public MaxonMotor
         ~MaxonSteer() { this->disable(); };
 
         void writeTargetPos(int nTargetPos) {
-            if ((nTargetPos < -this->m_fMaxTarget) || (nTargetPos > this->m_fMaxTarget))
-                nTargetPos = this->m_fMaxTarget * std::copysign(1, nTargetPos);
+            if ((nTargetPos < -this->m_fMaxTargetMaxon) || (nTargetPos > this->m_fMaxTargetMaxon))
+                nTargetPos = this->m_fMaxTargetMaxon * std::copysign(1, nTargetPos);
             
             /* set target position */
             this->download<int>(0x607A, 0x00, nTargetPos);

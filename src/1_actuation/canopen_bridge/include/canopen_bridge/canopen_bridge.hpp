@@ -40,7 +40,8 @@ class CANOpenBridge : public EDFNode
 
         /* Steer parameters */
         int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer;
-        float m_fWheelRate, m_fIncPerDegree, m_fMaxTarget;
+        float m_fWheelRate, m_fIncPerDegree, m_fMaxTargetMaxon, m_fMaxTargetPot;
+        std::optional<float> m_fSteerPot, m_fOffSetClamp;
 
         /* Brake parameters */
         int m_nBrakeId, m_nMaxTorque, m_nReturnPedalTorque, m_nTimeoutMsgBrake, m_nFreqScaleBrake, m_nCtrBrake = 1;
@@ -80,6 +81,13 @@ class CANOpenBridge : public EDFNode
 
         void connectCANBus();
         void loadParameters();
+
+        inline void getSteerOffSetPot() {
+            float fRatio = (this->m_fMaxTargetMaxon - (-this->m_fMaxTargetMaxon)) / (this->m_fMaxTargetPot - (-this->m_fMaxTargetPot));
+            this->m_fOffSetClamp = -this->m_fMaxTargetMaxon + ((this->m_fSteerPot.value() - (-this->m_fMaxTargetPot)) * fRatio);
+        }
+
+        inline float getStepToActuate() {};
 
         MaxonSteer *m_mSteer = nullptr;
         MaxonBrake *m_mBrake = nullptr;

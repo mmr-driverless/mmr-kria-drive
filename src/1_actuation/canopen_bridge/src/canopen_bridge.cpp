@@ -52,7 +52,8 @@ void CANOpenBridge::loadParameters()
     declare_parameter("steer.node_id", 18);
     declare_parameter("steer.wheel_rate", 6.4286);
     declare_parameter("steer.inc_per_degree", 179.7224);
-    declare_parameter("steer.max_target", 24000.0);
+    declare_parameter("steer.max_target_pot", 135.0);
+    declare_parameter("steer.max_target_maxon", 24000.0);
     declare_parameter("steer.velocity", 2750);
     declare_parameter("steer.timeout_msgs", 5);
 
@@ -85,7 +86,8 @@ void CANOpenBridge::loadParameters()
     get_parameter("steer.node_id", this->m_nSteerID);
     get_parameter("steer.wheel_rate", this->m_fWheelRate);
     get_parameter("steer.inc_per_degree", this->m_fIncPerDegree);
-    get_parameter("steer.max_target", this->m_fMaxTarget);
+    get_parameter("steer.max_target_pot", this->m_fMaxTargetPot);
+    get_parameter("steer.max_target_maxon", this->m_fMaxTargetMaxon);
     get_parameter("steer.velocity", this->m_nVelocity);
     get_parameter("steer.timeout_msgs", this->m_nTimeoutMsgSteer);
 
@@ -136,16 +138,16 @@ void CANOpenBridge::connectCANBus()
 
 void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 {
-    if (msg->enable && (this->m_mSteer == nullptr)) {
+    if (msg->enable && (this->m_mSteer == nullptr) && (this->m_fOffSetClamp.has_value())) {
         /* Enables the steer motor in PPM */
         this->m_mSteer = new MaxonSteer(
             this->m_nSocket, this->m_nSteerID, this->m_nTimeoutMsgSteer,
-            this->m_fMaxTarget, this->m_nVelocity
+            this->m_fMaxTargetMaxon, this->m_nVelocity
         );
         this->m_msgActuatorStatus.steer_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::POSITION_MODE);
         
         if (this->m_bDebug)
-            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR STEER");
+            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR STEER, [ OFFSET ]: %f", this->m_fOffSetClamp);
 
         return;
     }
@@ -163,6 +165,8 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         return;
     }
     
+    /* TODO: conversion */
+
     /* convert radiant into degrees */
     msg->wheel_angle *= 180 / M_PI;
 
@@ -237,6 +241,9 @@ void CANOpenBridge::msgCmdClutchCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 
 void CANOpenBridge::msgSelectorCallback(mmr_base::msg::EcuStatus::SharedPtr msg)
 {
+    this->m_fSteerPot = msg->steering_angle;
+    if (!this->m_fOffSetClamp.has_value()) this->getSteerOffSetPot();
+
     if (this->m_fClutchPot.has_value())
         this->msgEcuStatusCallback(msg);
     else this->msgEngageInitClutch(msg);
