@@ -3,6 +3,7 @@
 #include <control_node/parameters.hpp>
 #include <control_node/viz/msgs/viz_msgs.hpp>
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
+#include <control_node/control/pure_pursuit_2023/acc_to_brake_apps.hpp>
 #include <algorithm>
 
 namespace control_node {
@@ -157,22 +158,19 @@ Control PurePursuit2023::control(
   Control u(0.0, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
   if (state.speed().has_value()) {
+    // Compute the target acceleration
     double accv = (std::pow(targetSpeed, 2) - std::pow(*state.speed(), 2)) / (2 * m_accel_lookforward);
 
     // Smooth the target acceleration in the time-domain with yet another first order IIR filter
     m_smoothedAccel = m_smoothedAccel * (1 - m_accel_k_smooth) + accv * m_accel_k_smooth;
 
-    // TODO: Use the low level controller from canbusbridge, this is just a placeholder
-    auto apps_brake_from_accel = [this](double accel) -> std::pair<double, double> {
-      if (accel >= 0)
-        return { this->m_accel_apps_p * accel, 0.0 };
-      else
-        return { 0.0, this->m_accel_brake_p * (-accel) };
-    };
+    // Determine the inputs from the low level controller
+    if (state.gear().has_value() && state.rpm().has_value() && state.speed().has_value()) {
+      AppsBrakePair ll_u = apps_brake_from_accel(accv, state.speed().value(), state.gear().value(), state.rpm().value(), *m_vp);
 
-    auto [apps, brake_torque] = apps_brake_from_accel(m_smoothedAccel);
-    u.throttle = std::clamp<double>(apps, 0.0, 1.0);
-    u.brake = brake_torque;
+      u.throttle = ll_u.apps;
+      u.brake = ll_u.brake_torque;
+    }
   }
 
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
@@ -182,9 +180,9 @@ Control PurePursuit2023::control(
       *state.yaw(),
       steer_lookforward,
       m_steerGain,
-      m_vp->max_steering_angle(),
-      m_vp->lr(),
-      m_vp->wheelbase()
+      m_vp->max_steering_angle_rad(),
+      m_vp->lr_m(),
+      m_vp->wheelbase_m()
     );
   }
 

@@ -26,7 +26,7 @@ Control Inspection::control(
   if (!m_start_t.has_value())
     m_start_t = t;
 
-  double steering = std::sin(m_frequency * std::chrono::duration<double>(t - *m_start_t).count()) * m_vp->max_steering_angle() * m_steer_fraction;
+  double steering = std::sin(m_frequency * std::chrono::duration<double>(t - *m_start_t).count()) * m_vp->max_steering_angle_rad() * m_steer_fraction;
   return Control(steering, 0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 }
 
