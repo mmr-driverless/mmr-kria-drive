@@ -42,7 +42,7 @@ class CANOpenBridge : public EDFNode
         /* Steer parameters */
         int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer, m_nControlMode;
         float m_fWheelRate, m_fIncPerDegree, m_fMaxTargetMaxon, m_fMaxTargetPot;
-        float m_fConvFactor, m_fMaxWheelTarget;
+        float m_fConvFactor, m_fMaxWheelTarget, m_fTargetWheelAngle;
         std::optional<float> m_fSteerPot;
         uint32_t m_nCRCSteerOld, m_nCRCSteer;
 
@@ -87,18 +87,18 @@ class CANOpenBridge : public EDFNode
 
         inline int getStepToActuate(float fTargetWheelAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
             
-            int nIncToDo;
+            int nIncToDo = 0;
             fTargetWheelAngle = fTargetWheelAngle * 180 / M_PI;
 
             if (mode == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)
                 return std::round(fTargetWheelAngle * this->m_fWheelRate * this->m_fIncPerDegree);
             
-            if (!this->m_fSteerPot.has_value()) {
+            if (this->m_fSteerPot.has_value()) {
 
                 float fTargetSteerAngle = fTargetWheelAngle * m_fWheelRate;
                 std::clamp<float>(fTargetSteerAngle, -this->m_fMaxTargetPot, this->m_fMaxTargetPot);
 
-                float fDeltaDegrees = std::abs(fTargetSteerAngle - m_fSteerPot.value()) * std::copysign(1, fTargetWheelAngle);
+                float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
                 nIncToDo = std::round(fDeltaDegrees * m_fConvFactor);
             }
 
@@ -115,6 +115,7 @@ class CANOpenBridge : public EDFNode
 
         CANOpenBridge();
 
+        void monitorSteer();
         void sendActuatorStatus();
 
         ~CANOpenBridge() { close(this->m_nSocket); };

@@ -156,7 +156,7 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         return;
     }
 
-    if (msg->disable && (this->m_mSteer != nullptr)) {
+    if (msg->disable && (this->m_mSteer != nullptr) && (static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode) == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)) {
         delete this->m_mSteer;
         this->m_mSteer = nullptr;
         this->m_msgActuatorStatus.steer_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
@@ -168,25 +168,8 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         this->m_mSteer = nullptr;
         return;
     }
-    
-    if (static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode) == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS) {
-        if (this->m_nCRCSteerOld != this->m_nCRCSteer)
-            this->m_nCRCSteerOld = this->m_nCRCSteer;
-        else return;
-    }
-    /* Compute the incremets to do */
-    int nIncrements = this->getStepToActuate(msg->wheel_angle, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
-    
-    if (this->m_bDebug) {
-        RCLCPP_INFO(
-            this->get_logger(), 
-            "[ STEERING ANGLE POT ]: %f, [ WHEEL ANGLE TARGET ]: %f, [ NUMBER INCREMENT ]: %d",
-            this->m_fSteerPot.value(), msg->wheel_angle, nIncrements
-        );
-    }
-    
-    if (this->m_mSteer != nullptr)  
-        this->m_mSteer->writeTargetPos(nIncrements, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
+
+    this->m_fTargetWheelAngle = msg->wheel_angle;
 }
 
 void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
@@ -343,6 +326,27 @@ void CANOpenBridge::sendActuatorStatus()
     this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); 
 }
 
+void CANOpenBridge::monitorSteer()
+{
+    if (static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode) == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS) {
+        if (this->m_nCRCSteerOld != this->m_nCRCSteer)
+            this->m_nCRCSteerOld = this->m_nCRCSteer;
+        else return;
+    }
+    /* Compute the incremets to do */
+    int nIncrements = this->getStepToActuate(m_fTargetWheelAngle, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
+    
+    if (this->m_bDebug) {
+        RCLCPP_INFO(
+            this->get_logger(), 
+            "[ STEERING ANGLE POT ]: %f, [ WHEEL ANGLE TARGET ]: %f, [ NUMBER INCREMENT ]: %d",
+            this->m_fSteerPot.value(), m_fTargetWheelAngle, nIncrements
+        );
+    }
+    
+    if (this->m_mSteer != nullptr)  
+        this->m_mSteer->writeTargetPos(nIncrements, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
+}
 
 void CANOpenBridge::uploadVoltage()
 {
