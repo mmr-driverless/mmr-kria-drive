@@ -35,7 +35,7 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->m_subActuatorsStatus = this->create_subscription<mmr_base::msg::ActuatorStatus>(
         this->m_sActuatorsStatusTopic, 1, std::bind(&CANBusBridge::msgActuatorsStatusCallback, this, std::placeholders::_1));
 
-
+    this->m_msgEcuStatus.checksum_steering_angle = 0;
     this->m_pubCANBusTx = this->create_publisher<can_msgs::msg::Frame>(this->m_sTopicTx, 1);
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
     this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
@@ -349,6 +349,7 @@ void CANBusBridge::readEcuStatus(can_frame frame)
         case ECU::MMR_ECU_CLUTCH_STEER:
             this->m_msgEcuStatus.clutch_percentage = this->endian_cast<float>(frame.data);
             this->m_msgEcuStatus.steering_angle = (float)this->endian_cast<int16_t>(frame.data + 4) / 10;
+            this->m_msgEcuStatus.checksum_steering_angle ++;
             this->m_msgEcuStatus.wheel_angle = (float)this->endian_cast<int16_t>(frame.data + 6) / 10;
             break;
 

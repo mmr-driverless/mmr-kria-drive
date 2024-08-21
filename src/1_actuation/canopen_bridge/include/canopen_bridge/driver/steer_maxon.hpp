@@ -51,7 +51,7 @@ class MaxonSteer : public MaxonMotor
 
         ~MaxonSteer() { this->disable(); };
 
-        void writeTargetPos(int nTargetPos) {
+        void writeTargetPos(int nTargetPos, MOTOR::IDX_TOGGLE_NEW_POS mode) {
             if ((nTargetPos < -this->m_fMaxTargetMaxon) || (nTargetPos > this->m_fMaxTargetMaxon))
                 nTargetPos = this->m_fMaxTargetMaxon * std::copysign(1, nTargetPos);
             
@@ -59,7 +59,7 @@ class MaxonSteer : public MaxonMotor
             this->download<int>(0x607A, 0x00, nTargetPos);
 
             /* start postioning & toggle `new position` bit */
-            this->toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS);
+            this->toggle_new_pos(mode);
         }
 
 };
