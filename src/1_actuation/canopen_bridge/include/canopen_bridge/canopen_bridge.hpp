@@ -42,7 +42,7 @@ class CANOpenBridge : public EDFNode
         /* Steer parameters */
         int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer, m_nControlMode;
         float m_fWheelRate, m_fIncPerDegree, m_fMaxTargetMaxon, m_fMaxTargetPot;
-        float m_fConvFactor, m_fMaxWheelTarget, m_fTargetWheelAngle;
+        float m_fConvFactor, m_fMinTargetPot, m_fTargetWheelAngle;
         std::optional<float> m_fSteerPot;
         uint32_t m_nCRCSteerOld, m_nCRCSteer;
 
@@ -96,7 +96,7 @@ class CANOpenBridge : public EDFNode
             if (this->m_fSteerPot.has_value()) {
 
                 float fTargetSteerAngle = fTargetWheelAngle * m_fWheelRate;
-                std::clamp<float>(fTargetSteerAngle, -this->m_fMaxTargetPot, this->m_fMaxTargetPot);
+                std::clamp<float>(fTargetSteerAngle, this->m_fMinTargetPot, this->m_fMaxTargetPot);
 
                 float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
                 nIncToDo = std::round(fDeltaDegrees * m_fConvFactor);

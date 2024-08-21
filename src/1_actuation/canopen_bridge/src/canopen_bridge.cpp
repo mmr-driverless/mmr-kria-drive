@@ -33,7 +33,7 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     this->m_msgActuatorStatus.clutch_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     this->m_msgActuatorStatus.steer_status  = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
 
-    this->m_fConvFactor = (this->m_fMaxTargetMaxon - (-this->m_fMaxTargetMaxon)) / (this->m_fMaxTargetPot - (-this->m_fMaxTargetPot));
+    this->m_fConvFactor = (this->m_fMaxTargetMaxon - (this->m_fMinTargetPot)) / (this->m_fMaxTargetPot - (-this->m_fMaxTargetPot));
     this->m_nCRCSteerOld = 0;
 }
 
@@ -60,7 +60,7 @@ void CANOpenBridge::loadParameters()
     declare_parameter("steer.velocity", 2750);
     declare_parameter("steer.timeout_msgs", 5);
     declare_parameter("steer.control_mode", 0);
-    declare_parameter("steer.max_target_wheel", 0.0);
+    declare_parameter("steer.min_target_pot", 0.0);
 
     declare_parameter("brake.node_id", 18);
     declare_parameter("brake.max_torque", 1500);
@@ -92,11 +92,11 @@ void CANOpenBridge::loadParameters()
     get_parameter("steer.wheel_rate", this->m_fWheelRate);
     get_parameter("steer.inc_per_degree", this->m_fIncPerDegree);
     get_parameter("steer.max_target_pot", this->m_fMaxTargetPot);
+    get_parameter("steer.min_target_pot", this->m_fMinTargetPot);
     get_parameter("steer.max_target_maxon", this->m_fMaxTargetMaxon);
     get_parameter("steer.velocity", this->m_nVelocity);
     get_parameter("steer.timeout_msgs", this->m_nTimeoutMsgSteer);
     get_parameter("steer.control_mode", this->m_nControlMode);
-    get_parameter("steer.max_target_wheel", this->m_fMaxWheelTarget);
 
     get_parameter("brake.node_id", this->m_nBrakeId);
     get_parameter("brake.max_torque", this->m_nMaxTorque);
