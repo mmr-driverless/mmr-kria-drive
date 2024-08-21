@@ -156,7 +156,7 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         return;
     }
 
-    if (msg->disable && (this->m_mSteer != nullptr) && (static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode) == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)) {
+    if (msg->disable && (this->m_mSteer != nullptr)) {
         delete this->m_mSteer;
         this->m_mSteer = nullptr;
         this->m_msgActuatorStatus.steer_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
