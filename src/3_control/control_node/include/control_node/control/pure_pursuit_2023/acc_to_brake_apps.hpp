@@ -79,7 +79,7 @@ static inline AppsBrakePair apps_brake_from_accel(double target_acc,
   } else {
     // Compute the torque that the brake motor has to apply 
     double T_mot_freno_perm_mNm =
-        ((((((target_acc * vp.mass_kg() / 3) * (vp.wheel_radius_m() * 1000.0) / vp.brake_disc_radius_mm() / 4 /
+        ((((((-target_acc * vp.mass_kg() / 3) * (vp.wheel_radius_m() * 1000.0) / vp.brake_disc_radius_mm() / 4 /
              vp.brake_mu() / (PI / 4 * pow(vp.brake_piston_diameter_mm(), 2)) * 10) *
             vp.brake_pedal_down_distance_mm() / vp.brake_pedal_up_distance_mm() * 2 * (PI / 4 * pow(vp.brake_tilton_diameter_mm(), 2)) / 10) *
            vp.brake_pulley_diameter_mm() / 2000) /
