@@ -18,7 +18,7 @@ void NoopEstimator::ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus
   m_state.m_gear = msg->gear;
   m_state.m_lc_is_active = msg->bool_ack_ideal_launch_control;
   m_state.m_rpm = msg->nmot;
-  m_state.m_speed = msg->vehicle_speed;
+  m_state.m_speed = msg->vehicle_speed / 3.6;
 }
 
 void NoopEstimator::act_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg) {
