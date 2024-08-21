@@ -70,7 +70,7 @@
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 6.0
+        minLookForward: 4.2
         minLookForwardGain: 0.4
         steerGain: 1.0
         minSpeed: 3.33
@@ -131,7 +131,7 @@
             buffered: false
 
         3:
-          enabled: false
+          enabled: true
           type: Ecu
           params:
             topic: "/command/ecu"
