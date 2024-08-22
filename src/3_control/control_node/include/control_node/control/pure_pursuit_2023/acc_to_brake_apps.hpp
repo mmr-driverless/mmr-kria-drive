@@ -1,158 +1,95 @@
-#include <limits>
-#include <algorithm>
-#include <cstdint>
 #include <cmath>
-#include <cstring>
 #include <vector>
 
-struct Output 
-{
-    double brake_torque;
-    double apps;
+#include <control_node/vehicle_parameters.hpp>
+
+namespace control_node {
+namespace control {
+namespace pure_pursuit_2023 {
+
+struct AppsBrakePair {
+  double brake_torque;
+  double apps;
 };
 
-struct Parameters
-{
-    double Cx;
-    double Cz;
-    double Sx;
-    double Sz;
-    double RDRY;
-    double X;
-    double Z;
-    double DELTA;
-    double J0;
-    //double lookahead;
-    double RATIO_DIFF;
-    double VEH_MASS;
-    double R_WHEEL;
-    double R_MEAN_BRAKE_DISK;
-    double MU_BRAKE;
-    //double M_PI;
-    double D_PIST;
-    double L_PED_UP;
-    double L_PED_DOWN;
-    double D_TILTON;
-    double D_CARRUCOLA;
-    double RIDUTTORE;
-    double EFF_RIDUTTORE;
-    double T_MAX_BRAKE;
+static inline AppsBrakePair apps_brake_from_accel(double target_acc,
+                                                  double speed, int gear,
+                                                  int rpm,
+                                                  const VehicleParameters &vp) {
+  constexpr double PI = std::numbers::pi;
+  constexpr double G = 9.81;
+  constexpr double AIR_DENSITY = 1.225;
 
-    std::vector<float> gear_ratios = 
-    {
-        std::numeric_limits<int>::infinity(),
-        (float)77/14,
-        77/19,
-        77*36/39/21,
-        77*36/39/24
-    };
-    std::vector<unsigned short> NMOVET = 
-    {
-        10, 2500, 3500, 4500, 5500, 6500, 7500, 8500, 9500, 10500, 11500, 18000
-    };
-    std::vector<unsigned short> CDC = 
-    {
-        23, 23, 36, 40, 38, 44, 46, 52, 56, 51, 47, 47
-    };
-};
+  // Drag (X) and downforce (Z)
+  double X = 0.5 * AIR_DENSITY * vp.cx() * vp.sx() * std::pow(speed, 2);
+  double Z = 0.5 * AIR_DENSITY * vp.cz() * vp.sz() * std::pow(speed, 2) * vp.cz() * vp.sz();
 
-Output aps_brake_from_accl(double accl, int gear, int rpm, const Parameters& params)
-{
-    constexpr double G = 9.81;
-    constexpr double air_density = 1.225;
-    double Cx = params.Cx;
-    double Cz = params.Cz;
-    double Sx = params.Sx;
-    double Sz = params.Sz;
-    double RDRY = params.RDRY;
-    double X = params.X;
-    double Z = params.Z;
-    double DELTA = params.DELTA;
-    double J0 = params.J0;
-    //double lookahead = params.lookahead;
-    double RATIO_DIFF = params.RATIO_DIFF;
+  double M = 300.0; // vp.mass_kg()
 
-    double VEH_MASS  = params.VEH_MASS;
-    double R_WHEEL = params.R_WHEEL;
-    double R_MEAN_BRAKE_DISK = params.R_MEAN_BRAKE_DISK;
-    double MU_BRAKE = params.MU_BRAKE;
-    //double M_PI = params.M_PI;
-    double D_PIST = params.D_PIST;
-    double L_PED_UP = params.L_PED_UP;
-    double L_PED_DOWN = params.L_PED_DOWN;
-    double D_TILTON = params.D_TILTON;
-    double D_CARRUCOLA = params.D_CARRUCOLA;
-    double RIDUTTORE = params.RIDUTTORE;
-    double EFF_RIDUTTORE = params.EFF_RIDUTTORE;
-    double T_MAX_BRAKE = params.T_MAX_BRAKE;
+  // Required torque at the rear wheels
+  double coppia_ruote =
+      (X * vp.wheel_radius_m()) + (((M * G) + Z) * vp.wheel_roll_coeff()) +
+      ((M + ((4.0 * vp.wheel_inertia()) / std::pow(vp.wheel_radius_m(), 2)))) *
+          vp.wheel_radius_m() * target_acc;
 
-    auto& gear_ratios = params.gear_ratios;
-    auto& NMOVET = params.NMOVET;
-    auto& CDC = params.CDC;
+  if (coppia_ruote >= 0.0) {
+    if (gear == 0)
+      return { .brake_torque = 0.0, .apps = 0.0 };
 
-    double coppia_ruote = (X * RDRY) + (((VEH_MASS * G) + Z) * DELTA) + ((VEH_MASS + ((4.0 * J0) / pow(RDRY, 2)))) * RDRY * accl;
-    float coppia_motore = 0.0f;
-    float coppia_freno = 0.0f;
-    float APS = 0.0f;
+    // Torque required at the engine
+    double coppia_motore =
+        (double)(coppia_ruote / vp.ratio_diff() / vp.gear_ratios().at(gear));
 
-    if(coppia_ruote >= 0.0)
-    {
-        coppia_motore = (float)(coppia_ruote / RATIO_DIFF / gear_ratios[gear]);
-        uint8_t RPMBOUNDINF = 11, RMPBOUNDSUP = 11;
-        double CDCINTERPOLATO = 0.0, m = 0.0, q = 0.0;
-        uint8_t i;
+    /*
+      Find the maximum torque of the engine at the current RPM
+      by linear interpolation of the torque curve obtained at the dyno
+    */
+    int NMOTVET_SIZE = vp.NMOVET_rpm().size();
+    int RPMBOUNDINF = NMOTVET_SIZE - 1;
+    int RMPBOUNDSUP = RPMBOUNDINF;
 
-        for(i = 1; i < NMOVET.size(); ++i)
-        {
-            if(rpm <= NMOVET[i])
-            {
-                RPMBOUNDINF = i -1;
-                RMPBOUNDSUP = i;
-                break;
-            }
-        }
+    double CDCINTERPOLATO = 0.0, m = 0.0, q = 0.0;
 
-        m = (double)(
-            (double)(CDC[RMPBOUNDSUP] - CDC[RPMBOUNDINF])
-            / 
-            (double)(NMOVET[RMPBOUNDSUP] - NMOVET[RPMBOUNDINF]));
-
-        q = (double)(
-            (double)(
-                (double)(NMOVET[RMPBOUNDSUP] * CDC[RPMBOUNDINF])
-                -
-                (double)(NMOVET[RPMBOUNDINF] * CDC[RMPBOUNDSUP])
-            )
-            /
-            (double)(NMOVET[RMPBOUNDSUP] - NMOVET[RPMBOUNDINF])
-        );
-
-        CDCINTERPOLATO = (double)(m * static_cast<double>(rpm)) + q;
-
-        APS = (float)(coppia_motore / CDCINTERPOLATO);
-
-        if(std::isnan(APS) || std::isinf(APS))
-        {
-            APS = 0.0f;
-        }
-    }
-    else
-    {
-        APS = 0.0f;
-        double T_mot_freno_perm = ((((((accl*VEH_MASS/3) * R_WHEEL/R_MEAN_BRAKE_DISK/4/MU_BRAKE/(M_PI/4 * pow(D_PIST,2)) * 10) * L_PED_DOWN/L_PED_UP*2*(M_PI/4*pow(D_TILTON,2))/10)*D_CARRUCOLA/2000)/RIDUTTORE*1000) / EFF_RIDUTTORE) / T_MAX_BRAKE * 1000;
-        coppia_freno = (float)T_mot_freno_perm;
-
-        coppia_freno = (coppia_freno < -100.0f) ? coppia_freno : 0.0f;
-        coppia_freno = (coppia_freno < -300.0f) ? -300.0f : coppia_freno;
-
-        coppia_freno /= 1000.0f;
-
-        if(rpm <= 3200)
-        {
-            coppia_freno = 0.0f;
-        }
+    for (int i = 1; i < NMOTVET_SIZE; ++i) {
+      if (rpm <= vp.NMOVET_rpm().at(i)) {
+        RPMBOUNDINF = i - 1;
+        RMPBOUNDSUP = i;
+        break;
+      }
     }
 
-    Output output = {.brake_torque = coppia_freno, .apps = APS};
-    return output;
+    m = (double)((double)(vp.CDC_Nm().at(RMPBOUNDSUP) - vp.CDC_Nm().at(RPMBOUNDINF)) /
+                 (double)(vp.NMOVET_rpm().at(RMPBOUNDSUP) - vp.NMOVET_rpm().at(RPMBOUNDINF)));
+
+    q = (double)((double)((double)(vp.NMOVET_rpm().at(RMPBOUNDSUP) * vp.CDC_Nm().at(RPMBOUNDINF)) -
+                          (double)(vp.NMOVET_rpm().at(RPMBOUNDINF) * vp.CDC_Nm().at(RMPBOUNDSUP))) /
+                 (double)(vp.NMOVET_rpm().at(RMPBOUNDSUP) - vp.NMOVET_rpm().at(RPMBOUNDINF)));
+
+    CDCINTERPOLATO = (double)(m * static_cast<double>(rpm)) + q;
+
+    // Assume that the torque produced by the motor is directly proportional to
+    // APPS (where APPS=1 => max torque at the current RPM)
+    double APS = (double)(coppia_motore / CDCINTERPOLATO);
+
+    if (std::isnan(APS) || std::isinf(APS)) {
+      APS = 0.0f;
+    }
+
+    return { .brake_torque = 0.0, .apps = APS };
+  } else {
+    // Compute the torque that the brake motor has to apply 
+    double T_mot_freno_perm_mNm =
+        ((((((-target_acc * vp.mass_kg() / 3) * (vp.wheel_radius_m() * 1000.0) / vp.brake_disc_radius_mm() / 4 /
+             vp.brake_mu() / (PI / 4 * pow(vp.brake_piston_diameter_mm(), 2)) * 10) *
+            vp.brake_pedal_down_distance_mm() / vp.brake_pedal_up_distance_mm() * 2 * (PI / 4 * pow(vp.brake_tilton_diameter_mm(), 2)) / 10) *
+           vp.brake_pulley_diameter_mm() / 2000) /
+          vp.brake_reducer() * 1000) /
+         vp.brake_reducer_efficiency());
+
+    return { .brake_torque = T_mot_freno_perm_mNm / 1000.0, .apps = 0.0};
+  }
 }
+
+}; // namespace pure_pursuit_2023
+}; // namespace control
+}; // namespace control_node

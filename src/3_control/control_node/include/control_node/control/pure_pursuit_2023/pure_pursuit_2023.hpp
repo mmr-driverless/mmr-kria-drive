@@ -22,11 +22,13 @@ class PurePursuit2023 : public IController {
 
   double m_minSpeedDistance;
   double m_minSpeed;
-  
-  double m_accel_apps_p;
-  double m_accel_brake_p;
-  double m_accel_lookforward;
-  double m_accel_k_smooth;
+
+  double m_min_throttle;
+  bool m_simplified_longitudinal_control_enabled;
+  double m_simple_long_apps_p;
+  double m_simple_long_brake_p;
+  double m_ll_accel_lookforward;
+  double m_ll_accel_k_smooth;
 
   struct {
     bool enabled;
