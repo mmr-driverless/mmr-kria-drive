@@ -336,7 +336,7 @@ void CANOpenBridge::monitorSteer()
     /* Compute the incremets to do */
     int nIncrements = this->getStepToActuate(m_fTargetWheelAngle, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
     
-    if (this->m_bDebug) {
+    if ((this->m_bDebug) && (this->m_fSteerPot.has_value())) {
         RCLCPP_INFO(
             this->get_logger(), 
             "[ STEERING ANGLE POT ]: %f, [ WHEEL ANGLE TARGET ]: %f, [ NUMBER INCREMENT ]: %d",
