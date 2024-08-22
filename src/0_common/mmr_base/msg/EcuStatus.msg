@@ -28,6 +28,7 @@ float32 fan_control
 
 float32 clutch_percentage
 float32 steering_angle
+uint32 checksum_steering_angle
 float32 wheel_angle
 
 float32 wheel_speed_front_left

@@ -24,6 +24,7 @@ int main(int argc, char * argv[])
     while (true)
     {
       executor.spin_all(10ms);
+      node->monitorSteer();
       node->sendActuatorStatus();
       sched_yield();
     }

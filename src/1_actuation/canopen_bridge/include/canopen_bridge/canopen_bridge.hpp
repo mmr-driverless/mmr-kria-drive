@@ -27,6 +27,7 @@
 #include <math.h>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 class CANOpenBridge : public EDFNode
 {
@@ -39,8 +40,11 @@ class CANOpenBridge : public EDFNode
         std::string m_sSteerTopic, m_sBrakeTopic, m_sClucthTopic, m_sStatusActuatorTopic, m_sEcuStatusTopic;
 
         /* Steer parameters */
-        int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer;
-        float m_fWheelRate, m_fIncPerDegree, m_fMaxTarget;
+        int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer, m_nControlMode;
+        float m_fWheelRate, m_fIncPerDegree, m_fMaxTargetMaxon, m_fMaxTargetPot;
+        float m_fConvFactor, m_fMinTargetPot, m_fTargetWheelAngle;
+        std::optional<float> m_fSteerPot;
+        uint32_t m_nCRCSteerOld, m_nCRCSteer;
 
         /* Brake parameters */
         int m_nBrakeId, m_nMaxTorque, m_nReturnPedalTorque, m_nTimeoutMsgBrake, m_nFreqScaleBrake, m_nCtrBrake = 1;
@@ -81,6 +85,26 @@ class CANOpenBridge : public EDFNode
         void connectCANBus();
         void loadParameters();
 
+        inline int getStepToActuate(float fTargetWheelAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
+            
+            int nIncToDo = 0;
+            fTargetWheelAngle = fTargetWheelAngle * 180 / M_PI;
+
+            if (mode == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)
+                return std::round(fTargetWheelAngle * this->m_fWheelRate * this->m_fIncPerDegree);
+            
+            if (this->m_fSteerPot.has_value()) {
+
+                float fTargetSteerAngle = fTargetWheelAngle * m_fWheelRate;
+                fTargetSteerAngle = std::clamp<float>(fTargetSteerAngle, this->m_fMinTargetPot, this->m_fMaxTargetPot);
+
+                float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
+                nIncToDo = std::round(fDeltaDegrees * m_fConvFactor);
+            }
+
+            return nIncToDo;
+        }
+
         MaxonSteer *m_mSteer = nullptr;
         MaxonBrake *m_mBrake = nullptr;
         MaxonClutch *m_mClutch = nullptr;
@@ -91,6 +115,7 @@ class CANOpenBridge : public EDFNode
 
         CANOpenBridge();
 
+        void monitorSteer();
         void sendActuatorStatus();
 
         ~CANOpenBridge() { close(this->m_nSocket); };
