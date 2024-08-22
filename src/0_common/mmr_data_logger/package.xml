@@ -4,15 +4,14 @@
   <name>mmr_data_logger</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="edoardo.torrini@gmail.com">etorrini</maintainer>
+  <maintainer email="samusavazzi@gmail.com">ssavazzi</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
+  <buildtool_depend>mmr_edf</buildtool_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
   </export>
 </package>
+
