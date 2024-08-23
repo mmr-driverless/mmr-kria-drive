@@ -96,7 +96,7 @@ class CANOpenBridge : public EDFNode
 
                 fTargetSteerAngle = std::clamp<float>(fTargetSteerAngle, this->m_fMinTargetPot, this->m_fMaxTargetPot);
                 float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
-                nIncToDo = std::round(fDeltaDegrees * m_fConvFactor);
+                nIncToDo = std::round(fDeltaDegrees * this->m_fConvFactor);
             }
 
             return nIncToDo;

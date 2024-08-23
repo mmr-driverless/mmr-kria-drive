@@ -10,6 +10,7 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN INTERFACE: %s", this->m_sInterface.c_str());
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN BITRATE: %d", this->m_nBitrate);
         RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH: %d", this->m_nMonitorClutch);
+        RCLCPP_INFO(this->get_logger(), "[ INFO ] CONVERSION FACTOR STEER: %f", this->m_fConvFactor);
     }
 
     this->m_subCmdSteer = this->create_subscription<mmr_base::msg::CmdMotor>(
@@ -33,7 +34,6 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     this->m_msgActuatorStatus.clutch_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     this->m_msgActuatorStatus.steer_status  = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
 
-    this->m_fConvFactor = (this->m_fMaxTargetMaxon - (this->m_fMinTargetPot)) / (this->m_fMaxTargetPot - (-this->m_fMaxTargetPot));
     this->m_nCRCSteerOld = 0;
 }
 
@@ -56,11 +56,12 @@ void CANOpenBridge::loadParameters()
     declare_parameter("steer.wheel_rate", 6.4286);
     declare_parameter("steer.inc_per_degree", 179.7224);
     declare_parameter("steer.max_target_pot", 135.0);
+    declare_parameter("steer.min_target_pot", 0.0);
     declare_parameter("steer.max_target_maxon", 24000.0);
     declare_parameter("steer.velocity", 2750);
     declare_parameter("steer.timeout_msgs", 5);
+    declare_parameter("steer.conversion_factor", 0.0);
     declare_parameter("steer.control_mode", 0);
-    declare_parameter("steer.min_target_pot", 0.0);
 
     declare_parameter("brake.node_id", 18);
     declare_parameter("brake.max_torque", 1500);
@@ -96,6 +97,7 @@ void CANOpenBridge::loadParameters()
     get_parameter("steer.max_target_maxon", this->m_fMaxTargetMaxon);
     get_parameter("steer.velocity", this->m_nVelocity);
     get_parameter("steer.timeout_msgs", this->m_nTimeoutMsgSteer);
+    get_parameter("steer.conversion_factor", this->m_fConvFactor);
     get_parameter("steer.control_mode", this->m_nControlMode);
 
     get_parameter("brake.node_id", this->m_nBrakeId);
