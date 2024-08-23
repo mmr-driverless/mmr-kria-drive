@@ -10,6 +10,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(mmr_edf REQUIRED)
+find_package(mmr_base REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 include_directories(
   include/
@@ -21,6 +24,8 @@ add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp
   mmr_edf
+  mmr_base
+  std_msgs
 )
 
 
