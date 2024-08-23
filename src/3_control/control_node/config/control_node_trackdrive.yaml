@@ -164,6 +164,12 @@
             qos_override:
               durability: transient_local
               reliability: reliable
+
+        2:
+          enabled: true
+          type: "ROS_SpeedProfilePoints"
+          params:
+            topic: "/planning/speedProfilePoints"
       # Uncomment this to dump paths to file
       # dump_paths_dir: '/home/simonebondi/Desktop/dump_dir'
 

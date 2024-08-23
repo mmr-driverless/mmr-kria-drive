@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(ackermann_msgs REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
 
@@ -25,6 +26,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CmdEcu.msg"
   "msg/ControlLog.msg"
   "msg/RaceStatus.msg"
+  "msg/SpeedProfilePoint.msg"
+  "msg/SpeedProfilePoints.msg"
   ### IMU data dependecies ###
   "msg/Imu/Acceleration.msg"
   "msg/Imu/EulerAngles.msg"
@@ -37,7 +40,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   ############################
   "msg/ImuCanData.msg"
   # Add custom msg dependecies to standard ROS2 msgs
-  DEPENDENCIES std_msgs geometry_msgs sensor_msgs
+  DEPENDENCIES std_msgs geometry_msgs sensor_msgs ackermann_msgs
 )
 
 install(FILES
