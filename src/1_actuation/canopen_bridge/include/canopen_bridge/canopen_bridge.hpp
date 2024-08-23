@@ -85,19 +85,16 @@ class CANOpenBridge : public EDFNode
         void connectCANBus();
         void loadParameters();
 
-        inline int getStepToActuate(float fTargetWheelAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
+        inline int getStepToActuate(float fTargetSteerAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
             
             int nIncToDo = 0;
-            fTargetWheelAngle = fTargetWheelAngle * 180 / M_PI;
 
             if (mode == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)
-                return std::round(fTargetWheelAngle * this->m_fWheelRate * this->m_fIncPerDegree);
+                return std::round(fTargetSteerAngle * this->m_fIncPerDegree);
             
             if (this->m_fSteerPot.has_value()) {
 
-                float fTargetSteerAngle = fTargetWheelAngle * m_fWheelRate;
                 fTargetSteerAngle = std::clamp<float>(fTargetSteerAngle, this->m_fMinTargetPot, this->m_fMaxTargetPot);
-
                 float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
                 nIncToDo = std::round(fDeltaDegrees * m_fConvFactor);
             }
