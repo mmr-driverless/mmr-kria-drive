@@ -13,7 +13,7 @@ class Inspection : public IController {
     const VehicleParameters* m_vp;
     std::optional<std::chrono::nanoseconds> m_start_t;
     double m_frequency;
-    double m_steer_fraction;
+    double m_amplitude;
     double m_throttle;
     int m_gear;
     Control::LaunchControl m_lc;

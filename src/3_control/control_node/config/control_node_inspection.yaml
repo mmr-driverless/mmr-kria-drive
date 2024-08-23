@@ -39,8 +39,8 @@
     control:
       type: Inspection
       params:
-        frequency: 3.14
-        steer_fraction: 0.2
+        frequency_hz: 0.5
+        amplitude_deg: 10
         throttle: 0.15
         launch_control: false
         gear: 1
@@ -119,7 +119,6 @@
     vehicle_parameters:
       wheelbase_m: 1.541 # distance between front and rear axle [m]
       lr_m: 0.75 # distance between CoM and rear axle [m]
-      max_steering_angle_rad: 0.3979351 # maximum angle at the wheel [rad]
       cx: 0.99
       cz: 2.2
       sx: 1.1
