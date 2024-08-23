@@ -1,3 +1,6 @@
+# This tool estimates the maxon motor increments per degree of steering wheel rotation.
+# Just launch this and move the steering wheel back and forth. When you have enough, press CTRL+C.
+
 import canopen
 import can
 import pathlib
