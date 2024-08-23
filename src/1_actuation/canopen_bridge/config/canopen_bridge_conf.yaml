@@ -1,7 +1,7 @@
 /canopen_bridge_node:
   ros__parameters:
     generic:
-      interface: can1
+      interface: vcan0
       bitrate: 1000000
       debug: true
       WCET: 5000000 # ms
@@ -22,6 +22,7 @@
       max_target_maxon: 24000.0
       velocity: 2750
       timeout_msgs: 5
+      conversion_factor: 350.3649635036496
       control_mode: 1 # if you want relative: 1, absolute: 0
     brake:
       node_id: 17
