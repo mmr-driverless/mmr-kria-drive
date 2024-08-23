@@ -7,7 +7,7 @@ namespace inspection {
 void Inspection::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger) {
   m_vp = &vp;
   m_frequency = p.get<double>("frequency_hz") * (2 * std::numbers::pi);
-  m_amplitude = p.get<double>("amplitude_deg") / (180.0 * std::numbers::pi);
+  m_amplitude = p.get<double>("amplitude_steering_wheel_deg");
   m_throttle = p.get<double>("throttle");
   m_gear = p.get<int>("gear");
   m_lc = (p.get<bool>("launch_control")? Control::LaunchControl::Set : Control::LaunchControl::Unset);

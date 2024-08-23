@@ -188,7 +188,7 @@ Control PurePursuit2023::control(
   u.throttle = std::max(u.throttle, m_min_throttle);
 
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
-    u.steer = calculateSteeringTarget(
+    double wheel_angle_rad = calculateSteeringTarget(
       *targetPosition,
       *state.position(),
       *state.yaw(),
@@ -197,6 +197,10 @@ Control PurePursuit2023::control(
       m_vp->lr_m(),
       m_vp->wheelbase_m()
     );
+
+    double wheel_angle_deg = wheel_angle_rad * (180 / std::numbers::pi);
+    double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
+    u.steer = steering_wheel_angle_deg;
   }
 
   return u;
