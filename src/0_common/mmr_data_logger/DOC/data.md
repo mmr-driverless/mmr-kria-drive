@@ -8,6 +8,10 @@ Acceleration lateral Y
 
 Yaw rate
 
+
+linear_acceleration x primo elemento, y secondo
+angular_velocity z 3 elemento
+
 EQ
 
 Speed_actual
