@@ -9,7 +9,7 @@ namespace control_node {
 class VehicleParameters {
   double m_wheelbase_m; // Distance between front and rear axles [m]
   double m_lr_m; // Distance between CoM and rear axle [m]
-  double m_max_steering_angle_rad; // Maximum angle of the steered wheel in the bicycle model [rad]
+  double m_steering_ratio; // Ratio between steering wheel and wheel angle (bicycle model) [1]
   double m_cx; 
   double m_cz;
   double m_sx;
@@ -36,7 +36,7 @@ public:
   VehicleParameters(const Parameters& p)
     : m_wheelbase_m(p.get<double>("wheelbase_m")),
       m_lr_m(p.get<double>("lr_m")),
-      m_max_steering_angle_rad(p.get<double>("max_steering_angle_rad")),
+      m_steering_ratio(p.get<double>("steering_ratio")),
       m_cx(p.get<double>("cx")),
       m_cz(p.get<double>("cz")),
       m_sx(p.get<double>("sx")),
@@ -60,9 +60,9 @@ public:
       m_CDC_Nm(p.get<std::vector<long>>("cdc_Nm"))
   {}
 
-  double max_steering_angle_rad() const { return m_max_steering_angle_rad; }
   double wheelbase_m() const { return m_wheelbase_m; }
   double lr_m() const { return m_lr_m; }
+  double steering_ratio() const { return m_steering_ratio; }
   double cx() const { return m_cx; }
   double cz() const { return m_cz; }
   double sx() const { return m_sx; }

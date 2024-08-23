@@ -18,7 +18,7 @@ static inline double normalizeAngle(double angle){
   return angle;
 }
 
-static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vector2d car_position, double car_yaw, double lookforward, double steer_gain, double max_steer, double com_dist_to_rear, double wheelbase)
+static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vector2d car_position, double car_yaw, double lookforward, double steer_gain, double com_dist_to_rear, double wheelbase)
 {
   Eigen::Vector2d car_rear = car_position - com_dist_to_rear * Eigen::Vector2d(std::cos(car_yaw), std::sin(car_yaw));
 
@@ -27,9 +27,8 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
 
   //Calculate steer target rotation
   double wheelRotation = atan2(2 * wheelbase * std::sin(SteerTarget) / (lookforward * steer_gain), 1);
-
-  //Cut off with respect to real steer car capability
-  return std::clamp(wheelRotation, -max_steer, max_steer);
+  
+  return wheelRotation;
 }
 
 void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) {
@@ -189,16 +188,19 @@ Control PurePursuit2023::control(
   u.throttle = std::max(u.throttle, m_min_throttle);
 
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
-    u.steer = calculateSteeringTarget(
+    double wheel_angle_rad = calculateSteeringTarget(
       *targetPosition,
       *state.position(),
       *state.yaw(),
       steer_lookforward,
       m_steerGain,
-      m_vp->max_steering_angle_rad(),
       m_vp->lr_m(),
       m_vp->wheelbase_m()
     );
+
+    double wheel_angle_deg = wheel_angle_rad * (180 / std::numbers::pi);
+    double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
+    u.steer = steering_wheel_angle_deg;
   }
 
   return u;

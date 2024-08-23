@@ -169,8 +169,8 @@
 
     vehicle_parameters:
       wheelbase_m: 1.541 # distance between front and rear axle [m]
+      steering_ratio: 6.4286 # Ratio between steering wheel and wheel angle (bicycle model) [1]
       lr_m: 0.75 # distance between CoM and rear axle [m]
-      max_steering_angle_rad: 0.3979351 # maximum angle at the wheel [rad]
       cx: 0.99
       cz: 2.2
       sx: 1.1
