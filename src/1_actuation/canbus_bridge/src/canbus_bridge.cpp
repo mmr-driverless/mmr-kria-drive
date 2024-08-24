@@ -153,7 +153,7 @@ void CANBusBridge::readMsgFromCANBus()
         if ((frame.can_id & ECU::MMR_ECU_MASK) == ECU::MMR_ECU_MASK)
             this->readEcuStatus(frame);
 
-        else if ((frame.can_id & IMU::MMR_IMU_MASK) == IMU::MMR_IMU_MASK)
+        if ((frame.can_id & IMU::MMR_IMU_MASK) == IMU::MMR_IMU_MASK)
             this->readImuStatus(frame);
         
         if (frame.can_id == RES::MMR_RES_STATUS)
@@ -305,6 +305,14 @@ void CANBusBridge::sendStatus()
 
         this->m_pubResStatus->publish(this->m_msgResStatus);
     }
+
+    if (this->m_pubImuData != nullptr) {
+        this->m_msgOutImuData.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
+        this->m_msgOutImuData.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
+        this->m_msgOutImuData.header.frame_id = "IMU_DATA";
+
+        this->m_pubImuData->publish(this->m_msgOutImuData);
+    }
 }
 
 void CANBusBridge::readResStatus(can_frame frame)
@@ -392,9 +400,6 @@ void CANBusBridge::readEcuStatus(can_frame frame)
 
 void CANBusBridge::readImuStatus(can_frame frame)
 {
-
-    this->m_msgOutImuData.header.stamp = this->now();
-
     switch (frame.can_id)
     {
         case IMU::MMR_IMU_ERROR:
@@ -474,6 +479,4 @@ void CANBusBridge::readImuStatus(can_frame frame)
             this->m_msgImuCanData.gnss_status.n_avail_sat = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 4); 
             break;
     }
-
-    this->m_pubImuData->publish(this->m_msgOutImuData);
 }
