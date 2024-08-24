@@ -30,6 +30,8 @@ class PurePursuit2023 : public IController {
   double m_ll_accel_lookforward;
   double m_ll_accel_k_smooth;
 
+  bool m_second_gear_on_second_lap;
+
   struct {
     bool enabled;
     int slowLaps;

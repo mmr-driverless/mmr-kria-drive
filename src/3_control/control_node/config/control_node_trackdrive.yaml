@@ -78,6 +78,8 @@
         
         min_throttle: 0.15
 
+        second_gear_on_second_lap: false
+
         low_level_longitudinal_controller:
           simplified: false
           # apps_p: 0.7

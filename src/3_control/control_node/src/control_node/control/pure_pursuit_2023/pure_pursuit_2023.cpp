@@ -46,6 +46,7 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_minSpeed = p.get<double>("minSpeed");
   m_min_throttle = p.get<double>("min_throttle");
   m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
+  m_second_gear_on_second_lap = p.get<bool>("second_gear_on_second_lap");
 
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
@@ -202,6 +203,10 @@ Control PurePursuit2023::control(
     double wheel_angle_deg = wheel_angle_rad * (180 / std::numbers::pi);
     double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
     u.steer = steering_wheel_angle_deg;
+  }
+
+  if (lap > 1 && m_second_gear_on_second_lap) {
+    u.gear = 2;
   }
 
   return u;
