@@ -125,9 +125,9 @@
           params:
             spi_interface: /dev/spidev1.0
             spi_frequency: 50000
-            v_ref: 3.3
-            v_apps_min: 0.95
-            v_apps_max: 2.515
+            v_ref: 5.0
+            v_apps_min: 0.942
+            v_apps_max: 2.484
             buffered: false
 
         3:

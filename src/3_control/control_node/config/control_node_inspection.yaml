@@ -64,9 +64,9 @@
           params:
             spi_interface: /dev/spidev1.0
             spi_frequency: 50000
-            v_ref: 3.3
-            v_apps_min: 0.95
-            v_apps_max: 2.515
+            v_ref: 5.0
+            v_apps_min: 0.942
+            v_apps_max: 2.484
             buffered: false
 
         2:
@@ -117,8 +117,8 @@
 
     vehicle_parameters:
       wheelbase_m: 1.541 # distance between front and rear axle [m]
-      steering_ratio: 6.4286 # Ratio between steering wheel and wheel angle (bicycle model) [1]
-      lr_m: 0.75 # distance between CoM and rear axle [m]
+      steering_ratio: 6.87 # Ratio between steering wheel and wheel angle (bicycle model) [1]
+      lr_m: 0.7094 # distance between CoM and rear axle [m]
       cx: 0.99
       cz: 2.2
       sx: 1.1
