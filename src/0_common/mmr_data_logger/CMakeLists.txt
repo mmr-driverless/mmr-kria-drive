@@ -15,6 +15,7 @@ find_package(rclcpp REQUIRED)
 find_package(mmr_edf REQUIRED)
 find_package(mmr_base REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
 include_directories(include)
@@ -33,6 +34,8 @@ ament_target_dependencies(${NODE_NAME}
   mmr_edf
   mmr_base
   std_msgs
+  geometry_msgs
+  sensor_msgs
 )
 
 
