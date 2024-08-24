@@ -18,15 +18,17 @@ static inline double normalizeAngle(double angle){
   return angle;
 }
 
-static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vector2d car_position, double car_yaw, double lookforward, double steer_gain, double com_dist_to_rear, double wheelbase)
+static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vector2d car_position, double car_yaw, double steer_gain, double com_dist_to_rear, double wheelbase)
 {
   Eigen::Vector2d car_rear = car_position - com_dist_to_rear * Eigen::Vector2d(std::cos(car_yaw), std::sin(car_yaw));
+  Eigen::Vector2d diff = target - car_rear;
 
   //Calculate delta between target direction and car Rotation
-  double SteerTarget = normalizeAngle(atan2(target.y() - car_rear.y(), target.x() - car_rear.x()) - car_yaw);
+  double SteerTarget = normalizeAngle(std::atan2(diff.y(), diff.x()) - car_yaw);
 
   //Calculate steer target rotation
-  double wheelRotation = atan2(2 * wheelbase * std::sin(SteerTarget) / (lookforward * steer_gain), 1);
+  double dist = diff.norm();
+  double wheelRotation = std::atan2(2 * wheelbase * std::sin(SteerTarget) / (dist * steer_gain), 1);
   
   return wheelRotation;
 }
@@ -192,7 +194,6 @@ Control PurePursuit2023::control(
       *targetPosition,
       *state.position(),
       *state.yaw(),
-      steer_lookforward,
       m_steerGain,
       m_vp->lr_m(),
       m_vp->wheelbase_m()
