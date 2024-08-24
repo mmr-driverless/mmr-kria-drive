@@ -18,9 +18,8 @@ def generate_launch_description():
         package='mmr_data_logger',
         name='mmr_data_logger_node',
         executable='mmr_data_logger_node',
-        parameters=[
-            config_node,
-        ]
+        output='screen',
+        parameters=[config_node]
     )
 
     return LaunchDescription([

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 project(mmr_data_logger)
-set (CMAKE_CXX_STANDARD 20)
+set(NODE_NAME ${PROJECT_NAME}_node)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -14,14 +17,18 @@ find_package(mmr_base REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-include_directories(
-  include/
+include_directories(include)
+
+file(GLOB_RECURSE SOURCES include/*.cpp)
+add_executable(
+  ${NODE_NAME}
+  src/${NODE_NAME}.cpp
+  src/${PROJECT_NAME}.cpp
+  ${SOURCES}
 )
 
-add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
 
-
-ament_target_dependencies(${PROJECT_NAME}_node
+ament_target_dependencies(${NODE_NAME}
   rclcpp
   mmr_edf
   mmr_base
@@ -29,8 +36,8 @@ ament_target_dependencies(${PROJECT_NAME}_node
 )
 
 
-install(TARGETS
-  ${PROJECT_NAME}_node
+install(
+  TARGETS ${NODE_NAME}
   DESTINATION lib/${PROJECT_NAME}
 )
 

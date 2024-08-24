@@ -1,6 +1,6 @@
 #include <mmr_data_logger/mmr_data_logger.hpp>
 
-MMR_Data_Logger::load_parameters(){
+void MMR_Data_Logger::load_parameters(){
     declare_parameter("generic.WCET", 5000000);
     declare_parameter("generic.period", 10000000);
     declare_parameter("generic.deadline", 10000000);
@@ -19,16 +19,17 @@ MMR_Data_Logger::load_parameters(){
     get_parameter("generic.WCET", this->m_nWCET);
     get_parameter("generic.period", this->m_nPeriod);
     get_parameter("generic.deadline", this->m_nDeadline);
+    get_parameter("generic.debug", this->debug);
 
-    get_parameter("topics.statusActuatorTopic", this->subActuator);
-    get_parameter("topics.ecuStatusTopic", this->subEcu);
-    get_parameter("topics.xsenseTopic", this->subImu);
-    get_parameter("topics.asTopic", this->subAsState);
-    get_parameter("topics.missionTopic", this->subMissionSelected);
-    get_parameter("topics.lapCounterTopic", this->subRaceStatus);
-    get_parameter("topics.conesActualTopic", this->subConesActual);
-    get_parameter("topics.conesAllTopic", this->subConesAll);
-    get_parameter("topics.controlTopic", this->subControl);
+    get_parameter("topics.statusActuatorTopic", this->statusActuatorTopic);
+    get_parameter("topics.ecuStatusTopic", this->ecuStatusTopic);
+    get_parameter("topics.xsenseTopic", this->xsenseTopic);
+    get_parameter("topics.asTopic", this->asTopic);
+    get_parameter("topics.missionTopic", this->missionTopic);
+    get_parameter("topics.lapCounterTopic", this->lapCounterTopic);
+    get_parameter("topics.conesActualTopic", this->conesActualTopic);
+    get_parameter("topics.conesAllTopic", this->conesAllTopic);
+    get_parameter("topics.controlTopic", this->controlTopic);
 }
 
 MMR_Data_Logger::MMR_Data_Logger(): 
@@ -72,9 +73,15 @@ EDFNode("MMR_Data_Logger")
       this->conesAllTopic, 10, std::bind(&MMR_Data_Logger::conesAllCallBack, this, _1)
     );
 
-    this->subControl= this->create_subscription<mmr_base::msg::Marker>(
+    this->subControl= this->create_subscription<mmr_base::msg::ControlLog>(
       this->controlTopic, bestEffortQOS, std::bind(&MMR_Data_Logger::controlCallBack, this, _1)
     );
    
    
+}
+
+
+MMR_Data_Logger::~MMR_Data_Logger() {
+  RCLCPP_INFO(this->get_logger(), "Destroying MMR_Data_Logger...");
+  rclcpp::shutdown();
 }

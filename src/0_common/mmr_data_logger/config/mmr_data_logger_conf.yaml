@@ -1,19 +1,17 @@
-/canopen_bridge_node:
+/mmr_data_logger_node:
   ros__parameters:
     generic:
-      interface: can1
-      bitrate: 1000000
-      debug: true
+      debug: false
       WCET: 5000000 # ms
       period: 10000000 # 10ms
       deadline: 10000000
-    topic:
+    topics:
       statusActuatorTopic: "/actuator/status" 
       ecuStatusTopic: "/status/ecu"
       xsenseTopic: "/imu/data"
       asTopic: "/as/status"
       missionTopic: "/mission/selected"
-      lapCounterTopic: "/race/planning/race_status"
+      lapCounterTopic: "planning/race_status"
       conesActualTopic: "/perception/cones"
       conesAllTopic: "/slam/cones_positions"
       controlTopic: "/control/log"
