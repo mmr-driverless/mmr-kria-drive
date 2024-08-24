@@ -1,7 +1,7 @@
 /*
 TODO
--aggiungere la speed quando simo ha finito di creare il topic e il messaggio
--scegliere se usare il messaggio marker o array_marker (dimensionare l'array che cazzzzzo vuole dire)
+-aggiungere la speed quando simo ha finito di creare il topic e il messaggio 
+-scegliere se usare il messaggio marker o array_marker [ DONE ]
 */
 
 #pragma once
@@ -27,7 +27,7 @@ TODO
 class MMR_Data_Logger : public EDFNode
 {
     private:
-    std::string steerTopic, brakeTopic, clutchTopic, statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
+    std::string statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
 
     /* DV driving dynamics 1 */ 
 
@@ -44,30 +44,38 @@ class MMR_Data_Logger : public EDFNode
     bool steeringState;
     int8_t lapCounter, conesCountActual, conesCountAll;
 
-    rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr subSteer;
-
-    rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr subBrake;
-
-    rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr subClutch;
-
     rclcpp::Subscription<mmr_base::msg::EcuStatus>::SharedPtr subEcu;
-
+    void ecuCallBack(const mmr_base::msg::EcuStatus::SharedPtr msg);
+    
     rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr subActuator;
+    void actuatorStatusCallBack(const mmr_base::msg::ActuatorStatus::SharedPtr msg);
 
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr subImu;
+    void imuCallBack(const sensor_msgs::msg::Imu::SharedPtr msg);
 
-    rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subState;
+    rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subAsState;
+    void asStateCallBack(const std_msgs::msg::UInt8::SharedPtr msg);
 
     rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr subMissionSelected;
+    void missionSelectedCallBack(const std_msgs::msg::Int8::SharedPtr msg);
 
     rclcpp::Subscription<mmr_base::msg::RaceStatus>::SharedPtr subRaceStatus;
+    void raceStatusCallBack(const mmr_base::msg::RaceStatus::SharedPtr msg);
     
     rclcpp::Subscription<mmr_base::msg::Marker>::SharedPtr subConesActual;
+    void conesActualCallBack(const mmr_base::msg::Marker::SharedPtr msg);
 
     rclcpp::Subscription<mmr_base::msg::Marker>::SharedPtr subConesAll;
+    void conesAllCallBack(const mmr_base::msg::Marker::SharedPtr msg);
 
-    rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl; 
+    rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl;
+    void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg);
+
+    void load_parameters();
+
 
     public:
+
+    MMR_Data_Logger();
 
 };

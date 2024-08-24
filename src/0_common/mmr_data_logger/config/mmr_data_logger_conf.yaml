@@ -8,15 +8,12 @@
       period: 10000000 # 10ms
       deadline: 10000000
     topic:
-      steerTopic: "/command/steer" -
-      brakeTopic: "/command/brake" -
-      clutchTopic: "/command/clutch" -
-      statusActuatorTopic: "/actuator/status" -
-      ecuStatusTopic: "/status/ecu" -
-      xsenseTopic: "/imu/data" -
-      asTopic: "/as/status" - 
-      missionTopic: "/mission/selected" -
-      lapCounterTopic: "/race/planning/race_status" -
-      conesActualTopic: "/perception/cones" -
-      conesAllTopic: "/slam/cones_positions" -
+      statusActuatorTopic: "/actuator/status" 
+      ecuStatusTopic: "/status/ecu"
+      xsenseTopic: "/imu/data"
+      asTopic: "/as/status"
+      missionTopic: "/mission/selected"
+      lapCounterTopic: "/race/planning/race_status"
+      conesActualTopic: "/perception/cones"
+      conesAllTopic: "/slam/cones_positions"
       controlTopic: "/control/log"
