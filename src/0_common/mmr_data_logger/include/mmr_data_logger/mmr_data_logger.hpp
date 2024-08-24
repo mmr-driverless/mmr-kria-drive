@@ -38,7 +38,7 @@ private:
     const float ACCELERATION_SCALE_FACTOR= 512;
     const float YAW_SCALE_FACTOR= 128;
     const float MAXIMUM_STEERING_ANGLE = 120.0;
-    
+
     bool debug,brakeMotorEnabled;
     std::string statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
     float pbrake_rear, pbrake_front, pebs1, pebs2;
@@ -165,6 +165,10 @@ private:
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
         this->brakeTarget=static_cast<int8_t>((msg->brake/MAXIMUM_PBRAKE)*100);
     }
+
+    uint64_t pack_bits(uint64_t value, int position, int length);
+    uint64_t create_dv_driving_dynamics_1_message();
+
 
 
 public:

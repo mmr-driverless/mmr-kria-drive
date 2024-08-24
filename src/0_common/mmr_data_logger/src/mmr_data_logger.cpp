@@ -129,3 +129,23 @@ void MMR_Data_Logger::print_parameters(){
     // Print all in one go
     RCLCPP_INFO(rclcpp::get_logger("vehicle_logger"), "%s", oss.str().c_str());
 }
+
+uint64_t MMR_Data_Logger::pack_bits(uint64_t value, int position, int length) {
+    return (value & ((1ULL << length) - 1)) << position;
+}
+
+uint64_t  MMR_Data_Logger::create_dv_driving_dynamics_1_message() {
+    uint64_t message = 0;
+
+    // Impacchettamento dei dati nei bit corretti secondo la tabella
+    message |= pack_bits(this->speedActual, 0, 8);                 // bit 0-7
+    message |= pack_bits(this->speedTarget, 8, 8);                 // bit 8-15
+    message |= pack_bits(this->steeringAgleActual, 16, 8);// bit 16-23
+    message |= pack_bits(this->steeringAngleTarget, 24, 8);// bit 24-31
+    message |= pack_bits(this->brakeActual, 32, 8);            // bit 32-39
+    message |= pack_bits(this->brakeTarget, 40, 8);            // bit 40-47
+    message |= pack_bits(0, 48, 8);          // bit 48-55
+    message |= pack_bits(0, 56, 8);        // bit 56-63
+
+    return message;
+}
