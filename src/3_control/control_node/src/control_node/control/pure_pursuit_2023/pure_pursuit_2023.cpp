@@ -218,7 +218,7 @@ Control PurePursuit2023::control(
   log_msg.smoothed_target_speed_m_s = m_smoothedSpeed;
   log_msg.smoothed_target_acceleration_m_s_2 = m_smoothedAccel;
 
-  m_log_pub.publish(log_msg);
+  m_log_pub->publish(log_msg);
 
   return u;
 }
