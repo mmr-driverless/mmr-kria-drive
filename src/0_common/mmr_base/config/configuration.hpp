@@ -92,6 +92,7 @@ namespace COCKPIT {
 
     enum MMR_CAN_MSG_ID {
         MMR_MISSION_SELECTED = 0x40,
+        MMR_24V_VOLTAGE = 0x131,
     };
 
     enum MMR_MISSION_VALUE {

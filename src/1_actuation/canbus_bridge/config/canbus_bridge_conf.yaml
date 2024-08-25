@@ -13,7 +13,7 @@
       cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"
       resStatusTopic: "/status/res"
-      ActuatorsStatusTopic: "/actuator/status"
+      actuatorsStatusTopic: "/actuator/status"
       missionSelectTopic: "/mission/selected"
       outputImuTopic: "/canbus/imu/data"
       controlLogTopic: "/control/log"
@@ -30,3 +30,5 @@
       ctrLimit: 2
       changeDeltaTime: 500 #ms
       delayCmdEcu: 50 #ms
+    24v:
+      freq_div: 1000
