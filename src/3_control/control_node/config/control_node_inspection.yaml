@@ -22,7 +22,7 @@
       race_status:
         topic: "/planning/race_status"
       stop:
-        topic: "/stop"
+        topic: "/mission/stop"
       
       rev_duration_before_engage_ms: 250
       launch_throttle: 0.5
