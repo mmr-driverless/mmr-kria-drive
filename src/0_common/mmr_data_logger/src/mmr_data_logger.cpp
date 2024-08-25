@@ -149,3 +149,34 @@ uint64_t  MMR_Data_Logger::create_dv_driving_dynamics_1_message() {
 
     return message;
 }
+
+bitfield40  MMR_Data_Logger::create_dv_system_status_messagge() {
+    bitfield40 message;
+    message.value=0;
+
+    // Impacchettamento dei dati nei bit corretti secondo la tabella
+    message.value |= pack_bits(0x05, 0, 3);                 // bit 0-7
+    message.value |= pack_bits(0x08, 3, 5);
+    message.value |= pack_bits(0x88, 8, 8);                 // bit 8-15
+    message.value |= pack_bits(0x99, 16, 8);// bit 16-23
+    message.value |= pack_bits(0xAA, 24, 8);// bit 24-31
+    message.value |= pack_bits(0xBB, 32, 8);            // bit 32-39
+
+    return message;
+}
+
+bitfield48  MMR_Data_Logger::create_dv_driving_dynamics_2_message() {
+    bitfield48 message;
+    message.value=0;
+
+    // Impacchettamento dei dati nei bit corretti secondo la tabella
+    message.value |= pack_bits(0x05, 0, 3);                 // bit 0-7
+    message.value |= pack_bits(0x08, 3, 5);
+    message.value |= pack_bits(0x88, 8, 8);                 // bit 8-15
+    message.value |= pack_bits(0x99, 16, 8);// bit 16-23
+    message.value |= pack_bits(0xAA, 24, 8);// bit 24-31
+    message.value |= pack_bits(0xBB, 32, 8);            // bit 32-39
+    message.value |= pack_bits(0xCC, 40, 8);            // bit 40-47
+
+    return message;
+}

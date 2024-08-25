@@ -26,9 +26,17 @@ TODO
 #include <mmr_base/msg/marker.hpp>
 #include <mmr_base/msg/marker_array.hpp>
 #include <mmr_base/configuration.hpp>
-#include <can_msgs/msg/frame.hpp>
 
 #include <string.h>
+
+
+struct bitfield48 {
+  uint64_t value : 48;
+};
+
+struct bitfield40 {
+  uint64_t value : 40;
+};
 
 class MMR_Data_Logger : public EDFNode
 {
@@ -170,6 +178,8 @@ private:
 
     uint64_t pack_bits(uint64_t value, int position, int length);
     uint64_t create_dv_driving_dynamics_1_message();
+    bitfield48 create_dv_driving_dynamics_2_message();
+    bitfield40 create_dv_system_status_messagge();
 
 
 
