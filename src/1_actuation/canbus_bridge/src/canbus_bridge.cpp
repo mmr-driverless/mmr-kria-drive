@@ -59,7 +59,7 @@ void CANBusBridge::loadParameters()
     declare_parameter("topic.cmdEcuTopic", "");
     declare_parameter("topic.ecuStatusTopic", "");
     declare_parameter("topic.resStatusTopic", "");
-    declare_parameter("topic.ActuatorsStatusTopic", "");
+    declare_parameter("topic.actuatorsStatusTopic", "");
     declare_parameter("topic.missionSelectTopic", "");
     declare_parameter("topic.outputImuTopic", "");
     declare_parameter("topic.controlLogTopic", "");
@@ -77,6 +77,8 @@ void CANBusBridge::loadParameters()
     declare_parameter("neutral.ctrLimit", 2);
     declare_parameter("neutral.delayCmdEcu", 50);
 
+    declare_parameter("24v.freq_div", 1);
+
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
     get_parameter("generic.debug", this->m_bDebug);
@@ -89,7 +91,7 @@ void CANBusBridge::loadParameters()
     get_parameter("topic.cmdEcuTopic", this->m_sCmdEcuTopic);
     get_parameter("topic.ecuStatusTopic", this->m_sEcuStatusTopic);
     get_parameter("topic.resStatusTopic", this->m_sResStatusTopic);
-    get_parameter("topic.ActuatorsStatusTopic", this->m_sActuatorsStatusTopic);
+    get_parameter("topic.actuatorsStatusTopic", this->m_sActuatorsStatusTopic);
     get_parameter("topic.missionSelectTopic", this->m_sMissionSelectTopic);
     get_parameter("topic.outputImuTopic", this->m_sOutImuDataTopic);
     get_parameter("topic.controlLogTopic", this->m_sControlLogTopic);
@@ -106,6 +108,8 @@ void CANBusBridge::loadParameters()
     get_parameter("neutral.changeDeltaTime", this->m_lNeutralChangeDeltaTime);
     get_parameter("neutral.ctrLimit", this->m_nNeutralCtr);
     get_parameter("neutral.delayCmdEcu", this->m_lDelayCmdEcuNeutral);
+
+    get_parameter("24v.freq_div", this->m_nFreqDiv24V);
 }
 
 void CANBusBridge::connectCANBus()
@@ -479,4 +483,21 @@ void CANBusBridge::readImuStatus(can_frame frame)
             this->m_msgImuCanData.gnss_status.n_avail_sat = (uint8_t)this->endian_cast<uint8_t, std::endian::big>(frame.data + 4); 
             break;
     }
+}
+
+void CANBusBridge::send24VCockpit()
+{
+    if ((this->m_nCtr24V % this->m_nFreqDiv24V) != 0) {
+        this->m_nCtr24V ++;
+        return;
+    }
+
+    this->m_nCtr24V = 1;
+
+    struct can_frame frame = {
+        .can_id = COCKPIT::MMR_24V_VOLTAGE,
+        .len = sizeof(float),
+    };
+    memcpy(frame.data, &this->m_msgActuatorsStatus.voltage, sizeof(float));
+    this->writeMsg(frame);
 }

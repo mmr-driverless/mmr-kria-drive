@@ -42,6 +42,7 @@ class CANBusBridge : public EDFNode
         std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
         std::string m_sActuatorsStatusTopic, m_sOutImuDataTopic, m_sControlLogTopic;
         int m_nBitrate, m_nMaxMsgs, m_nControlFreqDiv, m_nCtrFreqControl = 1;
+        int m_nFreqDiv24V, m_nCtr24V = 1;
         bool m_bDebug;
 
         void loadParameters();
@@ -156,4 +157,5 @@ class CANBusBridge : public EDFNode
         void changeGearUpDown();
         void setGearNeutral();
         void setLaunchControl();
+        void send24VCockpit();
 };
