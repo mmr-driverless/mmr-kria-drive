@@ -26,6 +26,7 @@ TODO
 #include <mmr_base/msg/marker.hpp>
 #include <mmr_base/msg/marker_array.hpp>
 #include <mmr_base/configuration.hpp>
+#include <can_msgs/msg/frame.hpp>
 
 #include <string.h>
 
@@ -34,7 +35,7 @@ class MMR_Data_Logger : public EDFNode
 private:
 
     const float MAXIMUM_PBRAKE = 10;
-    const float STEERING_ANGLE_SCALE_FACTOR= 0.5;
+    const float STEERING_ANGLE_SCALE_FACTOR= 2;
     const float ACCELERATION_SCALE_FACTOR= 512;
     const float YAW_SCALE_FACTOR= 128;
     const float MAXIMUM_STEERING_ANGLE = 120.0;
@@ -68,8 +69,8 @@ private:
         this->pebs2=msg->p_ebs_2;
         this->speedActual=static_cast<uint8_t>(msg->vehicle_speed);
         this->brakeActual=static_cast<uint8_t>((((pbrake_front+pbrake_rear)/2)/MAXIMUM_PBRAKE)*100);
-        float precentageOfSteering = ((msg->steering_angle/MAXIMUM_STEERING_ANGLE )/STEERING_ANGLE_SCALE_FACTOR) *100;
-        this->steeringAgleActual=static_cast<uint8_t>(precentageOfSteering);
+        float precentageOfSteering = ((msg->steering_angle )*STEERING_ANGLE_SCALE_FACTOR);
+        this->steeringAgleActual=static_cast<int8_t>(precentageOfSteering);
 
         if(brakeMotorEnabled and this->pbrake_front>0 and this->pbrake_rear>0){
             this->serviceBrakeState=2;
@@ -104,10 +105,11 @@ private:
         this->accelerationLateral=static_cast<int16_t>(msg->linear_acceleration.y*ACCELERATION_SCALE_FACTOR);
         this->yawRate=static_cast<int16_t>(msg->angular_velocity.z*YAW_SCALE_FACTOR);
 
-        /*if(this->debug){
+        if(this->debug){
             std::cout<<"-------------IMU MSG---------------------------"<<std::endl;
             std::cout<<"ACCELERATION LONGITUDINAL: "<<msg->linear_acceleration.x<<std::endl;
             std::cout<<"ACCELERATION LATERAL: "<<msg->linear_acceleration.y<<std::endl;
+            std::cout<<"ACCELERATION Z: "<<msg->linear_acceleration.z<<std::endl;
             std::cout<<"YAW RATE: "<<msg->angular_velocity.z<<std::endl;
             std::cout<<"--------ELABORATED INFORMATION msg-------------"<<std::endl;
             std::cout<<"ACCELERATION LONGITUDINAL: "<<this->accelerationLongitudinal<<std::endl;
@@ -115,7 +117,7 @@ private:
             std::cout<<"YAW RATE: "<<this->yawRate<<std::endl;
             std::cout<<"-----------------------------------------------"<<std::endl;
             std::cout<<std::endl;
-        }*/
+        }
 
     }
 
@@ -161,7 +163,7 @@ private:
 
     rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl;
     void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
-        float percentageSteeringAngle=(((msg->steer*57.2958)/MAXIMUM_STEERING_ANGLE )/STEERING_ANGLE_SCALE_FACTOR) *100;
+        float percentageSteeringAngle=(((msg->steer*57.2958) )/STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
         this->brakeTarget=static_cast<int8_t>((msg->brake/MAXIMUM_PBRAKE)*100);
     }
