@@ -45,6 +45,7 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_minSpeedDistance = p.get<double>("minSpeedDistance");
   m_minSpeed = p.get<double>("minSpeed");
   m_min_throttle = p.get<double>("min_throttle");
+  m_min_throttle_is_clamp = p.get<bool>("min_throttle_is_clamp");
   m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
   m_second_gear_on_second_lap = p.get<bool>("second_gear_on_second_lap");
 
@@ -184,7 +185,10 @@ Control PurePursuit2023::control(
   }
 
   // Apply minimum throttle
-  u.throttle = std::max(u.throttle, m_min_throttle);
+  if (m_min_throttle_is_clamp)
+    u.throttle = std::max(u.throttle, m_min_throttle);
+  else
+    u.throttle = m_min_throttle + ((1 - m_min_throttle) * u.throttle);
 
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
     double wheel_angle_rad = calculateSteeringTarget(
