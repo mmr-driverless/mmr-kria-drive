@@ -101,6 +101,11 @@
             g: 1.0
             b: 0.0
             a: 1.0
+        
+        log:
+          topic: "/control/pp_log"
+          qos_override:
+            depth: 50
 
 
     # Actuation settings
