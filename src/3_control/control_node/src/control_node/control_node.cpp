@@ -32,7 +32,7 @@ inline static void update_marker(viz::VizManager& mgr, int mid, std::optional<Ei
 }
 
 void ControlNode::tick() {
-  std::chrono::nanoseconds t((this->get_clock()->now() - m_start_time).nanoseconds());
+  std::chrono::nanoseconds t(this->get_clock()->now().nanoseconds());
   RCLCPP_DEBUG(this->get_logger(), "Tick @%ld.%03lds", std::chrono::duration_cast<std::chrono::seconds>(t).count(), std::chrono::duration_cast<std::chrono::milliseconds>(t).count() % 1000);
 
   m_viz_mgr.pre_tick(t);
@@ -62,13 +62,13 @@ void ControlNode::tick() {
   }
 
   // Decide what inputs to apply based on the current vehicle state and position relative to the path.
-  control::Control u = m_controller->control(t, x, path, closest_point);
+  control::Control u = m_controller->control(t, x, path, closest_point, m_event_mgr.lap());
 
   // Override the controls to perform the start and stop maneuvers.
   u = m_event_mgr.tick(t, x, u);
 
   // Actuate the control input.
-  m_actuator_mgr.actuate_all(u);
+  m_actuator_mgr.actuate_all(t, u);
 
   if (m_viz_mgr.is_viz_tick()) {
     update_marker(m_viz_mgr, m_path_projection_marker, closest_point.has_value()? std::make_optional(path.get_position(*closest_point)) : std::nullopt, m_path_projection_marker_alpha, 0);
@@ -107,7 +107,6 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_path_threshold2 = path_threshold * path_threshold;
 
   m_has_completed_path = false;
-  m_start_time = this->get_clock()->now();
 
   auto projection_marker_p = tracking_p.subparams("projection_marker");
   m_path_projection_marker = m_viz_mgr.get_new(viz::msgs::Marker::CYLINDER, projection_marker_p.parse_rgba("color", m_path_projection_marker_alpha), flat_scale(projection_marker_p.get<double>("diameter")));
@@ -147,7 +146,7 @@ void ControlNode::setup_controller() {
   }
   
   RCLCPP_INFO(this->get_logger(), "INITIALIZING controller '%s'.", type.c_str());
-  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr);
+  m_controller->init(*this, p.subparams("params"), m_vp, m_viz_mgr, this->get_logger().get_child(type));
 }
 
 };

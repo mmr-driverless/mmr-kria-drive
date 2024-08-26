@@ -15,12 +15,13 @@ namespace control {
 
 struct IController {
   virtual ~IController() = default;
-  virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr) = 0;
+  virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) = 0;
   virtual Control control(
     std::chrono::nanoseconds t,
     const estimation::IVehicleState& state,
     const path::ReferencePath& reference_path,
-    const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection
+    const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
+    int lap
   ) = 0;
 };
 

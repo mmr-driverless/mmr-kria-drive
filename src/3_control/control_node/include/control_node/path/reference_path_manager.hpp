@@ -1,23 +1,32 @@
 #ifndef CONTROLNODE_PATH_REFERENCEPATHMANAGER_HPP
 #define CONTROLNODE_PATH_REFERENCEPATHMANAGER_HPP
 
+#include <vector>
+#include <filesystem>
+#include <optional>
+
 #include <rclcpp/rclcpp.hpp>
+
 #include <control_node/parameters.hpp>
 #include <control_node/path/reference_path.hpp>
 #include <control_node/path/sources/reference_path_source.hpp>
-#include <vector>
 
 namespace control_node {
 namespace path {
 
 class ReferencePathManager {
   std::vector<Eigen::Vector2d> m_waypoints;
-  std::vector<ReferencePath::PointData::StorageT> m_data;
+  std::vector<double> m_data_dist_to_next;
+  std::vector<double> m_data_curvature;
+  std::vector<double> m_data_target_speed;
 
   std::vector<std::pair<int, std::unique_ptr<sources::ReferencePathSource>>> m_sources;
   int m_max_activated_source_idx;
 
   bool m_changed;
+
+  unsigned int m_dump_paths_uid;
+  std::optional<std::filesystem::path> m_dump_paths_dir;
 
   ReferencePath m_path;
 

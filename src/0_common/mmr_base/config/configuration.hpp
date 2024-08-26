@@ -33,6 +33,7 @@ namespace ECU {
         MMR_STEERING_ANGLE = 0x8A,
         MMR_BRAKING_PERCENTAGE,
         MMR_ACCELERATOR_PERCENTAGE = 0x8c,
+        MMR_LAP_COUNTER = 0x91,
 
         MMR_CLUTCH_PULL_OK = 0xE1,
         MMR_CLUTCH_RELEASE_OK = 0xE3,
@@ -67,7 +68,7 @@ namespace ECU {
             { CMD::ACTIONS::GEAR_DOWN, 8 },
             { CMD::ACTIONS::SET_LAUNCH_CONTROL, 5 },
             { CMD::ACTIONS::UNSET_LAUNCH_CONTROL, 5 },
-            { CMD::ACTIONS::SET_NEUTRAL, 32 },
+            { CMD::ACTIONS::SET_NEUTRAL, 31 },
         };
 
         struct DATA {
@@ -91,6 +92,7 @@ namespace COCKPIT {
 
     enum MMR_CAN_MSG_ID {
         MMR_MISSION_SELECTED = 0x40,
+        MMR_24V_VOLTAGE = 0x131,
     };
 
     enum MMR_MISSION_VALUE {
@@ -188,7 +190,7 @@ namespace timing {
 
 namespace IMU {
     enum MMR_CAN_MASK {
-        MMR_ECU_MASK = 0x400,
+        MMR_IMU_MASK = 0x400,
     };
 
     enum MMR_CAN_MSG_ID {

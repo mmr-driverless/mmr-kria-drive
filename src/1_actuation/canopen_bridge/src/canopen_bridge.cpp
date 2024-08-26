@@ -9,7 +9,8 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     if (this->m_bDebug) {
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN INTERFACE: %s", this->m_sInterface.c_str());
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN BITRATE: %d", this->m_nBitrate);
-        RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH; %d", this->m_nMonitorClutch);
+        RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH: %d", this->m_nMonitorClutch);
+        RCLCPP_INFO(this->get_logger(), "[ INFO ] CONVERSION FACTOR STEER: %f", this->m_fIncPerDegree);
     }
 
     this->m_subCmdSteer = this->create_subscription<mmr_base::msg::CmdMotor>(
@@ -32,6 +33,8 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     this->m_msgActuatorStatus.brake_status  = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     this->m_msgActuatorStatus.clutch_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     this->m_msgActuatorStatus.steer_status  = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
+
+    this->m_nCRCSteerOld = 0;
 }
 
 void CANOpenBridge::loadParameters()
@@ -52,14 +55,18 @@ void CANOpenBridge::loadParameters()
     declare_parameter("steer.node_id", 18);
     declare_parameter("steer.wheel_rate", 6.4286);
     declare_parameter("steer.inc_per_degree", 179.7224);
-    declare_parameter("steer.max_target", 24000.0);
+    declare_parameter("steer.max_target_pot", 135.0);
+    declare_parameter("steer.min_target_pot", 0.0);
+    declare_parameter("steer.max_target_maxon", 24000);
     declare_parameter("steer.velocity", 2750);
     declare_parameter("steer.timeout_msgs", 5);
+    declare_parameter("steer.control_mode", 0);
 
     declare_parameter("brake.node_id", 18);
     declare_parameter("brake.max_torque", 1500);
     declare_parameter("brake.return_pedal_torque", -20);
     declare_parameter("brake.timeout_msgs", 5);
+    declare_parameter("brake.monitor_freq", 5);
 
     declare_parameter("clutch.node_id", 16);
     declare_parameter("clutch.velocity", 3500);
@@ -84,14 +91,18 @@ void CANOpenBridge::loadParameters()
     get_parameter("steer.node_id", this->m_nSteerID);
     get_parameter("steer.wheel_rate", this->m_fWheelRate);
     get_parameter("steer.inc_per_degree", this->m_fIncPerDegree);
-    get_parameter("steer.max_target", this->m_fMaxTarget);
+    get_parameter("steer.max_target_pot", this->m_fMaxTargetPot);
+    get_parameter("steer.min_target_pot", this->m_fMinTargetPot);
+    get_parameter("steer.max_target_maxon", this->m_nMaxTargetMaxon);
     get_parameter("steer.velocity", this->m_nVelocity);
     get_parameter("steer.timeout_msgs", this->m_nTimeoutMsgSteer);
+    get_parameter("steer.control_mode", this->m_nControlMode);
 
     get_parameter("brake.node_id", this->m_nBrakeId);
     get_parameter("brake.max_torque", this->m_nMaxTorque);
     get_parameter("brake.return_pedal_torque", this->m_nReturnPedalTorque);
     get_parameter("brake.timeout_msgs", this->m_nTimeoutMsgBrake);
+    get_parameter("brake.monitor_freq", this->m_nFreqScaleBrake);
 
     get_parameter("clutch.node_id", this->m_nClutchId);
     get_parameter("clutch.velocity", this->m_nVelocityClutch);
@@ -138,12 +149,9 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         /* Enables the steer motor in PPM */
         this->m_mSteer = new MaxonSteer(
             this->m_nSocket, this->m_nSteerID, this->m_nTimeoutMsgSteer,
-            this->m_fMaxTarget, this->m_nVelocity
+            this->m_nMaxTargetMaxon, this->m_nVelocity
         );
         this->m_msgActuatorStatus.steer_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::POSITION_MODE);
-        
-        if (this->m_bDebug)
-            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR STEER");
 
         return;
     }
@@ -160,19 +168,13 @@ void CANOpenBridge::msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         this->m_mSteer = nullptr;
         return;
     }
-    
-    /* convert radiant into degrees */
-    msg->wheel_angle *= 180 / M_PI;
 
-    /* Compute the incremets to do */
-    int nIncrements = std::round(msg->wheel_angle * this->m_fWheelRate * this->m_fIncPerDegree);
-
-    if (this->m_mSteer != nullptr)  
-        this->m_mSteer->writeTargetPos(nIncrements);
+    this->m_fTargetSteerAngle = msg->wheel_angle;
 }
 
 void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 {
+    
     if (msg->enable && (this->m_mBrake == nullptr)) {
         /* Enables the brake motor in CST */
         this->m_mBrake = new MaxonBrake(
@@ -180,8 +182,13 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
             this->m_nMaxTorque, m_nReturnPedalTorque
         );
 
+        uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);
+        uint32_t nNominalCurrent = this->m_mBrake->upload<uint32_t>(0x3031, 0x01);
         if (this->m_bDebug)
-            RCLCPP_INFO(this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE");
+            RCLCPP_INFO(
+                this->get_logger(), "[ INFO ] ENABLE RECEIVED FOR BRAKE, [ MAX TORQUE ]: %u uNm, [ NOMINAL CURRENT ]: %u mA", 
+                nMaxTorqueNominal, nNominalCurrent 
+            );
         
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::TORQUE_MODE);
         return;
@@ -192,12 +199,12 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         this->m_mBrake = nullptr;
         this->m_msgActuatorStatus.brake_status = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
     }
-
-    msg->brake_torque *= 1000;
-    int nTorque = std::abs(std::round(msg->brake_torque));
     
+    if (this->m_bDebug)
+        RCLCPP_INFO(this->get_logger(), "[ TORQUE REQUEST ]: %lf", msg->brake_torque);
+
     if (this->m_mBrake != nullptr)
-        this->m_mBrake->writeTargetTorque(nTorque);
+        this->m_mBrake->writeTargetTorque(msg->brake_torque);
 }
 
 void CANOpenBridge::msgCmdClutchCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
@@ -229,6 +236,9 @@ void CANOpenBridge::msgCmdClutchCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
 
 void CANOpenBridge::msgSelectorCallback(mmr_base::msg::EcuStatus::SharedPtr msg)
 {
+    this->m_fSteerPot = msg->steering_angle;
+    this->m_nCRCSteer = msg->checksum_steering_angle;
+
     if (this->m_fClutchPot.has_value())
         this->msgEcuStatusCallback(msg);
     else this->msgEngageInitClutch(msg);
@@ -289,20 +299,57 @@ void CANOpenBridge::msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ]: engaged clutch");
 
-        this->m_mClutch->engage(fClutchPot);
+        if (this->m_mClutch != nullptr)
+            this->m_mClutch->engage(fClutchPot);
     }
     else { 
     
         if (this->m_bDebug)
             RCLCPP_INFO(this->get_logger(), "[ INFO ]: disengaged clutch");
-
-        this->m_mClutch->disengage(fClutchPot);
+        
+        if (this->m_mClutch != nullptr)
+            this->m_mClutch->disengage(fClutchPot);
     }
 }
 
 void CANOpenBridge::sendActuatorStatus()
 {
+    if ((this->m_nCtrBrake % this->m_nFreqScaleBrake) == 0) {
+        if (this->m_mBrake != nullptr)
+            this->uploadVoltage();
+        this->m_nCtrBrake = 1;
+    }
+    else this->m_nCtrBrake ++;
+
     this->m_msgActuatorStatus.header.stamp.sec = timing::Clock::get_time<std::chrono::seconds>().count();
     this->m_msgActuatorStatus.header.stamp.nanosec = timing::Clock::get_time<std::chrono::nanoseconds>().count() % timing::NANOSECONDS_MOD;
     this->m_pubActuatorStatus->publish(this->m_msgActuatorStatus); 
+}
+
+void CANOpenBridge::monitorSteer()
+{
+    if (static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode) == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS) {
+        if (this->m_nCRCSteerOld != this->m_nCRCSteer)
+            this->m_nCRCSteerOld = this->m_nCRCSteer;
+        else return;
+    }
+    /* Compute the incremets to do */
+    int nIncrements = this->getStepToActuate(m_fTargetSteerAngle, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
+    
+    if ((this->m_bDebug) && (this->m_fSteerPot.has_value())) {
+        RCLCPP_INFO(
+            this->get_logger(), 
+            "[ STEERING ANGLE POT ]: %f, [ WHEEL ANGLE TARGET ]: %f, [ NUMBER INCREMENT ]: %d",
+            this->m_fSteerPot.value(), m_fTargetSteerAngle, nIncrements
+        );
+    }
+    
+    if (this->m_mSteer != nullptr)  
+        this->m_mSteer->writeTargetPos(nIncrements, static_cast<MOTOR::IDX_TOGGLE_NEW_POS>(this->m_nControlMode));
+}
+
+void CANOpenBridge::uploadVoltage()
+{
+    uint16_t m_uVoltage = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
+    this->m_msgActuatorStatus.voltage = ( (float) m_uVoltage / 10);
 }

@@ -2,6 +2,7 @@
 #include <control_node/estimation/state_estimator_factory.hpp>
 
 #include <control_node/estimation/noop_estimator/noop_estimator.hpp>
+#include <control_node/estimation/inspection/inspection_estimator.hpp>
 
 namespace control_node {
 namespace estimation {
@@ -11,6 +12,7 @@ static std::unique_ptr<IStateEstimator> create_state_estimator() { return std::m
 
 static constexpr std::initializer_list<std::pair<const char*, std::unique_ptr<IStateEstimator>(*)()>> ESTIMATORS = {
   std::make_pair("Noop", create_state_estimator<noop::NoopEstimator>),
+  std::make_pair("Inspection", create_state_estimator<inspection::InspectionEstimator>)
 };
 
 static constexpr ComponentFactory<IStateEstimator> FACTORY(ESTIMATORS);

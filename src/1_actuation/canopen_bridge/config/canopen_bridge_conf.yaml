@@ -16,31 +16,35 @@
     steer:
       node_id: 18
       wheel_rate: 6.4286
-      inc_per_degree: 179.7224 # riduzione 1-4 44.9306
-      max_target: 24000.0
-      velocity: 2750
+      inc_per_degree: 176.95383 # riduzione 1-4 44.9306
+      max_target_pot: 117.0
+      min_target_pot: -120.0
+      max_target_maxon: 24000
+      velocity: 3500
       timeout_msgs: 5
+      control_mode: 1 # if you want relative: 1, absolute: 0
     brake:
       node_id: 17
       max_torque: 1500
       return_pedal_torque: -20
-      timeout_msgs: 5 # da testare
+      timeout_msgs: 2
+      monitor_freq: 100
     clutch:
       node_id: 16
       velocity: 3500
       monitoring_freq: 5
       timeout_msgs: 2
       step_maxon:
-        - 200
-        - -500
-        - 300
-        - 100
-        - 600
-        - 400
+        - -200
+        - 1800
+        - -1000
+        - -250
+        - -800
+        - -400
       pot_val: 
         - 2.5
-        - 90.0
-        - 42.5
+        - 80.0
+        - 55.0
         - 32.5
         - 12.5
         - 2.5

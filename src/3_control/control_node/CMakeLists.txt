@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(control_node)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Whether to use the custom visualization msgs or the standard ones
 set(USE_KRIA_MSGS ON)
@@ -30,6 +28,7 @@ add_executable(control_node
   src/control_node/control_node.cpp
 
   src/control_node/estimation/noop_estimator.cpp
+  src/control_node/estimation/inspection/inspection_estimator.cpp
   src/control_node/estimation/state_estimator_factory.cpp
 
   src/control_node/path/sources/ros/sources_factory.cpp
@@ -46,6 +45,7 @@ add_executable(control_node
   src/control_node/actuation/sim.cpp
   src/control_node/actuation/spi_apps/mcp4921.cpp
   src/control_node/actuation/spi_apps/spi_apps.cpp
+  src/control_node/actuation/ecu/ecu.cpp
   src/control_node/actuation/actuator_factory.cpp
   src/control_node/actuation/actuator_manager.cpp
 

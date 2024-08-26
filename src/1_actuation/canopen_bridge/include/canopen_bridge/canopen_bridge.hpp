@@ -27,6 +27,7 @@
 #include <math.h>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 class CANOpenBridge : public EDFNode
 {
@@ -39,11 +40,14 @@ class CANOpenBridge : public EDFNode
         std::string m_sSteerTopic, m_sBrakeTopic, m_sClucthTopic, m_sStatusActuatorTopic, m_sEcuStatusTopic;
 
         /* Steer parameters */
-        int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer;
-        float m_fWheelRate, m_fIncPerDegree, m_fMaxTarget;
+        int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer, m_nControlMode, m_nMaxTargetMaxon;
+        float m_fWheelRate, m_fIncPerDegree, m_fMinTargetPot;
+        float m_fMaxTargetPot, m_fTargetSteerAngle;
+        std::optional<float> m_fSteerPot;
+        uint32_t m_nCRCSteerOld, m_nCRCSteer;
 
         /* Brake parameters */
-        int m_nBrakeId, m_nMaxTorque, m_nReturnPedalTorque, m_nTimeoutMsgBrake;
+        int m_nBrakeId, m_nMaxTorque, m_nReturnPedalTorque, m_nTimeoutMsgBrake, m_nFreqScaleBrake, m_nCtrBrake = 1;
 
         /* Clutch parameters */
         int m_nClutchId, m_nVelocityClutch, m_nMonitorClutch, m_nCountClutch = 1, m_nTimeoutMsgClutch;
@@ -67,6 +71,8 @@ class CANOpenBridge : public EDFNode
         void msgSelectorCallback(mmr_base::msg::EcuStatus::SharedPtr msg);
         void msgEngageInitClutch(mmr_base::msg::EcuStatus::SharedPtr msg);
         void msgEcuStatusCallback(mmr_base::msg::EcuStatus::SharedPtr msg);
+        
+        void uploadVoltage();
 
         rclcpp::Publisher<mmr_base::msg::ActuatorStatus>::SharedPtr m_pubActuatorStatus;
         rclcpp::Publisher<mmr_base::msg::ActuatorStatus>::SharedPtr m_pubCANBusTx;
@@ -79,6 +85,23 @@ class CANOpenBridge : public EDFNode
         void connectCANBus();
         void loadParameters();
 
+        inline int getStepToActuate(float fTargetSteerAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
+            
+            int nIncToDo = 0;
+
+            if (mode == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)
+                return std::round(fTargetSteerAngle * this->m_fIncPerDegree);
+            
+            if (this->m_fSteerPot.has_value()) {
+
+                fTargetSteerAngle = std::clamp<float>(fTargetSteerAngle, this->m_fMinTargetPot, this->m_fMaxTargetPot);
+                float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
+                nIncToDo = std::round(fDeltaDegrees * this->m_fIncPerDegree);
+            }
+
+            return nIncToDo;
+        }
+
         MaxonSteer *m_mSteer = nullptr;
         MaxonBrake *m_mBrake = nullptr;
         MaxonClutch *m_mClutch = nullptr;
@@ -89,6 +112,7 @@ class CANOpenBridge : public EDFNode
 
         CANOpenBridge();
 
+        void monitorSteer();
         void sendActuatorStatus();
 
         ~CANOpenBridge() { close(this->m_nSocket); };

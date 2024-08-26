@@ -1,0 +1,12 @@
+std_msgs/Header header
+
+float64 steer_lookahead_m
+float64 speed_lookahead_m
+
+float64 raw_target_acceleration_m_s_2
+float64 raw_target_speed_m_s
+
+float64 smoothed_target_speed_m_s
+float64 smoothed_target_acceleration_m_s_2
+
+float64 current_speed_m_s

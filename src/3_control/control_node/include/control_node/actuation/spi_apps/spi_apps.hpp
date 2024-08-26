@@ -11,16 +11,17 @@ namespace spi_apps {
 class SpiApps : public IActuator {
   std::optional<MCP4921> m_device;
   std::optional<rclcpp::Logger> m_logger;
-  bool m_soft_enabled;
+
+  MCP4921::ConfigFlags m_flags = MCP4921::ConfigFlags::FLAG_ACTIVE | MCP4921::ConfigFlags::FLAG_UNITARY_GAIN;
+  bool m_soft_enabled = false;
 
   double m_v_range;
   double m_v_min;
   double m_v_ref;
-public:
-  SpiApps();
 
+public:
   virtual void init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger logger);
-  virtual void actuate(const control::Control& control);
+  virtual void actuate(std::chrono::nanoseconds t, const control::Control& control);
 
   virtual void request_enable() { m_soft_enabled = true; };
   virtual void request_disable() { m_soft_enabled = false; };
