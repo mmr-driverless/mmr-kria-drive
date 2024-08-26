@@ -37,6 +37,7 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->m_pubResStatus = this->create_publisher<mmr_base::msg::ResStatus>(this->m_sResStatusTopic, qos);
     this->m_pubMissionSelect = this->create_publisher<std_msgs::msg::Int8>(this->m_sMissionSelectTopic, 1);
     this->m_pubImuData = this->create_publisher<sensor_msgs::msg::Imu>(this->m_sOutImuDataTopic, qos);
+    this->m_pubImuAllData = this->create_publisher<mmr_base::msg::ImuCanData>(this->m_sImuAllDataTopic, qos);
 
     this->m_ecGearUp.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), this->m_lDelayCmdEcuGear, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_UP));
     this->m_ecGearDown.emplace(this->m_nSocket, &this->m_mutexOnSocket, static_cast<int>(this->m_unGearCtrLimit), static_cast<int>(this->m_unGearCtrLimit), this->m_lDelayCmdEcuGear, this->getCanFrame(ECU::CMD::ACTIONS::GEAR_DOWN));
@@ -64,6 +65,7 @@ void CANBusBridge::loadParameters()
     declare_parameter("topic.outputImuTopic", "");
     declare_parameter("topic.controlLogTopic", "");
     declare_parameter("topic.raceStatusTopic", "");
+    declare_parameter("topic.imuAllData", "");
 
     declare_parameter("gear.ctrLimit", 5);
     declare_parameter("gear.changeDeltaTime", 200);
@@ -96,6 +98,7 @@ void CANBusBridge::loadParameters()
     get_parameter("topic.outputImuTopic", this->m_sOutImuDataTopic);
     get_parameter("topic.controlLogTopic", this->m_sControlLogTopic);
     get_parameter("topic.raceStatusTopic", this->m_sLapCounterTopic);
+    get_parameter("topic.imuAllData", this->m_sImuAllDataTopic);
 
     get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
     get_parameter("gear.changeDeltaTime", this->m_lGearChangeDeltaTime);
@@ -317,6 +320,9 @@ void CANBusBridge::sendStatus()
 
         this->m_pubImuData->publish(this->m_msgOutImuData);
     }
+
+    if (this->m_pubImuAllData != nullptr)
+        this->m_pubImuAllData->publish(this->m_msgImuCanData);
 }
 
 void CANBusBridge::readResStatus(can_frame frame)
