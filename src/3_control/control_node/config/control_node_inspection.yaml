@@ -40,7 +40,7 @@
       type: Inspection
       params:
         frequency_hz: 0.5
-        amplitude_steering_wheel_deg: 45
+        amplitude_steering_wheel_deg: 45.0
         throttle: 0.15
         launch_control: false
         gear: 1
