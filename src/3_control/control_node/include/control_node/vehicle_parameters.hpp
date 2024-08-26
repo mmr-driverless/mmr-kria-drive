@@ -28,6 +28,7 @@ class VehicleParameters {
   double m_brake_pulley_diameter_mm; // Brake pulley diameter [mm]
   double m_brake_reducer; // Brake motor reducer
   double m_brake_reducer_efficiency; // Reducer efficiency
+  double m_brake_min_torque; // Minimum brake motor torque
   std::vector<double> m_gear_ratios; 
   std::vector<long> m_NMOTVET_rpm;
   std::vector<long> m_CDC_Nm;
@@ -55,6 +56,7 @@ public:
       m_brake_pulley_diameter_mm(p.get<double>("brake_pulley_diameter_mm")),
       m_brake_reducer(p.get<double>("brake_reducer")),
       m_brake_reducer_efficiency(p.get<double>("brake_reducer_efficiency")),
+      m_brake_min_torque(p.get<double>("brake_min_torque")),
       m_gear_ratios(p.get<std::vector<double>>("gear_ratios")),
       m_NMOTVET_rpm(p.get<std::vector<long>>("nmotvet_rpm")),
       m_CDC_Nm(p.get<std::vector<long>>("cdc_Nm"))
@@ -81,6 +83,7 @@ public:
   double brake_pulley_diameter_mm() const { return m_brake_pulley_diameter_mm; }
   double brake_reducer() const { return m_brake_reducer; }
   double brake_reducer_efficiency() const { return m_brake_reducer_efficiency; }
+  double brake_min_torque() const { return m_brake_min_torque; }
   const std::vector<double>& gear_ratios() const { return m_gear_ratios; }
   const std::vector<long>& NMOVET_rpm() const { return m_NMOTVET_rpm; }
   const std::vector<long>& CDC_Nm() const { return m_CDC_Nm; }
