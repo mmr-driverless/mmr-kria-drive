@@ -119,10 +119,8 @@
       wheelbase_m: 1.541 # distance between front and rear axle [m]
       steering_ratio: 6.87 # Ratio between steering wheel and wheel angle (bicycle model) [1]
       lr_m: 0.7094 # distance between CoM and rear axle [m]
-      cx: 0.99
-      cz: 2.2
-      sx: 1.1
-      sz: 2.5
+      scx: 1.1 # 0.99 * 1.1
+      scz: 5.5 # 2.2 * 2.5
       wheel_radius_m: 0.23
       mass_kg: 260.0
       wheel_roll_coeff: 0.013
@@ -138,15 +136,17 @@
       brake_reducer_efficiency: 0.90
       brake_min_torque: 150.0 # Any braking command under this threshold is ignored [mNm]
       differential_ratio: 3.38
-      nmotvet_rpm: [ 10, 2500, 3500, 4500, 5500, 6500, 7500, 8500, 9500, 10500, 11500, 18000 ]
-      cdc_Nm: [ 23, 23, 36, 40, 38, 44, 46, 52, 56, 51, 47, 47 ]
+      nmotvet_rpm: [ 10.0, 2500.0, 3500.0, 4500.0, 5500.0, 6500.0, 7500.0, 8500.0, 9500.0, 10500.0, 11500.0, 18000.0 ]
+      cdc_Nm: [ 23.0, 23.0, 36.0, 40.0, 38.0, 44.0, 46.0, 52.0, 56.0, 51.0, 47.0, 47.0 ]
       gear_ratios: [
-        0.0, # std::numeric_limits<int>::infinity()
+        +inf,
         5.5, # 77/14,
         4.052631578947368, # 77/19
         3.3846153846153846, # 77*36/39/21
         2.9615384615384617 # 77*36/39/24
       ]
+      apps_map_x: [ 0.0, 0.005, 0.85, 1.0 ] # % of maximum torque
+      apps_map_y: [ 0.0, 0.15, 0.75, 1.0 ] # APPS
 
     viz:
       enabled: false
