@@ -16,14 +16,14 @@ namespace estimation {
 namespace noop {
 
 class NoopEstimator : public IStateEstimator {
+  double m_clutch_disengaged_thresh;
+  
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
   rclcpp::Subscription<mmr_base::msg::EcuStatus>::SharedPtr m_ecu_status_sub;
-  rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr m_act_status_sub;
   rclcpp::Subscription<mmr_base::msg::ResStatus>::SharedPtr m_res_status_sub;
 
   void odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg);
   void ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus> msg);
-  void act_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg);
   void res_status_cb(std::shared_ptr<const mmr_base::msg::ResStatus> msg);
 
 public:

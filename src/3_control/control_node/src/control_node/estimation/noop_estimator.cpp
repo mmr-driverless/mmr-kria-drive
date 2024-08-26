@@ -9,9 +9,10 @@ namespace estimation {
 namespace noop {
 
 void NoopEstimator::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters&) {
+  m_clutch_disengaged_thresh = p.get<double>("clutch_disengaged_thresh");
+
   m_odom_sub = node.create_subscription<nav_msgs::msg::Odometry>(p.get<std::string>("odometry_topic"), rclcpp::SensorDataQoS(), std::bind(&NoopEstimator::odom_cb, this, std::placeholders::_1));
   m_ecu_status_sub = node.create_subscription<mmr_base::msg::EcuStatus>(p.get<std::string>("ecu_status.topic"), p.parse_qos("ecu_status.qos"), std::bind(&NoopEstimator::ecu_status_cb, this, std::placeholders::_1));
-  m_act_status_sub = node.create_subscription<mmr_base::msg::ActuatorStatus>(p.get<std::string>("actuator_status.topic"), p.parse_qos("actuator_status.qos"), std::bind(&NoopEstimator::act_status_cb, this, std::placeholders::_1));
   m_res_status_sub = node.create_subscription<mmr_base::msg::ResStatus>(p.get<std::string>("res_status.topic"), p.parse_qos("res_status.qos"), std::bind(&NoopEstimator::res_status_cb, this, std::placeholders::_1));
 }
 
@@ -20,10 +21,7 @@ void NoopEstimator::ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus
   m_state.m_lc_is_active = msg->bool_ack_ideal_launch_control;
   m_state.m_rpm = msg->nmot;
   m_state.m_speed = msg->vehicle_speed / 3.6;
-}
-
-void NoopEstimator::act_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg) {
-  m_state.m_clutch_is_engaged = static_cast<MOTOR::ACTUATOR_STATUS>(msg->clutch_status) == MOTOR::ACTUATOR_STATUS::ENGAGE;
+  m_state.m_clutch_is_engaged = msg->clutch_percentage < m_clutch_disengaged_thresh;
 }
 
 void NoopEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) {
