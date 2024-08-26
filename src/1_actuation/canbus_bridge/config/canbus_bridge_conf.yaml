@@ -9,6 +9,7 @@
       deadline: 10000000
       max_msgs: 25
       control_freq_div: 1
+      ecu_command_enable: false
     topic:
       cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"

@@ -44,7 +44,7 @@ class CANBusBridge : public EDFNode
         std::string m_sImuAllDataTopic;
         int m_nBitrate, m_nMaxMsgs, m_nControlFreqDiv, m_nCtrFreqControl = 1;
         int m_nFreqDiv24V, m_nCtr24V = 1;
-        bool m_bDebug;
+        bool m_bDebug, m_bEcuCmdEnable;
 
         void loadParameters();
 
