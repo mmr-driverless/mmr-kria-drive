@@ -53,7 +53,7 @@
       race_status:
         topic: "/planning/race_status"
       stop:
-        topic: "/stop"
+        topic: "/mission/stop"
       
       rev_duration_before_engage_ms: 250
       launch_throttle: 0.5
@@ -71,10 +71,10 @@
       type: PurePursuit2023
       params:
         minLookForward: 4.2
-        minLookForwardGain: 0.4
+        minLookForwardGain: 0.1 # 0.4 before 
         steerGain: 1.0
         minSpeed: 4.1
-        minSpeedDistance: 5.0
+        minSpeedDistance: 4.2 # it must be equal to minLookForward
         
         min_throttle: 0.15
         min_throttle_is_clamp: false

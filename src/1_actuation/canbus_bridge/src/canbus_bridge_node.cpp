@@ -29,6 +29,7 @@ int main(int argc, char * argv[])
       node->changeGearUpDown();
       node->setLaunchControl();
       node->setGearNeutral();
+      node->send24VCockpit();
       sched_yield();
     }
 
