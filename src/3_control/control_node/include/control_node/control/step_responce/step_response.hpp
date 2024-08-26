@@ -12,11 +12,15 @@ namespace step_response {
 class StepResponse : public IController{
 
     const VehicleParameters* m_vp;
+    double m_acc_target;
+    int m_gear_target;
+    double m_use_step;
+    double m_min_throttle;
 
     public:
-    StepResponse();
+    // StepResponse();
 
-    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;
+    virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, rclcpp::Logger) override;
 
     virtual Control control(
         std::chrono::nanoseconds t,
