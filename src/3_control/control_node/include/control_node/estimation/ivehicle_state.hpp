@@ -15,7 +15,8 @@ struct IVehicleState {
   virtual std::optional<bool> lc_is_active() const = 0;
   virtual std::optional<bool> clutch_is_engaged() const = 0;
   virtual std::optional<int> gear() const = 0;
-  virtual std::optional<bool> bag_button() const = 0;
+  virtual std::optional<bool> res_bag() const = 0;
+  virtual std::optional<bool> res_go() const = 0;
 };
 
 }; // namespace estimation

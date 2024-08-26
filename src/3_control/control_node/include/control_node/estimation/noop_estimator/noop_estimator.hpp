@@ -6,6 +6,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <mmr_base/msg/ecu_status.hpp>
 #include <mmr_base/msg/actuator_status.hpp>
+#include <mmr_base/msg/res_status.hpp>
 
 #include <control_node/estimation/istate_estimator.hpp>
 #include <control_node/parameters.hpp>
@@ -18,10 +19,12 @@ class NoopEstimator : public IStateEstimator {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
   rclcpp::Subscription<mmr_base::msg::EcuStatus>::SharedPtr m_ecu_status_sub;
   rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr m_act_status_sub;
+  rclcpp::Subscription<mmr_base::msg::ResStatus>::SharedPtr m_res_status_sub;
 
   void odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg);
   void ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus> msg);
   void act_status_cb(std::shared_ptr<const mmr_base::msg::ActuatorStatus> msg);
+  void res_status_cb(std::shared_ptr<const mmr_base::msg::ResStatus> msg);
 
 public:
   class VehicleState : public IVehicleState {
@@ -32,6 +35,8 @@ public:
     std::optional<double> m_speed;
     std::optional<int> m_rpm;
     std::optional<bool> m_lc_is_active;
+    std::optional<bool> m_res_go;
+    std::optional<bool> m_res_bag;
     
   public:
     friend NoopEstimator;
@@ -42,6 +47,8 @@ public:
     virtual std::optional<bool> lc_is_active() const override { return m_lc_is_active; }
     virtual std::optional<bool> clutch_is_engaged() const override { return m_clutch_is_engaged; }
     virtual std::optional<int> gear() const override { return m_gear; }
+    virtual std::optional<bool> res_go() const override { return m_res_go; }
+    virtual std::optional<bool> res_bag() const override { return m_res_bag; }
   } m_state;
 
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;

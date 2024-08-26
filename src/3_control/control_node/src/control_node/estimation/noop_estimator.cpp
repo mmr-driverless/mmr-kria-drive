@@ -12,6 +12,7 @@ void NoopEstimator::init(rclcpp::Node& node, const Parameters& p, const VehicleP
   m_odom_sub = node.create_subscription<nav_msgs::msg::Odometry>(p.get<std::string>("odometry_topic"), rclcpp::SensorDataQoS(), std::bind(&NoopEstimator::odom_cb, this, std::placeholders::_1));
   m_ecu_status_sub = node.create_subscription<mmr_base::msg::EcuStatus>(p.get<std::string>("ecu_status.topic"), p.parse_qos("ecu_status.qos"), std::bind(&NoopEstimator::ecu_status_cb, this, std::placeholders::_1));
   m_act_status_sub = node.create_subscription<mmr_base::msg::ActuatorStatus>(p.get<std::string>("actuator_status.topic"), p.parse_qos("actuator_status.qos"), std::bind(&NoopEstimator::act_status_cb, this, std::placeholders::_1));
+  m_res_status_sub = node.create_subscription<mmr_base::msg::ResStatus>(p.get<std::string>("res_status.topic"), p.parse_qos("res_status.qos"), std::bind(&NoopEstimator::res_status_cb, this, std::placeholders::_1));
 }
 
 void NoopEstimator::ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus> msg) {
@@ -37,6 +38,11 @@ void NoopEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) 
   m_state.m_yaw = rpy.z();
 }
 
-};
-};
-};
+void NoopEstimator::res_status_cb(std::shared_ptr<const mmr_base::msg::ResStatus> msg) {
+  m_state.m_res_go = msg->go_signal;
+  m_state.m_res_bag = msg->bag;
+}
+
+}; // namespace noop
+}; // namespace estimation
+}; // namespace control_node

@@ -37,6 +37,7 @@ add_executable(control_node
 
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
   src/control_node/control/inspection/inspection.cpp
+  src/control_node/control/long_step_response/long_step_response.cpp
   src/control_node/control/controller_factory.cpp
 
   src/control_node/event/event_manager.cpp
