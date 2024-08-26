@@ -22,14 +22,12 @@ static inline AppsBrakePair apps_brake_from_accel(double target_acc,
 
   // Drag (X) and downforce (Z)
   double X = 0.5 * AIR_DENSITY * vp.cx() * vp.sx() * std::pow(speed, 2);
-  double Z = 0.5 * AIR_DENSITY * vp.cz() * vp.sz() * std::pow(speed, 2) * vp.cz() * vp.sz();
-
-  double M = 300.0; // vp.mass_kg()
+  double Z = 0.5 * AIR_DENSITY * vp.cz() * vp.sz() * std::pow(speed, 2); // * vp.cz() * vp.sz() - TODO: Ask Ema
 
   // Required torque at the rear wheels
   double coppia_ruote =
-      (X * vp.wheel_radius_m()) + (((M * G) + Z) * vp.wheel_roll_coeff()) +
-      ((M + ((4.0 * vp.wheel_inertia()) / std::pow(vp.wheel_radius_m(), 2)))) *
+      (X * vp.wheel_radius_m()) + (((vp.mass_kg() * G) + Z) * vp.wheel_roll_coeff()) +
+      ((vp.mass_kg() + ((4.0 * vp.wheel_inertia()) / std::pow(vp.wheel_radius_m(), 2)))) *
           vp.wheel_radius_m() * target_acc;
 
   if (coppia_ruote >= 0.0) {
