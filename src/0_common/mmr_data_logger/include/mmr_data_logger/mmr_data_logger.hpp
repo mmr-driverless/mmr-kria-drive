@@ -35,7 +35,7 @@ class MMR_Data_Logger : public EDFNode
 {
 private:
 
-    const float MAXIMUM_PBRAKE = 42.0;
+    const float MAXIMUM_PBRAKE = 60.0;
     const float STEERING_ANGLE_SCALE_FACTOR= 2;
     const float ACCELERATION_SCALE_FACTOR= 512;
     const float YAW_SCALE_FACTOR= 128;
@@ -72,6 +72,7 @@ private:
         this->brakeActual=static_cast<uint8_t>((((pbrake_front+pbrake_rear)/2)/MAXIMUM_PBRAKE)*100);
         float precentageOfSteering = ((msg->steering_angle/this->steerWheelRate )*STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAgleActual=static_cast<int8_t>(precentageOfSteering);
+        if(this->brakeActual>100)this->brakeActual=100;
 
         if(brakeMotorEnabled and this->pbrake_front>0 and this->pbrake_rear>0){
             this->serviceBrakeState=2;
@@ -104,9 +105,9 @@ private:
 
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr subImu;
     void imuCallBack(const sensor_msgs::msg::Imu::SharedPtr msg){
-        this->accelerationLongitudinal=static_cast<int16_t>(msg->linear_acceleration.x*ACCELERATION_SCALE_FACTOR);
-        this->accelerationLateral=static_cast<int16_t>(msg->linear_acceleration.y*ACCELERATION_SCALE_FACTOR);
-        this->yawRate=static_cast<int16_t>(msg->angular_velocity.z*YAW_SCALE_FACTOR);
+        this->accelerationLongitudinal=static_cast<int16_t>(msg->linear_acceleration.x/ACCELERATION_SCALE_FACTOR);
+        this->accelerationLateral=static_cast<int16_t>(msg->linear_acceleration.y/ACCELERATION_SCALE_FACTOR);
+        this->yawRate=static_cast<int16_t>(msg->angular_velocity.z/YAW_SCALE_FACTOR);
 
         if(this->debug && 0){
             std::cout<<"-------------IMU MSG---------------------------"<<std::endl;
@@ -169,6 +170,7 @@ private:
         float percentageSteeringAngle=(((msg->steer/this->steerWheelRate ) )/STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
         this->brakeTarget=static_cast<int8_t>((msg->brake/MAXIMUM_PBRAKE)*100);
+        if(this->brakeTarget>100)this->brakeTarget=100;
     }
 
     rclcpp::Subscription<mmr_base::msg::PurePursuitLog>::SharedPtr subPurePursuitLog;
