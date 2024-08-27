@@ -152,7 +152,8 @@ uint64_t  MMR_Data_Logger::create_dv_system_status_messagge() {
 
 void MMR_Data_Logger::send_messages(){
 
-  //print_parameters();
+  if( this->debug)
+    this->print_parameters();
 
   uint64_t message_500 = create_dv_driving_dynamics_1_message();
   auto msg_500 = can_msgs::msg::Frame();
