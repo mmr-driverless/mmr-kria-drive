@@ -40,6 +40,8 @@ public:
     virtual std::optional<int> gear() const override { return m_gear; }
     virtual std::optional<bool> res_go() const override { return std::nullopt; }
     virtual std::optional<bool> res_bag() const override { return std::nullopt; }
+    virtual std::optional<double> actual_steer() const override { return std::nullopt; }
+    virtual std::optional<double> throttle() const override { return std::nullopt; }
   } m_state;
 
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;

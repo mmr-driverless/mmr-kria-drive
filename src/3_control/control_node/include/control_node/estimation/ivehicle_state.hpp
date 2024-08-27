@@ -17,6 +17,8 @@ struct IVehicleState {
   virtual std::optional<int> gear() const = 0;
   virtual std::optional<bool> res_bag() const = 0;
   virtual std::optional<bool> res_go() const = 0;
+  virtual std::optional<double> actual_steer() const = 0;
+  virtual std::optional<double> throttle() const = 0;
 };
 
 }; // namespace estimation

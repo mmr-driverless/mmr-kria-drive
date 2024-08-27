@@ -48,6 +48,11 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_min_throttle_is_clamp = p.get<bool>("min_throttle_is_clamp");
   m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
   m_second_gear_on_second_lap = p.get<bool>("second_gear_on_second_lap");
+  m_dynamic_change_gear = p.get<bool>("change_gear_logic");
+  m_min_up = p.get<double>("m_min_up");
+  m_max_up = p.get<double>("m_max_up");
+  m_min_down = p.get<double>("m_min_down");
+  m_max_down = p.get<double>("m_max_down");
 
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
@@ -77,6 +82,33 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
     viz_p.parse_rgba("color", m_viz_lookforward_alpha),
     { scale, scale, 0.01 }
   );
+}
+
+
+int PurePursuit2023::gear_target(
+  std::chrono::nanoseconds t,
+  const estimation::IVehicleState& state
+  ) {
+    int target_gear;
+
+    double current_speed = state.speed().value();
+    int delta_speed = (((uint16_t)current_speed / 2) * 2) - current_speed;
+
+    double steering_angle = state.actual_steer().value();
+    double ath = std::clamp<double>(state.throttle().value(), 0.0f, 1.0f);
+
+    double rpm_up = lerp3(ath, mmr_point_double(0.0f, m_min_up), mmr_point_double(0.20f, m_min_up), mmr_point_double(1.0f, m_max_up));
+
+    double rpm_down;
+
+    if (state.gear().value() == 2) 
+      rpm_down = 3500.0;
+    else rpm_down = lerp3(ath, mmr_point_double(1.0f, m_min_down), mmr_point_double(0.70f, m_min_down), mmr_point_double(0.0f, m_max_down)); 
+
+    if (delta_speed > 0 && state.rpm().value() >= rpm_up && state.gear().value() < 4) return state.gear().value() + 1;
+    else if (delta_speed < 0 && state.rpm().value() <= rpm_down && state.gear().value() > 1 && std::abs(steering_angle) < 15.0) return state.gear().value() - 1;
+
+    return state.gear().value();
 }
 
 
@@ -207,6 +239,9 @@ Control PurePursuit2023::control(
 
   if (lap > 1 && m_second_gear_on_second_lap) {
     u.gear = 2;
+  }
+  else if (m_dynamic_change_gear) {
+    u.gear = this->gear_target(t, state);
   }
 
   mmr_base::msg::PurePursuitLog log_msg;
