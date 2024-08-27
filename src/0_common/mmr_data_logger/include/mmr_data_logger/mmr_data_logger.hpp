@@ -35,7 +35,7 @@ class MMR_Data_Logger : public EDFNode
 {
 private:
 
-    const float MAXIMUM_PBRAKE = 10;
+    const float MAXIMUM_PBRAKE = 42.0;
     const float STEERING_ANGLE_SCALE_FACTOR= 2;
     const float ACCELERATION_SCALE_FACTOR= 512;
     const float YAW_SCALE_FACTOR= 128;
@@ -86,6 +86,8 @@ private:
         }else if ( pebs1>0 and pebs2>0 ){
             this->ebsState=2;
         }
+
+        
     }
     
     rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr subActuator;
@@ -106,7 +108,7 @@ private:
         this->accelerationLateral=static_cast<int16_t>(msg->linear_acceleration.y*ACCELERATION_SCALE_FACTOR);
         this->yawRate=static_cast<int16_t>(msg->angular_velocity.z*YAW_SCALE_FACTOR);
 
-        if(this->debug){
+        if(this->debug && 0){
             std::cout<<"-------------IMU MSG---------------------------"<<std::endl;
             std::cout<<"ACCELERATION LONGITUDINAL: "<<msg->linear_acceleration.x<<std::endl;
             std::cout<<"ACCELERATION LATERAL: "<<msg->linear_acceleration.y<<std::endl;
@@ -171,8 +173,19 @@ private:
 
     rclcpp::Subscription<mmr_base::msg::PurePursuitLog>::SharedPtr subPurePursuitLog;
     void pplCallBack(const mmr_base::msg::PurePursuitLog::SharedPtr msg){
-        this->speedTarget=static_cast<uint8_t>(msg->smoothed_target_speed_m_s*3,6);
-        this->speedActual=static_cast<uint8_t>(msg->current_speed_m_s*3,6);
+        this->speedTarget=static_cast<uint8_t>(msg->smoothed_target_speed_m_s*3.6);
+        this->speedActual=static_cast<uint8_t>(msg->current_speed_m_s*3.6);
+
+        if(this->debug && 0){
+            std::cout<<"-------------PPL MSG---------------------------"<<std::endl;
+            std::cout<<"SPEED TARGET: "<<msg->smoothed_target_speed_m_s<<std::endl;
+            std::cout<<"SPEED ACTUAL: "<<msg->current_speed_m_s<<std::endl;
+            std::cout<<"--------ELABORATED INFORMATION msg-------------"<<std::endl;
+            std::cout<<"SPEED TARGET: "<<static_cast<int>(this->speedTarget)<<std::endl;
+            std::cout<<"SPEED ACTUAL: "<<static_cast<int>(this->speedActual)<<std::endl;
+            std::cout<<"-----------------------------------------------"<<std::endl;
+            std::cout<<std::endl;
+        }
     }
 
     rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr pubMsg;

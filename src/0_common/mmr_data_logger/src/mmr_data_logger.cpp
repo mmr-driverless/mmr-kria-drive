@@ -19,7 +19,7 @@ void MMR_Data_Logger::load_parameters(){
     declare_parameter("topics.sendMsgTopic", "");
     declare_parameter("topics.ppltopic", "");
     
-    declare_parameter("steer.wheel_rate", "");
+    declare_parameter("steer.wheel_rate", 6.87);
 
     get_parameter("generic.WCET", this->m_nWCET);
     get_parameter("generic.period", this->m_nPeriod);
@@ -152,7 +152,7 @@ uint64_t  MMR_Data_Logger::create_dv_system_status_messagge() {
 
 void MMR_Data_Logger::send_messages(){
 
-  if( this->debug)
+  if( this->debug )
     this->print_parameters();
 
   uint64_t message_500 = create_dv_driving_dynamics_1_message();
