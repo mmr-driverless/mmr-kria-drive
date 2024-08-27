@@ -170,7 +170,7 @@ private:
     }
 
     rclcpp::Subscription<mmr_base::msg::PurePursuitLog>::SharedPtr subPurePursuitLog;
-    void pplCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
+    void pplCallBack(const mmr_base::msg::PurePursuitLog::SharedPtr msg){
         this->speedTarget=static_cast<uint8_t>(msg->smoothed_target_speed_m_s*3,6);
         this->speedActual=static_cast<uint8_t>(msg->current_speed_m_s*3,6);
     }
