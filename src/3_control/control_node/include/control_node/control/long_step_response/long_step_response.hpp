@@ -5,6 +5,8 @@
 #include <control_node/vehicle_parameters.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <std_msgs/msg/int8.hpp>
+
 namespace control_node {
 namespace control {
 namespace long_step_response {
@@ -18,8 +20,11 @@ class LongStepResponse : public IController {
   std::chrono::milliseconds m_start_t;
 
   std::optional<rclcpp::Logger> m_logger;
+
+  rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr m_as_state_pub;
   
   enum class State {
+    WaitingForGo,
     Waiting,
     Running,
     Finished

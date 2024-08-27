@@ -1,18 +1,20 @@
 #include <chrono>
 #include <control_node/control/long_step_response/long_step_response.hpp>
 #include <control_node/control/pure_pursuit_2023/acc_to_brake_apps.hpp>
+#include <mmr_base/configuration.hpp>
 
 namespace control_node {
 namespace control {
 namespace long_step_response {
 
 
-void LongStepResponse::init(rclcpp::Node&, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger logger) {
+void LongStepResponse::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager&, rclcpp::Logger logger) {
   m_vp = &vp;
+  m_as_state_pub = node.create_publisher<std_msgs::msg::Int8>(p.get<std::string>("as_state.topic"), p.parse_qos("as_state.qos"));
   m_zero_duration = std::chrono::milliseconds(p.get<int>("zero_duration_ms"));
   m_step_size = p.get<double>("step_size");
   m_max_speed = p.get<double>("max_speed");
-  m_state = State::Waiting;
+  m_state = State::WaitingForGo;
   m_logger = logger;
 }
 
@@ -27,6 +29,16 @@ Control LongStepResponse::control(
 
   double throttle = 0.0;
 
+  if (m_state == State::WaitingForGo) {
+    if (state.res_go().has_value() && state.res_go()) {
+      RCLCPP_INFO(*m_logger, "Go received!");
+      std_msgs::msg::Int8 msg;
+      msg.data = AS::STATE::DRIVING;
+      m_as_state_pub->publish(msg);
+      m_state = State::Waiting;
+    }
+  }
+
   if (m_state == State::Waiting) {
     if (state.res_bag().has_value() && state.res_bag().value()) {
       m_state = State::Running;
@@ -39,8 +51,10 @@ Control LongStepResponse::control(
     bool over_speed = !state.speed().has_value() || state.speed().value() >= m_max_speed;
     bool go_off = !state.res_go().has_value() || !state.res_go().value();
 
-    if (over_speed || go_off)
+    if (over_speed || go_off) {
+      RCLCPP_INFO(*m_logger, "Stop (over_speed=%s), (go_off=%s)", over_speed?"T":"F", go_off?"T":"F");
       m_state = State::Finished;
+    }
     else if (state.speed().has_value() && state.gear().has_value() && state.rpm().has_value()) {
       double target_acc = 0.0;
 

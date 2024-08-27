@@ -1,5 +1,0 @@
-/control_node:
-  ros__parameters:
-    min_throttle: 0.15
-    acc_target: 0.0
-    gear_target: 0
