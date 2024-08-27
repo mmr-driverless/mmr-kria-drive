@@ -15,3 +15,4 @@
       conesActualTopic: "/perception/cones"
       conesAllTopic: "/slam/cones_positions"
       controlTopic: "/control/log"
+      sendMsgTopic: "/data_logger/log"

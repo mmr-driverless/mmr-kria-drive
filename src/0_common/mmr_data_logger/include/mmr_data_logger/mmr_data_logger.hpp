@@ -26,17 +26,9 @@ TODO
 #include <mmr_base/msg/marker.hpp>
 #include <mmr_base/msg/marker_array.hpp>
 #include <mmr_base/configuration.hpp>
+#include <can_msgs/msg/frame.hpp>
 
 #include <string.h>
-
-
-struct bitfield48 {
-  uint64_t value : 48;
-};
-
-struct bitfield40 {
-  uint64_t value : 40;
-};
 
 class MMR_Data_Logger : public EDFNode
 {
@@ -49,7 +41,7 @@ private:
     const float MAXIMUM_STEERING_ANGLE = 120.0;
 
     bool debug,brakeMotorEnabled;
-    std::string statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
+    std::string sendMsgTopic, statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
     float pbrake_rear, pbrake_front, pebs1, pebs2;
     
 
@@ -93,6 +85,13 @@ private:
         }else if ( pebs1>0 and pebs2>0 ){
             this->ebsState=2;
         }
+
+        std::cout<<"[ECU] brake "<<this->pbrake_front<<" "<<this->pbrake_rear<<std::endl;
+        std::cout<<"[ECU] ebs "<<this->pebs1<<" "<<this->pebs2<<std::endl;
+        std::cout<<"[ECU] service brake "<<this->serviceBrakeState<<std::endl;
+        std::cout<<"[ECU] ebs state "<<this->ebsState<<std::endl;
+        std::cout<<"[ECU] steering angle "<<this->steeringAgleActual<<std::endl;
+
     }
     
     rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr subActuator;
@@ -113,7 +112,7 @@ private:
         this->accelerationLateral=static_cast<int16_t>(msg->linear_acceleration.y*ACCELERATION_SCALE_FACTOR);
         this->yawRate=static_cast<int16_t>(msg->angular_velocity.z*YAW_SCALE_FACTOR);
 
-        if(this->debug){
+        if(this->debug && 0){
             std::cout<<"-------------IMU MSG---------------------------"<<std::endl;
             std::cout<<"ACCELERATION LONGITUDINAL: "<<msg->linear_acceleration.x<<std::endl;
             std::cout<<"ACCELERATION LATERAL: "<<msg->linear_acceleration.y<<std::endl;
@@ -171,15 +170,19 @@ private:
 
     rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl;
     void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
-        float percentageSteeringAngle=(((msg->steer*57.2958) )/STEERING_ANGLE_SCALE_FACTOR);
+        float percentageSteeringAngle=(((msg->steer/*57.2958*/) )/STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
         this->brakeTarget=static_cast<int8_t>((msg->brake/MAXIMUM_PBRAKE)*100);
     }
 
+    rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr pubMsg;
+
+
     uint64_t pack_bits(uint64_t value, int position, int length);
     uint64_t create_dv_driving_dynamics_1_message();
-    bitfield48 create_dv_driving_dynamics_2_message();
-    bitfield40 create_dv_system_status_messagge();
+    uint64_t create_dv_driving_dynamics_2_message();
+    uint64_t create_dv_system_status_messagge();
+
 
 
 
@@ -188,6 +191,7 @@ public:
     MMR_Data_Logger();
     void load_parameters();
     ~MMR_Data_Logger();
+    void send_messages();
     void print_parameters();
 
 };

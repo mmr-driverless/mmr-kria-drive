@@ -17,6 +17,7 @@ find_package(mmr_base REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(can_msgs REQUIRED)
 
 include_directories(include)
 
@@ -36,6 +37,7 @@ ament_target_dependencies(${NODE_NAME}
   std_msgs
   geometry_msgs
   sensor_msgs
+  can_msgs
 )
 
 

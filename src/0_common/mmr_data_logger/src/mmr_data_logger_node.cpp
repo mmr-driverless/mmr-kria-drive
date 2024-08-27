@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
 
     while (true) {
       executor.spin_all(30ms);
-      node->print_parameters();
+      node->send_messages();
       sched_yield();
     }
 
