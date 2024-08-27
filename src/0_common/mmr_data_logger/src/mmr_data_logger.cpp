@@ -17,7 +17,9 @@ void MMR_Data_Logger::load_parameters(){
     declare_parameter("topics.conesAllTopic", "");
     declare_parameter("topics.controlTopic", "");
     declare_parameter("topics.sendMsgTopic", "");
-
+    declare_parameter("topics.ppltopic", "");
+    
+    declare_parameter("steer.wheel_rate", "");
 
     get_parameter("generic.WCET", this->m_nWCET);
     get_parameter("generic.period", this->m_nPeriod);
@@ -34,6 +36,10 @@ void MMR_Data_Logger::load_parameters(){
     get_parameter("topics.conesAllTopic", this->conesAllTopic);
     get_parameter("topics.controlTopic", this->controlTopic);
     get_parameter("topics.sendMsgTopic", this->sendMsgTopic);
+    get_parameter("topics.ppltopic", this->purePursuitTopic);
+
+    get_parameter("steer.wheel_rate", this->steerWheelRate);
+    
 
 }
 
@@ -82,6 +88,10 @@ EDFNode("MMR_Data_Logger")
 
     this->subControl= this->create_subscription<mmr_base::msg::ControlLog>(
       this->controlTopic, bestEffortQOS, std::bind(&MMR_Data_Logger::controlCallBack, this, _1)
+    );
+
+    this->subPurePursuitLog= this->create_subscription<mmr_base::msg::PurePursuitLog>(
+      this->purePursuitTopic, bestEffortQOS, std::bind(&MMR_Data_Logger::pplCallBack, this, _1)
     );
    
    

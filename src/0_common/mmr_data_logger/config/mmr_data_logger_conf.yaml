@@ -15,4 +15,7 @@
       conesActualTopic: "/perception/cones"
       conesAllTopic: "/slam/cones_positions"
       controlTopic: "/control/log"
+      ppltopic: "/control/pp_log"
       sendMsgTopic: "/data_logger/log"
+    steer:
+      wheel_rate: 6.87

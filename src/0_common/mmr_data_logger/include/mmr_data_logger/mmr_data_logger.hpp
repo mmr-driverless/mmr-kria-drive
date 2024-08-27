@@ -25,6 +25,7 @@ TODO
 #include <mmr_base/msg/race_status.hpp>
 #include <mmr_base/msg/marker.hpp>
 #include <mmr_base/msg/marker_array.hpp>
+#include <mmr_base/msg/pure_pursuit_log.hpp>
 #include <mmr_base/configuration.hpp>
 #include <can_msgs/msg/frame.hpp>
 
@@ -41,8 +42,8 @@ private:
     const float MAXIMUM_STEERING_ANGLE = 120.0;
 
     bool debug,brakeMotorEnabled;
-    std::string sendMsgTopic, statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
-    float pbrake_rear, pbrake_front, pebs1, pebs2;
+    std::string purePursuitTopic, sendMsgTopic, statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
+    float pbrake_rear, pbrake_front, pebs1, pebs2, steerWheelRate;
     
 
     /* DV driving dynamics 1 */ 
@@ -69,7 +70,7 @@ private:
         this->pebs2=msg->p_ebs_2;
         this->speedActual=static_cast<uint8_t>(msg->vehicle_speed);
         this->brakeActual=static_cast<uint8_t>((((pbrake_front+pbrake_rear)/2)/MAXIMUM_PBRAKE)*100);
-        float precentageOfSteering = ((msg->steering_angle )*STEERING_ANGLE_SCALE_FACTOR);
+        float precentageOfSteering = ((msg->steering_angle/this->steerWheelRate )*STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAgleActual=static_cast<int8_t>(precentageOfSteering);
 
         if(brakeMotorEnabled and this->pbrake_front>0 and this->pbrake_rear>0){
@@ -85,13 +86,6 @@ private:
         }else if ( pebs1>0 and pebs2>0 ){
             this->ebsState=2;
         }
-
-        std::cout<<"[ECU] brake "<<this->pbrake_front<<" "<<this->pbrake_rear<<std::endl;
-        std::cout<<"[ECU] ebs "<<this->pebs1<<" "<<this->pebs2<<std::endl;
-        std::cout<<"[ECU] service brake "<<this->serviceBrakeState<<std::endl;
-        std::cout<<"[ECU] ebs state "<<this->ebsState<<std::endl;
-        std::cout<<"[ECU] steering angle "<<this->steeringAgleActual<<std::endl;
-
     }
     
     rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr subActuator;
@@ -112,7 +106,7 @@ private:
         this->accelerationLateral=static_cast<int16_t>(msg->linear_acceleration.y*ACCELERATION_SCALE_FACTOR);
         this->yawRate=static_cast<int16_t>(msg->angular_velocity.z*YAW_SCALE_FACTOR);
 
-        if(this->debug && 0){
+        if(this->debug){
             std::cout<<"-------------IMU MSG---------------------------"<<std::endl;
             std::cout<<"ACCELERATION LONGITUDINAL: "<<msg->linear_acceleration.x<<std::endl;
             std::cout<<"ACCELERATION LATERAL: "<<msg->linear_acceleration.y<<std::endl;
@@ -170,9 +164,15 @@ private:
 
     rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl;
     void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
-        float percentageSteeringAngle=(((msg->steer/*57.2958*/) )/STEERING_ANGLE_SCALE_FACTOR);
+        float percentageSteeringAngle=(((msg->steer/this->steerWheelRate ) )/STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
         this->brakeTarget=static_cast<int8_t>((msg->brake/MAXIMUM_PBRAKE)*100);
+    }
+
+    rclcpp::Subscription<mmr_base::msg::PurePursuitLog>::SharedPtr subPurePursuitLog;
+    void pplCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
+        this->speedTarget=static_cast<uint8_t>(msg->smoothed_target_speed_m_s*3,6);
+        this->speedActual=static_cast<uint8_t>(msg->current_speed_m_s*3,6);
     }
 
     rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr pubMsg;
