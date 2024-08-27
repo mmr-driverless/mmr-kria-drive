@@ -30,7 +30,7 @@ Control LongStepResponse::control(
   double throttle = 0.0;
 
   if (m_state == State::WaitingForGo) {
-    if (state.res_go().has_value() && state.res_go()) {
+    if (state.res_go().has_value() && state.res_go().value()) {
       RCLCPP_INFO(*m_logger, "Go received!");
       std_msgs::msg::Int8 msg;
       msg.data = AS::STATE::DRIVING;
