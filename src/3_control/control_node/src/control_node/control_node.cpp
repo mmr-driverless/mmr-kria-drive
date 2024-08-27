@@ -88,7 +88,7 @@ inline static std::array<double, 3> flat_scale(double scale) {
 
 ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(Parameters(this).get<int>("tick_interval"))),
-  m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
+  m_vp(Parameters(this, "vehicle_parameters"), this->get_logger().get_child("VehicleParameters")),
   m_actuator_mgr(this, Parameters(this, "actuation"), this->get_logger().get_child("ActuatorMgr")),
   m_event_mgr(this, Parameters(this, "event_manager"), this->get_logger().get_child("EventMgr"), m_actuator_mgr),
   m_refpath_mgr(this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
