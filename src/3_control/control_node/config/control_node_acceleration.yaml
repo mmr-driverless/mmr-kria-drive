@@ -70,22 +70,22 @@
       
       standstill_speed_m_s: 0.3
       standstill_time_ms: 2000
-      lap_to_stop: 11 # Stop when lap counter publishes this lap
+      lap_to_stop: 1 # Stop when lap counter publishes this lap
 
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 4.2
+        minLookForward: 7.5
         minLookForwardGain: 0.1 # 0.4 before 
         steerGain: 1.0
-        minSpeed: 4.1
+        minSpeed: 11.1
         minSpeedDistance: 4.2 # it must be equal to minLookForward
         
         min_throttle: 0.0
         min_throttle_is_clamp: true
 
-        second_gear_on_second_lap: true
-        change_gear_logic: false
+        second_gear_on_second_lap: false
+        change_gear_logic: true
 
         n_min_up: 4500.0
         n_max_up: 10000.0
@@ -101,7 +101,7 @@
           accel_k_smooth: 0.05
 
         dynamicTargetSpeed:
-          enabled: true # If this is false, then minSpeed is used.
+          enabled: false # If this is false, then minSpeed is used.
           slowLaps: 1
           k_smooth: 0.1
           maxSpeed: 9.0
