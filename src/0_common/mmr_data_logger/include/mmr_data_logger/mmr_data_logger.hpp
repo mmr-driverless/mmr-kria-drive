@@ -41,7 +41,7 @@ private:
     const float YAW_SCALE_FACTOR= 128;
     const float MAXIMUM_STEERING_ANGLE = 120.0;
 
-    bool debug,brakeMotorEnabled;
+    bool debug,brakeMotorEnabled,little_endian;
     std::string purePursuitTopic, sendMsgTopic, statusActuatorTopic, ecuStatusTopic, xsenseTopic, asTopic, missionTopic, lapCounterTopic, conesActualTopic, conesAllTopic, controlTopic;
     float pbrake_rear, pbrake_front, pebs1, pebs2, steerWheelRate;
     

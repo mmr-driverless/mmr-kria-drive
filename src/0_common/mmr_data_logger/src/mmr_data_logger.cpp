@@ -6,6 +6,7 @@ void MMR_Data_Logger::load_parameters(){
     declare_parameter("generic.period", 10000000);
     declare_parameter("generic.deadline", 10000000);
     declare_parameter("generic.debug", false);
+    declare_parameter("generic.little_endian", true);
 
     declare_parameter("topics.statusActuatorTopic", "");
     declare_parameter("topics.ecuStatusTopic", "");
@@ -25,6 +26,7 @@ void MMR_Data_Logger::load_parameters(){
     get_parameter("generic.period", this->m_nPeriod);
     get_parameter("generic.deadline", this->m_nDeadline);
     get_parameter("generic.debug", this->debug);
+    get_parameter("generic.little_endian", this->little_endian);
 
     get_parameter("topics.statusActuatorTopic", this->statusActuatorTopic);
     get_parameter("topics.ecuStatusTopic", this->ecuStatusTopic);
@@ -161,9 +163,13 @@ void MMR_Data_Logger::send_messages(){
   auto msg_500 = can_msgs::msg::Frame();
   msg_500.id = 0x500;
   msg_500.dlc = 8;
-  *(uint64_t*)temp= message_500;
-  for (int i=7 ; i>=0 ; i--)
-    msg_500.data[7-i] = temp[i];
+  if(this->little_endian){
+    *(uint64_t*)temp= message_500;
+    for (int i=7 ; i>=0 ; i--)
+      msg_500.data[7-i] = temp[i];
+  }else{
+    *(uint64_t*)msg_500.data.begin() = message_500;
+  }
     
   this->pubMsg->publish(msg_500);
 
@@ -171,9 +177,13 @@ void MMR_Data_Logger::send_messages(){
   auto msg_501 = can_msgs::msg::Frame();
   msg_501.id = 0x501;
   msg_501.dlc = 6;
-  *(uint64_t*)temp = message_501;
-  for (int i=5 ; i>=0 ; i--)
-    msg_501.data[5-i] = temp[i];
+  if(this->little_endian){
+    *(uint64_t*)temp = message_501;
+    for (int i=5 ; i>=0 ; i--)
+      msg_501.data[5-i] = temp[i];
+  }else{
+    *(uint64_t*)msg_501.data.begin() = message_501;
+  }
   this->pubMsg->publish(msg_501);
 
 
@@ -181,9 +191,13 @@ void MMR_Data_Logger::send_messages(){
   auto msg_502 = can_msgs::msg::Frame();
   msg_502.id = 0x502;
   msg_502.dlc = 5;
-  *(uint64_t*)temp = message_502;
-  for (int i=4 ; i>=0 ; i--)
-    msg_502.data[4-i] = temp[i];
+  if(this->little_endian){
+    *(uint64_t*)temp = message_502;
+    for (int i=4 ; i>=0 ; i--)
+      msg_502.data[4-i] = temp[i];
+  }else{
+    *(uint64_t*)msg_502.data.begin() = message_502;
+  }
   this->pubMsg->publish(msg_502);
 }
 
