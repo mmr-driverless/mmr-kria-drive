@@ -93,6 +93,8 @@
 
         steer_delay_s: 0.1
 
+        max_accel: 4 # m/s^2
+
         low_level_longitudinal_controller:
           simplified: false
           # apps_p: 0.7

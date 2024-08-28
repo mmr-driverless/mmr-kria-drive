@@ -68,6 +68,8 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_min_down = p.get<double>("m_min_down");
   m_max_down = p.get<double>("m_max_down");
   m_steer_delay_s = p.get<double>("steer_delay_s");
+  m_max_accel_sq = p.get<double>("max_accel");
+  m_max_accel_sq *= m_max_accel_sq;
 
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
@@ -227,6 +229,16 @@ Control PurePursuit2023::control(
       m_smoothedAccel = m_smoothedAccel * (1 - m_ll_accel_k_smooth) + accv * m_ll_accel_k_smooth;
 
       accel_sign = sign(m_smoothedAccel);
+
+      // Apply maximum acceleration using GG diagram
+      if (accel_sign > 0 && is_projection_valid) {
+        auto k = reference_path.get_curvature(*vehicle_path_projection);
+        if (k.has_value()) {
+          double ay = k.value() * std::pow(state.speed().value(), 2.0);
+          double ax_budget = std::sqrt(m_max_accel_sq - std::pow(ay, 2.0));
+          m_smoothedAccel = std::min(m_smoothedAccel, ax_budget);
+        }
+      }
 
       // Determine the inputs from the low level controller
       if (state.gear().has_value() && state.rpm().has_value() && state.speed().has_value()) {

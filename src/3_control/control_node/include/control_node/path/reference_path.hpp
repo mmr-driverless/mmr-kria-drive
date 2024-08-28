@@ -419,6 +419,21 @@ public:
     return speed + (m_data.data.target_speed[succ_idx] - speed) * at.t;
   }
 
+  std::optional<double> get_curvature(const PointRef& at) const {
+    if (n_waypoints() <= 0 || !m_data.metadata.is_curvature_valid)
+      return std::nullopt;
+
+    assert(is_valid_reference(at) && "at must be a valid reference.");
+
+    double k = m_data.data.curvature[at.prev_waypoint_idx];
+
+    int succ_idx = compute_index(at.prev_waypoint_idx, 1);
+    if (succ_idx < 0)
+      return k;
+
+    return k + (m_data.data.curvature[succ_idx] - k) * at.t;
+  }
+
   void compute_data() {
     if (!m_data.metadata.is_dist_to_next_valid) {
       // Compute, for each waypoint, the length of the segment that connects it to the next waypoint

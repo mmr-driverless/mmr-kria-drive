@@ -28,6 +28,8 @@ class PurePursuit2023 : public IController {
   double m_min_throttle;
   bool m_min_throttle_is_clamp;
 
+  double m_max_accel_sq;
+
   bool m_simplified_longitudinal_control_enabled;
   double m_simple_long_apps_p;
   double m_simple_long_brake_p;
