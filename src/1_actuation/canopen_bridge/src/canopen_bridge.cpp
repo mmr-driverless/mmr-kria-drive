@@ -35,7 +35,6 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     this->m_msgActuatorStatus.steer_status  = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
 
     this->m_nCRCSteerOld = 0;
-    this->m_nPreviousTorque = this->m_nMaxTorque;
 }
 
 void CANOpenBridge::loadParameters()
@@ -183,7 +182,7 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         /* Enables the brake motor in CST */
         this->m_mBrake = new MaxonBrake(
             this->m_nSocket, this->m_nBrakeId, this->m_nTimeoutMsgBrake,
-            this->m_nMaxTorque, m_nReturnPedalTorque
+            this->m_nMaxTorque, m_nReturnPedalTorque, this->m_nBrakeDelta
         );
 
         uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);
