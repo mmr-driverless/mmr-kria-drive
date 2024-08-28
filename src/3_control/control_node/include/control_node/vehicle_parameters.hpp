@@ -76,7 +76,7 @@ public:
       throw std::invalid_argument("Wrong size for apps_map_x");
     }
 
-    m_apps_map_x = Eigen::Map<Eigen::MatrixXd>(map_x.data(), M, N);
+    m_apps_map_x = Eigen::Map<Eigen::MatrixXd>(map_x.data(), N, M);
   }
 
   double wheelbase_m() const { return m_wheelbase_m; }
