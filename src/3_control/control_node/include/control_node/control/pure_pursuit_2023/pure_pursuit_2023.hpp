@@ -60,7 +60,7 @@ class PurePursuit2023 : public IController {
   int m_viz_lookforward;
 
   void viz(std::optional<Eigen::Vector2d> target);
-  int gear_target(std::chrono::nanoseconds t, const estimation::IVehicleState& state);
+  int gear_target(int acceleration_sign, const estimation::IVehicleState& state);
 
   static inline double lerp2(const double x, mmr_point_double start, mmr_point_double end) {
     const double M = end.y - start.y;

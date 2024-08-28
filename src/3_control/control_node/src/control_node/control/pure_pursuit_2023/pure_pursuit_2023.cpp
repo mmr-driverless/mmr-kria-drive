@@ -86,14 +86,9 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
 
 
 int PurePursuit2023::gear_target(
-  std::chrono::nanoseconds t,
+  int acceleration_sign,
   const estimation::IVehicleState& state
   ) {
-    int target_gear;
-
-    double current_speed = state.speed().value();
-    int delta_speed = (((uint16_t)current_speed / 2) * 2) - current_speed;
-
     double steering_angle = state.actual_steer().value();
     double ath = std::clamp<double>(state.throttle().value(), 0.0f, 1.0f);
 
@@ -105,8 +100,8 @@ int PurePursuit2023::gear_target(
       rpm_down = 3500.0;
     else rpm_down = lerp3(ath, mmr_point_double(1.0f, m_min_down), mmr_point_double(0.70f, m_min_down), mmr_point_double(0.0f, m_max_down)); 
 
-    if (delta_speed > 0 && state.rpm().value() >= rpm_up && state.gear().value() < 4) return state.gear().value() + 1;
-    else if (delta_speed < 0 && state.rpm().value() <= rpm_down && state.gear().value() > 1 && std::abs(steering_angle) < 15.0) return state.gear().value() - 1;
+    if (acceleration_sign > 0 && state.rpm().value() >= rpm_up && state.gear().value() < 4) return state.gear().value() + 1;
+    else if (acceleration_sign < 0 && state.rpm().value() <= rpm_down && state.gear().value() > 1 && std::abs(steering_angle) < 15.0) return state.gear().value() - 1;
 
     return state.gear().value();
 }
@@ -125,6 +120,13 @@ void PurePursuit2023::viz(std::optional<Eigen::Vector2d> target) {
       marker->color.a = 0.0f;
     }
   }
+}
+
+template <typename T>
+static inline int sign(T x) {
+  if (x > 0) return 1;
+  if (x < 0) return -1;
+  return 0;
 }
 
 Control PurePursuit2023::control(
@@ -192,10 +194,13 @@ Control PurePursuit2023::control(
 
   Control u(0.0, 0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
+
+  int accel_sign = 0;
   double raw_target_accel = NAN;
   if (state.speed().has_value()) {
     if (m_simplified_longitudinal_control_enabled) {
       double error = targetSpeed - state.speed().value();
+      accel_sign = sign(error);
       u.throttle = m_simple_long_apps_p * std::max(error, 0.0);
       u.brake = m_simple_long_brake_p * std::max(-error, 0.0);
     } else {
@@ -205,6 +210,8 @@ Control PurePursuit2023::control(
 
       // Smooth the target acceleration in the time-domain with yet another first order IIR filter
       m_smoothedAccel = m_smoothedAccel * (1 - m_ll_accel_k_smooth) + accv * m_ll_accel_k_smooth;
+
+      accel_sign = sign(m_smoothedAccel);
 
       // Determine the inputs from the low level controller
       if (state.gear().has_value() && state.rpm().has_value() && state.speed().has_value()) {
@@ -241,7 +248,7 @@ Control PurePursuit2023::control(
     u.gear = 2;
   }
   else if (m_dynamic_change_gear) {
-    u.gear = this->gear_target(t, state);
+    u.gear = this->gear_target(accel_sign, state);
   }
 
   mmr_base::msg::PurePursuitLog log_msg;
