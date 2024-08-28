@@ -29,6 +29,7 @@
       return_pedal_torque: -20
       timeout_msgs: 2
       monitor_freq: 100
+      delta_max: 150
     clutch:
       node_id: 16
       velocity: 3500

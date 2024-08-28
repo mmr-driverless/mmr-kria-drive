@@ -35,6 +35,7 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
     this->m_msgActuatorStatus.steer_status  = static_cast<unsigned char>(MOTOR::ACTUATOR_STATUS::DISABLE);
 
     this->m_nCRCSteerOld = 0;
+    this->m_nPreviousTorque = this->m_nMaxTorque;
 }
 
 void CANOpenBridge::loadParameters()
@@ -67,6 +68,7 @@ void CANOpenBridge::loadParameters()
     declare_parameter("brake.return_pedal_torque", -20);
     declare_parameter("brake.timeout_msgs", 5);
     declare_parameter("brake.monitor_freq", 5);
+    declare_parameter("brake.delta_max", 150);
 
     declare_parameter("clutch.node_id", 16);
     declare_parameter("clutch.velocity", 3500);
@@ -103,6 +105,8 @@ void CANOpenBridge::loadParameters()
     get_parameter("brake.return_pedal_torque", this->m_nReturnPedalTorque);
     get_parameter("brake.timeout_msgs", this->m_nTimeoutMsgBrake);
     get_parameter("brake.monitor_freq", this->m_nFreqScaleBrake);
+    get_parameter("brake.delta_max", this->m_nBrakeDelta);
+
 
     get_parameter("clutch.node_id", this->m_nClutchId);
     get_parameter("clutch.velocity", this->m_nVelocityClutch);
