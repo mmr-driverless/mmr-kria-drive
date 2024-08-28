@@ -33,6 +33,10 @@ class PurePursuit2023 : public IController {
   double m_ll_accel_k_smooth;
 
   bool m_second_gear_on_second_lap;
+  bool m_dynamic_change_gear;
+
+  double m_min_up, m_max_up;
+  double m_min_down, m_max_down;
 
   struct {
     bool enabled;
@@ -42,6 +46,10 @@ class PurePursuit2023 : public IController {
     double targetSpeedWeight;
   } m_dynamicTargetSpeed;
   
+  typedef struct {
+    double x;
+    double y;
+  } mmr_point_double;
 
   bool m_using_dynamic_speed = false;
   double m_smoothedSpeed = 0;
@@ -52,6 +60,19 @@ class PurePursuit2023 : public IController {
   int m_viz_lookforward;
 
   void viz(std::optional<Eigen::Vector2d> target);
+  int gear_target(std::chrono::nanoseconds t, const estimation::IVehicleState& state);
+
+  static inline double lerp2(const double x, mmr_point_double start, mmr_point_double end) {
+    const double M = end.y - start.y;
+    const double X = (x - start.x) / (end.x - start.x);
+    const double Q = start.y;
+
+    return M * X + Q;
+  }
+
+  static inline double lerp3(const double x, mmr_point_double start, mmr_point_double p1, mmr_point_double end) {
+    return x < p1.x? lerp2(x, start, p1) : lerp2(x, p1, end);
+  }
 
 public:
 

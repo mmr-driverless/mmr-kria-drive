@@ -37,6 +37,8 @@ public:
     std::optional<bool> m_lc_is_active;
     std::optional<bool> m_res_go;
     std::optional<bool> m_res_bag;
+    std::optional<double> m_steering_angle;
+    std::optional<double> m_throttle;
     
   public:
     friend NoopEstimator;
@@ -49,6 +51,8 @@ public:
     virtual std::optional<int> gear() const override { return m_gear; }
     virtual std::optional<bool> res_go() const override { return m_res_go; }
     virtual std::optional<bool> res_bag() const override { return m_res_bag; }
+    virtual std::optional<double> actual_steer() const override { return m_steering_angle; }
+    virtual std::optional<double> throttle() const override { return m_throttle; }
   } m_state;
 
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;

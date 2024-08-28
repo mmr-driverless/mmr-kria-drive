@@ -22,6 +22,8 @@ void NoopEstimator::ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus
   m_state.m_rpm = msg->nmot;
   m_state.m_speed = msg->vehicle_speed / 3.6;
   m_state.m_clutch_is_engaged = msg->clutch_percentage < m_clutch_disengaged_thresh;
+  m_state.m_steering_angle = msg->steering_angle;
+  m_state.m_throttle = msg->throttle;
 }
 
 void NoopEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) {
