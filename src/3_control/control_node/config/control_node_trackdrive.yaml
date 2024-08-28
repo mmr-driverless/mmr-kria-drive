@@ -91,6 +91,8 @@
         m_min_down: 3500.0
         m_max_down: 7500.0
 
+        steer_delay_s: 0.1
+
         low_level_longitudinal_controller:
           simplified: false
           # apps_p: 0.7

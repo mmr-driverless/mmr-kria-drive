@@ -18,6 +18,20 @@ static inline double normalizeAngle(double angle){
   return angle;
 }
 
+static inline double curv_from_steer(double wheel_ang_rad, const VehicleParameters& vp) {
+  double L = vp.wheelbase_m();
+  double LR = vp.lr_m();
+  double LF = L - vp.lr_m();
+
+  double beta = std::atan(LR * std::tan(wheel_ang_rad) / L);
+  double k = (std::tan(wheel_ang_rad) * std::cos(beta) - std::sin(beta)) / LF;
+  return k;
+}
+
+double chord_len(double k, double theta) {
+  return 2 * std::sin(theta / 2) / k;
+}
+
 static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vector2d car_position, double car_yaw, double steer_gain, double com_dist_to_rear, double wheelbase)
 {
   Eigen::Vector2d car_rear = car_position - com_dist_to_rear * Eigen::Vector2d(std::cos(car_yaw), std::sin(car_yaw));
@@ -53,6 +67,7 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_max_up = p.get<double>("m_max_up");
   m_min_down = p.get<double>("m_min_down");
   m_max_down = p.get<double>("m_max_down");
+  m_steer_delay_s = p.get<double>("steer_delay_s");
 
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
@@ -230,10 +245,46 @@ Control PurePursuit2023::control(
     u.throttle = m_min_throttle + ((1 - m_min_throttle) * u.throttle);
 
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
+    Eigen::Vector2d pred_target_position = *targetPosition;
+    Eigen::Vector2d pred_car_position = *state.position();
+    double pred_car_yaw = *state.yaw();
+
+    // Predict the vehicle state
+    if (m_steer_delay_s > 0 && state.speed().has_value() && state.actual_steer().has_value()) {
+      double actual_wheel_angle = state.actual_steer().value() / m_vp->steering_ratio();
+      double k = curv_from_steer(actual_wheel_angle, *m_vp);
+
+      double dtheta;
+      double phi;
+      double dist;
+      double ds = state.speed().value() * m_steer_delay_s;
+
+      if (std::abs(k) < 1e-7) {
+        dtheta = 0;
+        phi = 0;
+        dist = ds;
+      }
+      else {
+        dtheta = k * ds;
+        phi = (std::numbers::pi - dtheta) / 2;
+        phi = std::numbers::pi - phi;
+        dist = chord_len(k, dtheta);
+      }
+
+      pred_car_position += dist * Eigen::Vector2d(
+        std::cos(phi + pred_car_yaw),
+        std::sin(phi + pred_car_yaw)
+      );
+      pred_car_yaw += dtheta;
+
+      auto ref = reference_path.advance_point(*vehicle_path_projection, dist);
+      pred_target_position = reference_path.get_position(ref);
+    }
+
     double wheel_angle_rad = calculateSteeringTarget(
-      *targetPosition,
-      *state.position(),
-      *state.yaw(),
+      pred_target_position,
+      pred_car_position,
+      pred_car_yaw,
       m_steerGain,
       m_vp->lr_m(),
       m_vp->wheelbase_m()

@@ -23,6 +23,8 @@ class PurePursuit2023 : public IController {
   double m_minSpeedDistance;
   double m_minSpeed;
 
+  double m_steer_delay_s;
+
   double m_min_throttle;
   bool m_min_throttle_is_clamp;
 
