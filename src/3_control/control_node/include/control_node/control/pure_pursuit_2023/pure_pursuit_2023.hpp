@@ -21,20 +21,17 @@ class PurePursuit2023 : public IController {
   double m_steerGain;
 
   double m_minSpeedDistance;
+  double m_speed_lookforward_gain;
+  
   double m_minSpeed;
 
   double m_steer_delay_s;
-
-  double m_min_throttle;
-  bool m_min_throttle_is_clamp;
 
   double m_max_accel_sq;
 
   bool m_simplified_longitudinal_control_enabled;
   double m_simple_long_apps_p;
   double m_simple_long_brake_p;
-  double m_ll_accel_lookforward;
-  double m_ll_accel_k_smooth;
 
   bool m_second_gear_on_second_lap;
   bool m_dynamic_change_gear;
@@ -45,7 +42,6 @@ class PurePursuit2023 : public IController {
   struct {
     bool enabled;
     int slowLaps;
-    double k_smooth;
     double maxSpeed;
     double targetSpeedWeight;
   } m_dynamicTargetSpeed;
@@ -56,8 +52,6 @@ class PurePursuit2023 : public IController {
   } mmr_point_double;
 
   bool m_using_dynamic_speed = false;
-  double m_smoothedSpeed = 0;
-  double m_smoothedAccel = 0;
 
   viz::VizManager* m_viz_mgr;
   float m_viz_lookforward_alpha;

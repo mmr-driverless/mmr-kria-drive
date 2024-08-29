@@ -55,11 +55,10 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_logger = logger;
   m_minLookForward = p.get<double>("minLookForward");
   m_minLookForwardGain = p.get<double>("minLookForwardGain");
+  m_speed_lookforward_gain = p.get<double>("speed_lookforward_gain");
   m_steerGain = p.get<double>("steerGain");
   m_minSpeedDistance = p.get<double>("minSpeedDistance");
   m_minSpeed = p.get<double>("minSpeed");
-  m_min_throttle = p.get<double>("min_throttle");
-  m_min_throttle_is_clamp = p.get<bool>("min_throttle_is_clamp");
   m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
   m_second_gear_on_second_lap = p.get<bool>("second_gear_on_second_lap");
   m_dynamic_change_gear = p.get<bool>("change_gear_logic");
@@ -74,21 +73,15 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
     m_simple_long_brake_p = p.get<double>("low_level_longitudinal_controller.brake_p");
-  } else {
-    m_ll_accel_lookforward = p.get<double>("low_level_longitudinal_controller.accel_lookforward");
-    m_ll_accel_k_smooth = p.get<double>("low_level_longitudinal_controller.accel_k_smooth");
   }
 
   auto dyn_speed_p = p.subparams("dynamicTargetSpeed");
   m_dynamicTargetSpeed.enabled = dyn_speed_p.get<bool>("enabled");
   if (m_dynamicTargetSpeed.enabled) {
     m_dynamicTargetSpeed.slowLaps = dyn_speed_p.get<int>("slowLaps");
-    m_dynamicTargetSpeed.k_smooth = dyn_speed_p.get<double>("k_smooth");
     m_dynamicTargetSpeed.maxSpeed = dyn_speed_p.get<double>("maxSpeed");
     m_dynamicTargetSpeed.targetSpeedWeight = dyn_speed_p.get<double>("targetSpeedWeight");
   }
-
-  m_smoothedSpeed = m_minSpeed;
 
   m_viz_mgr = &viz_mgr;
 
@@ -153,15 +146,14 @@ Control PurePursuit2023::control(
   const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
   int lap
 ) {
-  // If we have a speed estimate, compute the dynamic lookforward
-  double dynamic_lookforward = 0.0;
-  if (state.speed().has_value())
-    dynamic_lookforward = m_minLookForwardGain * state.speed().value();
-  
   // Compute the steer and speed lookforward.
-  double steer_lookforward = m_minLookForward + dynamic_lookforward;
-  double speed_lookforward = m_minSpeedDistance + dynamic_lookforward;
-
+  double steer_lookforward = m_minLookForward;
+  double speed_lookforward = m_minSpeedDistance;
+  if (state.speed().has_value()) {
+    steer_lookforward += m_minLookForwardGain * state.speed().value();
+    speed_lookforward += m_speed_lookforward_gain * state.speed().value();
+  }
+  
   // Do we know where we are on the track?
   bool is_projection_valid = vehicle_path_projection.has_value();
 
@@ -172,9 +164,8 @@ Control PurePursuit2023::control(
     targetPosition = reference_path.get_position(steer_target_ref);
   }
 
-  // Compute the target speed
-  double raw_target_speed;
-  double targetSpeed;
+  // Compute the maximum speed
+  double maximum_speed;
   if (m_dynamicTargetSpeed.enabled && lap > m_dynamicTargetSpeed.slowLaps) {
     // Use dynamic target speed
 
@@ -184,51 +175,36 @@ Control PurePursuit2023::control(
     }
 
     // Get the target speed at the lookforward point
-    raw_target_speed = m_minSpeed;
     if (is_projection_valid) {
       auto speed_target_ref = reference_path.advance_point(*vehicle_path_projection, speed_lookforward);
 
-      if (auto tgt_speed = reference_path.get_target_speed(speed_target_ref))
-        raw_target_speed = *tgt_speed;
+      if (auto max_speed_opt = reference_path.get_target_speed(speed_target_ref))
+        maximum_speed = *max_speed_opt;
     }
-
-    // Smooth the target speed in the time-domain with a first order IIR filter
-    double smoothed = m_smoothedSpeed * (1 - m_dynamicTargetSpeed.k_smooth) + raw_target_speed * m_dynamicTargetSpeed.k_smooth;
-    if (std::isnan(smoothed)) {
-      RCLCPP_ERROR(*m_logger, "NAN target speed!!!");
-      smoothed = m_minSpeed;
-    }
-
-    m_smoothedSpeed = std::clamp<double>(smoothed, m_minSpeed, m_dynamicTargetSpeed.maxSpeed);
-    targetSpeed = m_smoothedSpeed;
   } else {
     // Use static speed
-    raw_target_speed = m_minSpeed;
-    targetSpeed = m_minSpeed;
+    maximum_speed = m_minSpeed;
   }
 
   viz(targetPosition);
 
   Control u(0.0, 0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
-
+  // Longitudinal control
   int accel_sign = 0;
-  double raw_target_accel = NAN;
+  double target_acceleration = NAN;
   if (state.speed().has_value()) {
     if (m_simplified_longitudinal_control_enabled) {
-      double error = targetSpeed - state.speed().value();
+      // Use a simple P control (useful for the simulator)
+      double error = maximum_speed - state.speed().value();
       accel_sign = sign(error);
       u.throttle = m_simple_long_apps_p * std::max(error, 0.0);
       u.brake = m_simple_long_brake_p * std::max(-error, 0.0);
     } else {
       // Compute the target acceleration
-      double accv = (std::pow(targetSpeed, 2) - std::pow(*state.speed(), 2)) / (2 * m_ll_accel_lookforward);
-      raw_target_accel = accv;
+      target_acceleration = (std::pow(maximum_speed, 2) - std::pow(*state.speed(), 2)) / (2 * speed_lookforward);
 
-      // Smooth the target acceleration in the time-domain with yet another first order IIR filter
-      m_smoothedAccel = m_smoothedAccel * (1 - m_ll_accel_k_smooth) + accv * m_ll_accel_k_smooth;
-
-      accel_sign = sign(m_smoothedAccel);
+      accel_sign = sign(target_acceleration);
 
       // Apply maximum acceleration using GG diagram
       if (accel_sign > 0 && is_projection_valid) {
@@ -236,13 +212,13 @@ Control PurePursuit2023::control(
         if (k.has_value()) {
           double ay = k.value() * std::pow(state.speed().value(), 2.0);
           double ax_budget = std::sqrt(m_max_accel_sq - std::pow(ay, 2.0));
-          m_smoothedAccel = std::min(m_smoothedAccel, ax_budget);
+          target_acceleration = std::min(target_acceleration, ax_budget);
         }
       }
 
       // Determine the inputs from the low level controller
       if (state.gear().has_value() && state.rpm().has_value() && state.speed().has_value()) {
-        AppsBrakePair ll_u = apps_brake_from_accel(accv, state.speed().value(), state.gear().value(), state.rpm().value(), *m_vp);
+        AppsBrakePair ll_u = apps_brake_from_accel(target_acceleration, state.speed().value(), state.gear().value(), state.rpm().value(), *m_vp);
 
         u.throttle = ll_u.apps;
         u.brake = ll_u.brake_torque;
@@ -250,18 +226,13 @@ Control PurePursuit2023::control(
     }
   }
 
-  // Apply minimum throttle
-  if (m_min_throttle_is_clamp)
-    u.throttle = std::max(u.throttle, m_min_throttle);
-  else
-    u.throttle = m_min_throttle + ((1 - m_min_throttle) * u.throttle);
-
+  // Compute steer
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
     Eigen::Vector2d pred_target_position = *targetPosition;
     Eigen::Vector2d pred_car_position = *state.position();
     double pred_car_yaw = *state.yaw();
 
-    // Predict the vehicle state
+    // Predict the vehicle state to compensate for the actuator delay
     if (m_steer_delay_s > 0 && state.speed().has_value() && state.actual_steer().has_value()) {
       double actual_wheel_angle = state.actual_steer().value() / m_vp->steering_ratio();
       double k = curv_from_steer(actual_wheel_angle, *m_vp);
@@ -307,12 +278,14 @@ Control PurePursuit2023::control(
     u.steer = steering_wheel_angle_deg;
   }
 
+  // Compute target gear
   if (lap > 1 && m_second_gear_on_second_lap) {
     u.gear = 2;
   }
   else if (m_dynamic_change_gear) {
     u.gear = this->gear_target(accel_sign, state);
   }
+
 
   mmr_base::msg::PurePursuitLog log_msg;
   log_msg.header.frame_id = "ocropoid";
@@ -321,11 +294,11 @@ Control PurePursuit2023::control(
   log_msg.steer_lookahead_m = steer_lookforward;
   log_msg.speed_lookahead_m = speed_lookforward;
 
-  log_msg.raw_target_acceleration_m_s_2 = raw_target_accel;
-  log_msg.raw_target_speed_m_s = raw_target_speed;
+  log_msg.raw_target_acceleration_m_s_2 = target_acceleration;
+  log_msg.raw_target_speed_m_s = maximum_speed;
 
-  log_msg.smoothed_target_speed_m_s = m_smoothedSpeed;
-  log_msg.smoothed_target_acceleration_m_s_2 = m_smoothedAccel;
+  log_msg.smoothed_target_speed_m_s = NAN;
+  log_msg.smoothed_target_acceleration_m_s_2 = NAN;
 
   m_log_pub->publish(log_msg);
 

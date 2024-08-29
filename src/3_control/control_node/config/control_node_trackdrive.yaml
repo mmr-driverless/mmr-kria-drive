@@ -77,7 +77,9 @@
         minLookForwardGain: 0.1 # 0.4 before 
         steerGain: 1.0
         minSpeed: 4.1
-        minSpeedDistance: 4.2 # it must be equal to minLookForward
+
+        minSpeedDistance: 4.2
+        speed_lookforward_gain: 0.1
         
         min_throttle: 0.0
         min_throttle_is_clamp: true
@@ -93,20 +95,17 @@
 
         steer_delay_s: 0.1
 
-        max_accel: 4 # m/s^2
+        max_accel: 4.0 # m/s^2
 
         low_level_longitudinal_controller:
           simplified: false
           # apps_p: 0.7
           # brake_p: 0.2
-          accel_lookforward: 6.2
-          accel_k_smooth: 0.05
 
         dynamicTargetSpeed:
           enabled: true # If this is false, then minSpeed is used.
           slowLaps: 1
-          k_smooth: 0.1
-          maxSpeed: 9.0
+          maxSpeed: 12.0
           targetSpeedWeight: 0.85
 
         target_marker:
