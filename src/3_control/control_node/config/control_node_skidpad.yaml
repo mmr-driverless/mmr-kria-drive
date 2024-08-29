@@ -73,11 +73,13 @@
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 7.5
-        minLookForwardGain: 0.1 # 0.4 before 
+        minLookForward: 4.0
+        minLookForwardGain: 0.4 # 0.4 before 
         steerGain: 1.0
-        minSpeed: 10.0
-        minSpeedDistance: 7.5 # it must be equal to minLookForward
+        minSpeed: 6.5
+        
+        minSpeedDistance: 4.0 # it must be equal to minLookForward
+        speed_lookforward_gain: 0.4
         
         min_throttle: 0.0
         min_throttle_is_clamp: true
@@ -93,19 +95,16 @@
 
         steer_delay_s: 0.0
 
-        max_accel: 4 # m/s^2
+        max_accel: 4.0 # m/s^2
 
         low_level_longitudinal_controller:
           simplified: false
           # apps_p: 0.7
           # brake_p: 0.2
-          accel_lookforward: 6.2
-          accel_k_smooth: 0.05
 
         dynamicTargetSpeed:
           enabled: false # If this is false, then minSpeed is used.
           slowLaps: 1
-          k_smooth: 0.1
           maxSpeed: 9.0
           targetSpeedWeight: 0.85
 
@@ -199,16 +198,17 @@
       mass_kg: 330.0
       wheel_roll_coeff: 0.013
       wheel_inertia: 0.0895 # 0.0735 + 0.016
+      brake_potential_deceleration_m_s_2: 4.0
       brake_tilton_diameter_mm: 15.88
       brake_mu: 0.35 # coef attrito pastiglia-disco [adim]
       brake_disc_radius_mm: 81.50
       brake_piston_diameter_mm: 25.0
-      brake_pedal_down_distance_mm: 56.0 # Distanza perno pedale-tilton
-      brake_pedal_up_distance_mm: 150.0 # Distanza perno pedale-ebs
-      brake_pulley_diameter_mm: 40.0
+      brake_pedal_down_distance_mm: 46.0 # Distanza perno pedale-tilton
+      brake_pedal_up_distance_mm: 175.0 # Distanza perno pedale-ebs
+      brake_pulley_diameter_mm: 37.0
       brake_reducer: 15.58
       brake_reducer_efficiency: 0.90
-      brake_min_torque: 150.0 # Any braking command under this threshold is ignored [mNm]
+      brake_min_torque: 100.0 # Any braking command under this threshold is ignored [mNm]
       differential_ratio: 3.38
       nmotvet_rpm: [ 10.0, 2500.0, 3500.0, 4500.0, 5500.0, 6500.0, 7500.0, 8500.0, 9500.0, 10500.0, 11500.0, 18000.0 ]
       cdc_Nm: [ 23.0, 23.0, 36.0, 40.0, 38.0, 44.0, 46.0, 52.0, 56.0, 51.0, 47.0, 47.0 ]
