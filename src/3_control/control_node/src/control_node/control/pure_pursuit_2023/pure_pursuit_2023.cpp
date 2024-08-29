@@ -211,7 +211,7 @@ Control PurePursuit2023::control(
         auto k = reference_path.get_curvature(*vehicle_path_projection);
         if (k.has_value()) {
           double ay = k.value() * std::pow(state.speed().value(), 2.0);
-          double ax_budget = std::sqrt(m_max_accel_sq - std::pow(ay, 2.0));
+          double ax_budget = std::sqrt(m_max_accel_sq - std::min(std::pow(ay, 2.0), m_max_accel_sq));
           target_acceleration = std::min(target_acceleration, ax_budget);
         }
       }
