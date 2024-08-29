@@ -16,7 +16,7 @@ static inline double speed_from_accel_and_displacement(double speed0, double ds,
   return std::sqrt(speed0 * speed0 + 2 * a * ds);
 }
 
-static inline void saturate_velocity_with_brake_potential(const std::span<double>& waypoint_distances, std::span<double> speed_profile, double max_deceleration) {
+static inline void saturate_velocity_with_brake_potential(const std::span<double>& waypoint_distances, std::span<double> speed_profile, double max_deceleration, bool is_closed) {
   /*
   A critical braking point is a point such that the speed profile is not guaranteed to have a feasible
   deceleration.
@@ -49,6 +49,9 @@ static inline void saturate_velocity_with_brake_potential(const std::span<double
     if (i > 0)
       crit_dist += waypoint_distances[i-1];
   }
+
+  if (not is_closed)
+    return;
 
   /* If the path is closed, the end and start sections should be continuous but right now they're not.
       Perform the same algorithm as before, but exit as soon as we find a new critical point (we've already processed them)
