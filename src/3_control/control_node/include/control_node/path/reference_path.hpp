@@ -11,6 +11,7 @@
 #include <control_node/path/geometry_helpers.hpp>
 #include <control_node/path/non_uniform_first_order_filter.hpp>
 #include <control_node/path/max_speed_eval.hpp>
+#include <control_node/path/brake_velocity_saturation.hpp>
 
 namespace control_node {
 namespace path {
@@ -523,8 +524,12 @@ public:
     }
 
     if (!m_data.metadata.is_target_speed_valid) {
+      // Compute the maximum pure-cornering velocity given the curvature
       for (int i = 0; i < n_waypoints(); ++i)
         m_data.data.target_speed[i] = speed::evaluateMaxSpeed(m_data.data.curvature[i]);
+      
+      // Saturate with brake potential
+      braking::saturate_velocity_with_brake_potential(m_data.data.dist_to_next, m_data.data.target_speed, 5);
 
       m_data.metadata.is_target_speed_valid = true;
     }
