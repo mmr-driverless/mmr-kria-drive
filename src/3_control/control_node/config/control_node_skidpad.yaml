@@ -73,10 +73,10 @@
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 4.0
+        minLookForward: 3.6
         minLookForwardGain: 0.4 # 0.4 before 
         steerGain: 1.0
-        minSpeed: 6.5
+        minSpeed: 4.1
         
         minSpeedDistance: 4.0 # it must be equal to minLookForward
         speed_lookforward_gain: 0.4
