@@ -73,12 +73,12 @@
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 2.8
-        minLookForwardGain: 0.4 # 0.4 before 
+        minLookForward: 3.1
+        minLookForwardGain: 0.5 # 0.4 before 
         steerGain: 1.0
-        minSpeed: 4.1
+        minSpeed: 6.5
 
-        minSpeedDistance: 2.8
+        minSpeedDistance: 3.1
         speed_lookforward_gain: 0.4
         
         min_throttle: 0.0
@@ -95,7 +95,7 @@
 
         steer_delay_s: 0.0
 
-        max_accel: 4.0 # m/s^2
+        max_accel: 3.0 # m/s^2
 
         low_level_longitudinal_controller:
           simplified: false
