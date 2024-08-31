@@ -5,7 +5,7 @@
       WCET: 5000000 # ms
       period: 10000000 # 10ms
       deadline: 10000000
-      little_endian: true
+      little_endian: false
     topics:
       statusActuatorTopic: "/actuator/status" 
       ecuStatusTopic: "/status/ecu"

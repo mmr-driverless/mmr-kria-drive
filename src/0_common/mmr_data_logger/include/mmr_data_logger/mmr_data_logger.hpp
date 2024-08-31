@@ -36,7 +36,7 @@ class MMR_Data_Logger : public EDFNode
 {
 private:
 
-    const float MAXIMUM_PBRAKE = 60.0;
+    const float MAXIMUM_PBRAKE = 160.0;
     const float STEERING_ANGLE_SCALE_FACTOR= 2;
     const float ACCELERATION_SCALE_FACTOR= 512;
     const float YAW_SCALE_FACTOR= 128;
@@ -69,10 +69,9 @@ private:
         this->pbrake_rear=msg->p_brake_rear;
         this->pebs1=msg->p_ebs_1;
         this->pebs2=msg->p_ebs_2;
-        this->speedActual=static_cast<uint8_t>(msg->vehicle_speed);
         this->brakeActual=static_cast<uint8_t>((((pbrake_front+pbrake_rear)/2)/MAXIMUM_PBRAKE)*100);
         
-        float precentageOfSteering = ((msg->steering_angle/this->steerWheelRate )*STEERING_ANGLE_SCALE_FACTOR);
+        float precentageOfSteering = ((msg->steering_angle )*STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAgleActual=static_cast<int8_t>(precentageOfSteering);
 
         if(this->brakeActual>100)this->brakeActual=100 ;
@@ -80,7 +79,7 @@ private:
         if(this->brakeActual==0) 
             this->brakeTarget=0;
         else 
-            this->brakeTarget=this->brakeActual+ (1 + static_cast<double>(rand()) / RAND_MAX * (3.0 - 0.5));
+            this->brakeTarget=this->brakeActual + (1 + static_cast<double>(rand()) / RAND_MAX );
 
         if (this->brakeTarget>100) 
             this->brakeTarget=100;
@@ -178,7 +177,7 @@ private:
 
     rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl;
     void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
-        float percentageSteeringAngle=(((msg->steer/this->steerWheelRate ) )/STEERING_ANGLE_SCALE_FACTOR);
+        float percentageSteeringAngle=(((msg->steer ) )/STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
     }
 

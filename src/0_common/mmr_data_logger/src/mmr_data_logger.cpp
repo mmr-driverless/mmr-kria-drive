@@ -83,7 +83,7 @@ EDFNode("MMR_Data_Logger")
     );
 
     this->subConesActual= this->create_subscription<mmr_base::msg::Marker>(
-      this->conesActualTopic, 1, std::bind(&MMR_Data_Logger::conesActualCallBack, this, _1)
+      this->conesActualTopic, bestEffortQOS, std::bind(&MMR_Data_Logger::conesActualCallBack, this, _1)
     );
     
     this->subConesAll= this->create_subscription<mmr_base::msg::Marker>(
