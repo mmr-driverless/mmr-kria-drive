@@ -51,6 +51,8 @@ EDFNode("MMR_Data_Logger")
     this->load_parameters();
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
 
+    std::srand(std::time(0));     
+
     this->pubMsg=this->create_publisher<can_msgs::msg::Frame>(this->sendMsgTopic, 1);
 
     using namespace std::placeholders;
