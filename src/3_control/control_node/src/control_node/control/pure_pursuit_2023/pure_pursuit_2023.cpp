@@ -66,7 +66,6 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_max_up = p.get<double>("m_max_up");
   m_min_down = p.get<double>("m_min_down");
   m_max_down = p.get<double>("m_max_down");
-  m_steer_delay_s = p.get<double>("steer_delay_s");
   m_max_accel_sq = p.get<double>("max_accel");
   m_max_accel_sq *= m_max_accel_sq;
 
@@ -225,46 +224,10 @@ Control PurePursuit2023::control(
 
   // Compute steer
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
-    Eigen::Vector2d pred_target_position = *targetPosition;
-    Eigen::Vector2d pred_car_position = *state.position();
-    double pred_car_yaw = *state.yaw();
-
-    // Predict the vehicle state to compensate for the actuator delay
-    if (m_steer_delay_s > 0 && state.speed().has_value() && state.actual_steer().has_value()) {
-      double actual_wheel_angle = state.actual_steer().value() / m_vp->steering_ratio();
-      double k = curv_from_steer(actual_wheel_angle, *m_vp);
-
-      double dtheta;
-      double phi;
-      double dist;
-      double ds = state.speed().value() * m_steer_delay_s;
-
-      if (std::abs(k) < 1e-7) {
-        dtheta = 0;
-        phi = 0;
-        dist = ds;
-      }
-      else {
-        dtheta = k * ds;
-        phi = (std::numbers::pi - dtheta) / 2;
-        phi = std::numbers::pi - phi;
-        dist = chord_len(k, dtheta);
-      }
-
-      pred_car_position += dist * Eigen::Vector2d(
-        std::cos(phi + pred_car_yaw),
-        std::sin(phi + pred_car_yaw)
-      );
-      pred_car_yaw += dtheta;
-
-      auto ref = reference_path.advance_point(*vehicle_path_projection, dist);
-      pred_target_position = reference_path.get_position(ref);
-    }
-
     double wheel_angle_rad = calculateSteeringTarget(
-      pred_target_position,
-      pred_car_position,
-      pred_car_yaw,
+      *targetPosition,
+      *state.position(),
+      *state.yaw(),
       m_steerGain,
       m_vp->lr_m(),
       m_vp->wheelbase_m()

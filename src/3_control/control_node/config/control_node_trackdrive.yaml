@@ -92,9 +92,7 @@
 
         m_min_down: 3500.0
         m_max_down: 7500.0
-
-        steer_delay_s: 0.0
-
+        
         max_accel: 3.0 # m/s^2
 
         low_level_longitudinal_controller:
