@@ -180,8 +180,6 @@ private:
     void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
         float percentageSteeringAngle=(((msg->steer/this->steerWheelRate ) )/STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
-        this->brakeTarget=static_cast<int8_t>((msg->brake/MAXIMUM_PBRAKE)*100);
-        if(this->brakeTarget>100)this->brakeTarget=100;
     }
 
     rclcpp::Subscription<mmr_base::msg::PurePursuitLog>::SharedPtr subPurePursuitLog;
