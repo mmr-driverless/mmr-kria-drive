@@ -149,7 +149,7 @@ uint64_t  MMR_Data_Logger::create_dv_system_status_messagge() {
     message |= pack_bits(this->serviceBrakeState, 9, 2);            // bit 9-10
     message |= pack_bits(this->lapCounter, 11, 4);            // bit 11-14
     message |= pack_bits(this->conesCountActual, 15, 8);          // bit 15-22
-    message |= pack_bits(this->lapCounter, 23, 17);        // bit 23-39
+    message |= pack_bits(this->conesCountAll, 23, 17);        // bit 23-39
 
     return message;
 }

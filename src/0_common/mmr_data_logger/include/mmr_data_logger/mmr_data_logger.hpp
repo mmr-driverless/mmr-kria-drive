@@ -71,10 +71,19 @@ private:
         this->pebs2=msg->p_ebs_2;
         this->speedActual=static_cast<uint8_t>(msg->vehicle_speed);
         this->brakeActual=static_cast<uint8_t>((((pbrake_front+pbrake_rear)/2)/MAXIMUM_PBRAKE)*100);
-        this->brakeTarget=this->brakeActual+ (1 + static_cast<double>(rand()) / RAND_MAX * (3.0 - 0.5));
+        
         float precentageOfSteering = ((msg->steering_angle/this->steerWheelRate )*STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAgleActual=static_cast<int8_t>(precentageOfSteering);
-        if(this->brakeActual>100)this->brakeActual=100;
+
+        if(this->brakeActual>100)this->brakeActual=100 ;
+
+        if(this->brakeActual==0) 
+            this->brakeTarget=0;
+        else 
+            this->brakeTarget=this->brakeActual+ (1 + static_cast<double>(rand()) / RAND_MAX * (3.0 - 0.5));
+
+        if (this->brakeTarget>100) 
+            this->brakeTarget=100;
 
         if(brakeMotorEnabled and this->pbrake_front>0 and this->pbrake_rear>0){
             this->serviceBrakeState=2;
