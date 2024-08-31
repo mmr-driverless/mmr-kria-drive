@@ -165,7 +165,7 @@ Control PurePursuit2023::control(
   }
 
   // Compute the maximum speed
-  double maximum_speed;
+  double maximum_speed = m_minSpeed;
   if (m_dynamicTargetSpeed.enabled && lap > m_dynamicTargetSpeed.slowLaps) {
     // Use dynamic target speed
 
@@ -181,9 +181,6 @@ Control PurePursuit2023::control(
       if (auto max_speed_opt = reference_path.get_target_speed(speed_target_ref))
         maximum_speed = *max_speed_opt;
     }
-  } else {
-    // Use static speed
-    maximum_speed = m_minSpeed;
   }
 
   viz(targetPosition);

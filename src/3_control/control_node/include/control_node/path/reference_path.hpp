@@ -471,7 +471,7 @@ public:
       Due to the non-uniform sampling we use a standard causal continuous IIR filter with a bilinear approximation
       (see the NonUniformBilinearApproxIIRFilter class). This is kind of expensive, but it's hard to get wrong.
 
-      Obviously, being a causal filter it does not have a non-zero phase, 
+      Obviously, being a causal filter it does not have zero phase, 
       so we perform one forward pass and a backwards one, just like "filtfilt" from MATLAB.
 
       As a filter, we chose a Butterworth filter. 3rd is the highest order that takes a reasonable computational time (see the NonUniformBi... whatever).
@@ -480,20 +480,21 @@ public:
       Achieving a similar result with a single 4th order filter takes double the time (ouch)!
 
       The filter state-space matrices were obtained with:
-      [A,B,C,D] = butter(3, 0.7, 's')
+      [A,B,C,D] = butter(3, 0.6, 's')
 
       Please note that you need to design a CONTINUOUS time (ANALOG) filter!
       */
 
+      const double Wn = vp.curv_cutoff_radps();
       const NonUniformBilinearApproxIIRFilter<3> FILTER_PROTOTYPE(
         0, Eigen::Matrix<double, 3, 1>::Zero(), // We assume that the start and end are straights!!
         Eigen::Matrix<double, 3, 3> {
-          { -0.7, 0, 0 },
-          { 0.7, -0.7, -0.7 },
-          { 0, 0.7, 0 }
+          { -Wn, 0, 0 },
+          { Wn, -Wn, -Wn },
+          { 0, Wn, 0 }
         },
         Eigen::Matrix<double, 3, 1> {
-          { 0.7 },
+          { Wn },
           { 0 },
           { 0 }
         },

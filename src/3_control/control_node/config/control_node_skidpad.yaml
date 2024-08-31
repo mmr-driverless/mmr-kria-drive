@@ -198,6 +198,7 @@
       mass_kg: 330.0
       wheel_roll_coeff: 0.013
       wheel_inertia: 0.0895 # 0.0735 + 0.016
+      curv_cutoff_radps: 0.7
       brake_potential_deceleration_m_s_2: 4.0
       brake_tilton_diameter_mm: 15.88
       brake_mu: 0.35 # coef attrito pastiglia-disco [adim]

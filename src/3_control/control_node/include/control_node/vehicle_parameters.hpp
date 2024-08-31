@@ -38,6 +38,7 @@ class VehicleParameters {
   std::vector<double> m_apps_map_y;
 
   double m_brake_potential_deceleration;
+  double m_curv_cutoff_radps;
 
   rclcpp::Logger m_logger;
 
@@ -69,6 +70,7 @@ public:
       m_apps_map_rpm(p.get<std::vector<double>>("apps_map_rpm")),
       m_apps_map_y(p.get<std::vector<double>>("apps_map_y")),
       m_brake_potential_deceleration(p.get<double>("brake_potential_deceleration_m_s_2")),
+      m_curv_cutoff_radps(p.get<double>("curv_cutoff_radps")),
       m_logger(logger)
   {
     auto map_x = p.get<std::vector<double>>("apps_map_x");
@@ -110,6 +112,7 @@ public:
   const std::vector<double>& apps_map_rpm() const { return m_apps_map_rpm; }
 
   double brake_potential_deceleration() const { return m_brake_potential_deceleration; }
+  double curv_cutoff_radps() const { return m_curv_cutoff_radps; }
 };
 
 };
