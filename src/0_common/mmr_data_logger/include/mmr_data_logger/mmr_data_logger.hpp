@@ -92,9 +92,9 @@ private:
 
         if(pebs1<=0 and pebs2<=0){
             this->ebsState=1;
-        }else if (pebs1>0 and pebs2>0 and pbrake_front>=20 and pbrake_rear>=20){
+        }else if (pebs1>4.5 and pebs2>4.5 and pbrake_front>=20 and pbrake_rear>=20){
             this->ebsState=3;            
-        }else if ( pebs1>0 and pebs2>0 ){
+        }else if ( pebs1>4.5 and pebs2>4.5 ){
             this->ebsState=2;
         }
 
