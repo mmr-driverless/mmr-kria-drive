@@ -37,7 +37,7 @@ class MMR_Data_Logger : public EDFNode
 private:
 
     const float MAXIMUM_PBRAKE = 160.0;
-    const float STEERING_ANGLE_SCALE_FACTOR= 2;
+    const float STEERING_ANGLE_SCALE_FACTOR= 0.5;
     const float ACCELERATION_SCALE_FACTOR= 512;
     const float YAW_SCALE_FACTOR= 128;
     const float MAXIMUM_STEERING_ANGLE = 120.0;
@@ -92,7 +92,7 @@ private:
 
         if(pebs1<=0 and pebs2<=0){
             this->ebsState=1;
-        }else if (pebs1>4.5 and pebs2>4.5 and pbrake_front>=20 and pbrake_rear>=20){
+        }else if (pebs1>4.5 and pebs2>4.5 and this->asStatus==4){
             this->ebsState=3;            
         }else if ( pebs1>4.5 and pebs2>4.5 ){
             this->ebsState=2;
@@ -177,13 +177,13 @@ private:
 
     rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr subControl;
     void controlCallBack(const mmr_base::msg::ControlLog::SharedPtr msg){
-        float percentageSteeringAngle=(((msg->steer ) )/STEERING_ANGLE_SCALE_FACTOR);
+        float percentageSteeringAngle=(((msg->steer))*STEERING_ANGLE_SCALE_FACTOR);
         this->steeringAngleTarget=static_cast<int8_t>(percentageSteeringAngle);
     }
 
     rclcpp::Subscription<mmr_base::msg::PurePursuitLog>::SharedPtr subPurePursuitLog;
     void pplCallBack(const mmr_base::msg::PurePursuitLog::SharedPtr msg){
-        this->speedTarget=static_cast<uint8_t>(msg->smoothed_target_speed_m_s*3.6);
+        this->speedTarget=static_cast<uint8_t>(msg->raw_target_speed_m_s*3.6);
         this->speedActual=static_cast<uint8_t>(msg->current_speed_m_s*3.6);
 
         if(this->debug && 0){
