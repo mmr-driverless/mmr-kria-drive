@@ -41,8 +41,8 @@ class MaxonClutch : private MaxonMotor
 
         MOTOR::ACTUATOR_STATUS disengage (float fClutchPot) {
             if (fClutchPot < this->m_aPotVal[MOTOR::INDEX_CLUTCH::CLUTCH_SET_DISENGAGED]) {
-                int nMotorResponse = this->download<int>(0x607A, 0x00, this->m_aMotorSteps[MOTOR::INDEX_CLUTCH::CLUTCH_SET_DISENGAGED]);
-                if( nMotorResponse == -1 )  this->download<uint16_t>(0x6040, 0x00, this->m_WfaultReset);
+                if (this->download<int>(0x607A, 0x00, this->m_aMotorSteps[MOTOR::INDEX_CLUTCH::CLUTCH_SET_DISENGAGED]) == MOTOR::ERROR_IDX::FAILED_MAXON_IDX)
+                    this->clearFault();
                 this->toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_REL_POS);
                 return MOTOR::ACTUATOR_STATUS::ENGAGE;
             }
@@ -50,8 +50,9 @@ class MaxonClutch : private MaxonMotor
         }
 
         void engage(int nSteps) {
-            int nMotorResponse = this->download<int>(0x607A, 0x00, nSteps);
-            if( nMotorResponse == -1 ) this->download<uint16_t>(0x6040, 0x00, this->m_WfaultReset);
+            if (this->download<int>(0x607A, 0x00, nSteps) == MOTOR::ERROR_IDX::FAILED_MAXON_IDX)
+                this->clearFault();
+
             this->toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_REL_POS);
         }
 
@@ -59,8 +60,8 @@ class MaxonClutch : private MaxonMotor
 
             for (int i = MOTOR::INDEX_CLUTCH::CLUTCH_SET_ENGAGED_1; i <= MOTOR::INDEX_CLUTCH::CLUTCH_SET_ENGAGED_4; i++) {
                 if (fClutchPot > this->m_aPotVal[i]) {
-                    int nMotorResponse = this->download<int>(0x607A, 0x00, this->m_aMotorSteps[i]);
-                    if( nMotorResponse == -1 )  this->download<uint16_t>(0x6040, 0x00, this->m_WfaultReset); 
+                    if (this->download<int>(0x607A, 0x00, this->m_aMotorSteps[i]) == MOTOR::ERROR_IDX::FAILED_MAXON_IDX)
+                        this->clearFault();
                     this->toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_REL_POS);
                     return MOTOR::ACTUATOR_STATUS::DISENGAGE; 
                 }

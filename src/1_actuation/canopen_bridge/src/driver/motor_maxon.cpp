@@ -51,12 +51,16 @@ void MaxonMotor::toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS nType)
     switch (nType)
     {
         case MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS:
-            this->download<uint16_t>(0x6040, 0x00, 0x003F);
+            if (this->download<uint16_t>(0x6040, 0x00, 0x003F) == MOTOR::ERROR_IDX::FAILED_MAXON_IDX)
+                this->clearFault();
             break;
 
         case MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_REL_POS:
-            this->download<uint16_t>(0x6040, 0x00, 0x007F);
+            if (this->download<uint16_t>(0x6040, 0x00, 0x007F) == MOTOR::ERROR_IDX::FAILED_MAXON_IDX)
+                this->clearFault();
             break;
     }
-    this->download<uint16_t>(0x6040, 0x00, 0x000F);
+    
+    if (this->download<uint16_t>(0x6040, 0x00, 0x000F) == MOTOR::ERROR_IDX::FAILED_MAXON_IDX)
+        this->clearFault();
 }
