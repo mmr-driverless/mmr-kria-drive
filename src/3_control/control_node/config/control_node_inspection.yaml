@@ -85,7 +85,7 @@
           enabled: true
           type: FileLogger
           params:
-            directory: "/home/root/control_actuator_log/"
+            directory: "/home/root/control_log/actuator"
 
     vehicle_parameters:
       wheelbase: 1.541 # distance between front and rear axle [m]

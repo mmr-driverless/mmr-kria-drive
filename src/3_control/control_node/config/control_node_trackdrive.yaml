@@ -165,7 +165,7 @@
           enabled: true
           type: FileLogger
           params:
-            directory: "/home/simonebondi/control_actuator_log/"
+            directory: "/home/root/control_log/actuator"
 
 
     # Reference path settings

@@ -167,7 +167,7 @@
           enabled: true
           type: FileLogger
           params:
-            directory: "/home/root/control_actuator_log/"
+            directory: "/home/root/control_log/actuator"
 
     # Reference path settings
     reference_path_manager:
