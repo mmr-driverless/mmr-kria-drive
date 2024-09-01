@@ -103,6 +103,12 @@
           params:
             topic: "/control/log"
 
+        2:
+          enabled: true
+          type: FileLogger
+          params:
+            directory: "/home/root/control_actuator_log/"
+
     vehicle_parameters:
       wheelbase_m: 1.541 # distance between front and rear axle [m]
       steering_ratio: 6.87 # Ratio between steering wheel and wheel angle (bicycle model) [1]

@@ -161,6 +161,12 @@
           params:
             topic: "/control/log"
 
+        5:
+          enabled: true
+          type: FileLogger
+          params:
+            directory: "/home/root/control_actuator_log/"
+
 
     # Reference path settings
     reference_path_manager:
