@@ -17,7 +17,7 @@ static inline double normalizeAngle(double angle){
   while(angle < -M_PI) angle += (2 * M_PI);
   return angle;
 }
-
+/*
 static inline double curv_from_steer(double wheel_ang_rad, const VehicleParameters& vp) {
   double L = vp.wheelbase_m();
   double LR = vp.lr_m();
@@ -27,10 +27,7 @@ static inline double curv_from_steer(double wheel_ang_rad, const VehicleParamete
   double k = (std::tan(wheel_ang_rad) * std::cos(beta) - std::sin(beta)) / LF;
   return k;
 }
-
-double chord_len(double k, double theta) {
-  return 2 * std::sin(theta / 2) / k;
-}
+*/
 
 static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vector2d car_position, double car_yaw, double steer_gain, double com_dist_to_rear, double wheelbase)
 {

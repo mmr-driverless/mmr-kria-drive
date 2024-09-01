@@ -25,8 +25,6 @@ class PurePursuit2023 : public IController {
   
   double m_minSpeed;
 
-  double m_steer_delay_s;
-
   double m_max_accel_sq;
 
   bool m_simplified_longitudinal_control_enabled;
