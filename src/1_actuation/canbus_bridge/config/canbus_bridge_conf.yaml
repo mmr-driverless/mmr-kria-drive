@@ -3,7 +3,7 @@
     generic:
       interface: can0
       bitrate: 1000000
-      debug: true
+      debug: false
       WCET: 5000000 # 5ms
       period: 10000000 # 10ms
       deadline: 10000000
