@@ -73,12 +73,12 @@
     control:
       type: PurePursuit2023
       params:
-        minLookForward: 3.6
-        minLookForwardGain: 0.4 # 0.4 before 
+        minLookForward: 5.1
+        minLookForwardGain: 0.1 # 0.4 before 
         steerGain: 1.0
-        minSpeed: 4.1
+        minSpeed: 8.0
         
-        minSpeedDistance: 4.0 # it must be equal to minLookForward
+        minSpeedDistance: 5.1 # it must be equal to minLookForward
         speed_lookforward_gain: 0.4
         
         min_throttle: 0.0
@@ -199,7 +199,7 @@
       scx: 1.1 # 0.99 * 1.1
       scz: 5.5 # 2.2 * 2.5
       wheel_radius_m: 0.23
-      mass_kg: 330.0
+      mass_kg: 260.0
       wheel_roll_coeff: 0.013
       wheel_inertia: 0.0895 # 0.0735 + 0.016
       curv_cutoff_radps: 0.7
