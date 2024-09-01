@@ -160,6 +160,16 @@ namespace MOTOR {
         IDX_WRITE_REL_POS,
     };
 
+
+    enum class ERROR_IDX {
+
+        OK_IDX = 0,
+        FAILED_CAN = -1,
+        FAILED_MAXON_IDX = -2,
+        FAILED_MSG_TOO_LONG = -3,
+
+    };
+
 };
 
 namespace AS {
