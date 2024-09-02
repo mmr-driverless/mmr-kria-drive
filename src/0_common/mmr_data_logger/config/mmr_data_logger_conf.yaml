@@ -2,9 +2,9 @@
   ros__parameters:
     generic:
       debug: true
-      WCET: 5000000 # ms
-      period: 10000000 # 10ms
-      deadline: 10000000
+      WCET: 1000000000 # m 1 secondo
+      period: 100000000 # 100ms
+      deadline: 100000000 #100ms
       little_endian: false
     topics:
       statusActuatorTopic: "/actuator/status" 
