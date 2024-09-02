@@ -169,8 +169,14 @@ void CANBusBridge::connectCANBus()
         .can_dlc = 1,
         .data = { 0x01 }
     };
-
     this->writeMsg(frame);
+
+    can_frame as_manager_on_frame = {
+      .can_id = 0x131,
+      .can_dlc = 1,
+      .data = { 0x01 }
+    };
+    this->writeMsg(as_manager_on_frame);
 }
 
 void CANBusBridge::readMsgFromCANBus()
