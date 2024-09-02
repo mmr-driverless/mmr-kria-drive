@@ -172,7 +172,7 @@ void CANBusBridge::connectCANBus()
     this->writeMsg(frame);
 
     can_frame as_manager_on_frame = {
-      .can_id = 0x131,
+      .can_id = 0x132,
       .can_dlc = 1,
       .data = { 0x01 }
     };
