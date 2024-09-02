@@ -148,13 +148,14 @@ private:
 
     rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr subMissionSelected;
     void missionSelectedCallBack(const std_msgs::msg::Int8::SharedPtr msg){
+        //Should be test
         switch(msg->data){
-            case COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_ACCELERATION: this->missionSelected=1;break;
-            case COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_SKIDPAD: this->missionSelected=2;break;
-            case COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_TRACKDRIVE: this->missionSelected=3;break;
-            case COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_EBS_TEST: this->missionSelected=4;break;
-            case COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_INSPECTION: this->missionSelected=5;break;
-            case COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_AUTOCROSS: this->missionSelected=6;break;
+            case static_cast<int8_t>(COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_ACCELERATION): this->missionSelected=1;break;
+            case static_cast<int8_t>(COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_SKIDPAD): this->missionSelected=2;break;
+            case static_cast<int8_t>(COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_TRACKDRIVE): this->missionSelected=3;break;
+            case static_cast<int8_t>(COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_EBS_TEST): this->missionSelected=4;break;
+            case static_cast<int8_t>(COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_INSPECTION): this->missionSelected=5;break;
+            case static_cast<int8_t>(COCKPIT::MMR_MISSION_VALUE::MMR_MISSION_AUTOCROSS): this->missionSelected=6;break;
         }
     }
 
