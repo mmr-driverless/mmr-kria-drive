@@ -92,9 +92,9 @@ private:
 
         if(pebs1<=0 and pebs2<=0){
             this->ebsState=1;
-        }else if (pebs1>4.5 and pebs2>4.5 and this->asStatus==4){
+        }else if (pebs1>1 and pebs2>1 and (this->asStatus==4 or this->asStatus==5)){
             this->ebsState=3;            
-        }else if ( pebs1>4.5 and pebs2>4.5 ){
+        }else if ( pebs1>1 and pebs2>1 ){
             this->ebsState=2;
         }
 
