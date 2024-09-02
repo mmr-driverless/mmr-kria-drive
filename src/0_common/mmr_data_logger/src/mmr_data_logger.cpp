@@ -53,7 +53,7 @@ EDFNode("MMR_Data_Logger")
 
     std::srand(std::time(0));     
 
-    this->pubMsg=this->create_publisher<can_msgs::msg::Frame>(this->sendMsgTopic, 1);
+    this->pubMsg=this->create_publisher<can_msgs::msg::Frame>(this->sendMsgTopic, 3);
 
     using namespace std::placeholders;
     const auto &bestEffortQOS = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);

@@ -32,7 +32,7 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->m_subRaceStatus = this->create_subscription<mmr_base::msg::RaceStatus>(
         this->m_sLapCounterTopic, 1, std::bind(&CANBusBridge::msgRaceStatusCallback, this, std::placeholders::_1));
     this->m_subDataLogger=this->create_subscription<can_msgs::msg::Frame>(
-        this->m_sDataLoggerTopic, 1, std::bind(&CANBusBridge::msgDataLoggerCallback, this, std::placeholders::_1));
+        this->m_sDataLoggerTopic, 3, std::bind(&CANBusBridge::msgDataLoggerCallback, this, std::placeholders::_1));
 
     this->m_msgEcuStatus.checksum_steering_angle = 0;
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
