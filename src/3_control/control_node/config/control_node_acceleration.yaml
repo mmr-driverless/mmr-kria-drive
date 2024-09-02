@@ -200,7 +200,7 @@
       scx: 1.1 # 0.99 * 1.1
       scz: 5.5 # 2.2 * 2.5
       wheel_radius_m: 0.23
-      mass_kg: 330.0
+      mass_kg: 260.0
       wheel_roll_coeff: 0.013
       wheel_inertia: 0.0895 # 0.0735 + 0.016
       curv_cutoff_radps: 0.7
