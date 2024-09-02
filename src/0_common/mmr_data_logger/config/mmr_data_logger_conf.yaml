@@ -2,7 +2,7 @@
   ros__parameters:
     generic:
       debug: true
-      WCET: 1000000000 # m 1 secondo
+      WCET: 25000000 # 25 ms
       period: 100000000 # 100ms
       deadline: 100000000 #100ms
       little_endian: false
