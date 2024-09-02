@@ -43,8 +43,10 @@ class CANBusBridge : public EDFNode
         std::string m_sInterface, m_sCmdEcuTopic, m_sLapCounterTopic;
         std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
         std::string m_sActuatorsStatusTopic, m_sOutImuDataTopic, m_sControlLogTopic, m_sDataLoggerTopic;
+        std::string m_sImuAllDataTopic;
         int m_nBitrate, m_nMaxMsgs, m_nControlFreqDiv, m_nCtrFreqControl = 1;
-        bool m_bDebug;
+        int m_nFreqDiv24V, m_nCtr24V = 1;
+        bool m_bDebug, m_bEcuCmdEnable;
 
         void loadParameters();
 
@@ -76,6 +78,7 @@ class CANBusBridge : public EDFNode
 
         /* Parsed IMU CAN Data publisher */
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr m_pubImuData;
+        rclcpp::Publisher<mmr_base::msg::ImuCanData>::SharedPtr m_pubImuAllData;
 
         /* message for the pub */
         mmr_base::msg::EcuStatus m_msgEcuStatus;
@@ -162,4 +165,5 @@ class CANBusBridge : public EDFNode
         void changeGearUpDown();
         void setGearNeutral();
         void setLaunchControl();
+        void send24VCockpit();
 };

@@ -3,22 +3,24 @@
     generic:
       interface: can0
       bitrate: 1000000
-      debug: true
+      debug: false
       WCET: 5000000 # 5ms
       period: 10000000 # 10ms
       deadline: 10000000
       max_msgs: 25
       control_freq_div: 1
+      ecu_command_enable: true
     topic:
       cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"
       resStatusTopic: "/status/res"
-      ActuatorsStatusTopic: "/actuator/status"
+      actuatorsStatusTopic: "/actuator/status"
       missionSelectTopic: "/mission/selected"
       outputImuTopic: "/canbus/imu/data"
       controlLogTopic: "/control/log"
       raceStatusTopic: "/planning/race_status"
       dataLoggerTopic: "/data_logger/log" 
+      imuAllData: "/canbus/imu/all_data"
     gear:
       ctrLimit: 5
       changeDeltaTime: 500 #ms
@@ -31,3 +33,5 @@
       ctrLimit: 2
       changeDeltaTime: 500 #ms
       delayCmdEcu: 50 #ms
+    24v:
+      freq_div: 1000

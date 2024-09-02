@@ -9,11 +9,9 @@ namespace control_node {
 class VehicleParameters {
   double m_wheelbase_m; // Distance between front and rear axles [m]
   double m_lr_m; // Distance between CoM and rear axle [m]
-  double m_max_steering_angle_rad; // Maximum angle of the steered wheel in the bicycle model [rad]
-  double m_cx; 
-  double m_cz;
-  double m_sx;
-  double m_sz;
+  double m_steering_ratio; // Ratio between steering wheel and wheel angle (bicycle model) [1]
+  double m_scx;
+  double m_scz;
   double m_wheel_radius_m; // Wheel radius
   double m_wheel_roll_coeff; // Rolling resistance coefficient
   double m_wheel_inertia; // Inertia of a single wheel
@@ -28,19 +26,21 @@ class VehicleParameters {
   double m_brake_pulley_diameter_mm; // Brake pulley diameter [mm]
   double m_brake_reducer; // Brake motor reducer
   double m_brake_reducer_efficiency; // Reducer efficiency
+  double m_brake_min_torque; // Minimum brake motor torque
   std::vector<double> m_gear_ratios; 
-  std::vector<long> m_NMOTVET_rpm;
-  std::vector<long> m_CDC_Nm;
+  std::vector<double> m_NMOTVET_rpm;
+  std::vector<double> m_CDC_Nm;
+  std::vector<double> m_apps_map_x;
+  std::vector<double> m_apps_map_y;
+  
 
 public:
   VehicleParameters(const Parameters& p)
     : m_wheelbase_m(p.get<double>("wheelbase_m")),
       m_lr_m(p.get<double>("lr_m")),
-      m_max_steering_angle_rad(p.get<double>("max_steering_angle_rad")),
-      m_cx(p.get<double>("cx")),
-      m_cz(p.get<double>("cz")),
-      m_sx(p.get<double>("sx")),
-      m_sz(p.get<double>("sz")),
+      m_steering_ratio(p.get<double>("steering_ratio")),
+      m_scx(p.get<double>("scx")),
+      m_scz(p.get<double>("scz")),
       m_wheel_radius_m(p.get<double>("wheel_radius_m")),
       m_wheel_roll_coeff(p.get<double>("wheel_roll_coeff")),
       m_wheel_inertia(p.get<double>("wheel_inertia")),
@@ -55,18 +55,19 @@ public:
       m_brake_pulley_diameter_mm(p.get<double>("brake_pulley_diameter_mm")),
       m_brake_reducer(p.get<double>("brake_reducer")),
       m_brake_reducer_efficiency(p.get<double>("brake_reducer_efficiency")),
+      m_brake_min_torque(p.get<double>("brake_min_torque")),
       m_gear_ratios(p.get<std::vector<double>>("gear_ratios")),
-      m_NMOTVET_rpm(p.get<std::vector<long>>("nmotvet_rpm")),
-      m_CDC_Nm(p.get<std::vector<long>>("cdc_Nm"))
+      m_NMOTVET_rpm(p.get<std::vector<double>>("nmotvet_rpm")),
+      m_CDC_Nm(p.get<std::vector<double>>("cdc_Nm")),
+      m_apps_map_x(p.get<std::vector<double>>("apps_map_x")),
+      m_apps_map_y(p.get<std::vector<double>>("apps_map_y"))
   {}
 
-  double max_steering_angle_rad() const { return m_max_steering_angle_rad; }
   double wheelbase_m() const { return m_wheelbase_m; }
   double lr_m() const { return m_lr_m; }
-  double cx() const { return m_cx; }
-  double cz() const { return m_cz; }
-  double sx() const { return m_sx; }
-  double sz() const { return m_sz; }
+  double steering_ratio() const { return m_steering_ratio; }
+  double scx() const { return m_scx; }
+  double scz() const { return m_scz; }
   double wheel_radius_m() const { return m_wheel_radius_m; }
   double wheel_roll_coeff() const { return m_wheel_roll_coeff; }
   double wheel_inertia() const { return m_wheel_inertia; }
@@ -81,9 +82,12 @@ public:
   double brake_pulley_diameter_mm() const { return m_brake_pulley_diameter_mm; }
   double brake_reducer() const { return m_brake_reducer; }
   double brake_reducer_efficiency() const { return m_brake_reducer_efficiency; }
+  double brake_min_torque() const { return m_brake_min_torque; }
   const std::vector<double>& gear_ratios() const { return m_gear_ratios; }
-  const std::vector<long>& NMOVET_rpm() const { return m_NMOTVET_rpm; }
-  const std::vector<long>& CDC_Nm() const { return m_CDC_Nm; }
+  const std::vector<double>& NMOVET_rpm() const { return m_NMOTVET_rpm; }
+  const std::vector<double>& CDC_Nm() const { return m_CDC_Nm; }
+  const std::vector<double>& apps_map_x() const { return m_apps_map_x; }
+  const std::vector<double>& apps_map_y() const { return m_apps_map_y; }
 };
 
 };

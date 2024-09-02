@@ -22,7 +22,7 @@
       race_status:
         topic: "/planning/race_status"
       stop:
-        topic: "/stop"
+        topic: "/mission/stop"
       
       rev_duration_before_engage_ms: 250
       launch_throttle: 0.5
@@ -39,8 +39,8 @@
     control:
       type: Inspection
       params:
-        frequency: 3.14
-        steer_fraction: 0.2
+        frequency_hz: 0.5
+        amplitude_steering_wheel_deg: 45.0
         throttle: 0.15
         launch_control: false
         gear: 1
@@ -64,9 +64,9 @@
           params:
             spi_interface: /dev/spidev1.0
             spi_frequency: 50000
-            v_ref: 3.3
-            v_apps_min: 0.95
-            v_apps_max: 2.515
+            v_ref: 5.0
+            v_apps_min: 0.942
+            v_apps_max: 2.484
             buffered: false
 
         2:
@@ -84,7 +84,6 @@
     vehicle_parameters:
       wheelbase: 1.541 # distance between front and rear axle [m]
       lr: 0.75 # distance between CoM and rear axle [m]
-      max_steering_angle: 0.3979351 # maximum angle at the wheel [rad]
 
     tracking:
       threshold: 8.0 # Meters. If the path doesn't pass through a circle of this radius centered on the vehicle, the tracking problem is restarted (which is a problem ONLY in Skidpad) and takes longer to execute
@@ -118,12 +117,10 @@
 
     vehicle_parameters:
       wheelbase_m: 1.541 # distance between front and rear axle [m]
-      lr_m: 0.75 # distance between CoM and rear axle [m]
-      max_steering_angle_rad: 0.3979351 # maximum angle at the wheel [rad]
-      cx: 0.99
-      cz: 2.2
-      sx: 1.1
-      sz: 2.5
+      steering_ratio: 6.87 # Ratio between steering wheel and wheel angle (bicycle model) [1]
+      lr_m: 0.7094 # distance between CoM and rear axle [m]
+      scx: 1.1 # 0.99 * 1.1
+      scz: 5.5 # 2.2 * 2.5
       wheel_radius_m: 0.23
       mass_kg: 260.0
       wheel_roll_coeff: 0.013
@@ -137,16 +134,19 @@
       brake_pulley_diameter_mm: 40.0
       brake_reducer: 15.58
       brake_reducer_efficiency: 0.90
+      brake_min_torque: 150.0 # Any braking command under this threshold is ignored [mNm]
       differential_ratio: 3.38
-      nmotvet_rpm: [ 10, 2500, 3500, 4500, 5500, 6500, 7500, 8500, 9500, 10500, 11500, 18000 ]
-      cdc_Nm: [ 23, 23, 36, 40, 38, 44, 46, 52, 56, 51, 47, 47 ]
+      nmotvet_rpm: [ 10.0, 2500.0, 3500.0, 4500.0, 5500.0, 6500.0, 7500.0, 8500.0, 9500.0, 10500.0, 11500.0, 18000.0 ]
+      cdc_Nm: [ 23.0, 23.0, 36.0, 40.0, 38.0, 44.0, 46.0, 52.0, 56.0, 51.0, 47.0, 47.0 ]
       gear_ratios: [
-        0.0, # std::numeric_limits<int>::infinity()
+        +inf,
         5.5, # 77/14,
-        4.0, #.052631578947368, # 77/19
-        3.0, #.3846153846153846, # 77*36/39/21
-        2.0, #.9615384615384617 # 77*36/39/24
+        4.052631578947368, # 77/19
+        3.3846153846153846, # 77*36/39/21
+        2.9615384615384617 # 77*36/39/24
       ]
+      apps_map_x: [ 0.0, 0.005, 0.85, 1.0 ] # % of maximum torque
+      apps_map_y: [ 0.0, 0.15, 0.75, 1.0 ] # APPS
 
     viz:
       enabled: false

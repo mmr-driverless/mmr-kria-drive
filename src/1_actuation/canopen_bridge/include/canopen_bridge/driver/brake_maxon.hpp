@@ -8,6 +8,7 @@ class MaxonBrake : public MaxonMotor
 
         const int m_nModeOfOp = MOTOR::CST;
         int m_nMaxTorque, m_nReturnPedalTorque;
+        double m_nPreviousTorque, m_nBrakeDelta;
 
         void initBrake() {
             /* set modes of operation */
@@ -19,12 +20,14 @@ class MaxonBrake : public MaxonMotor
 
     public:
 
-        MaxonBrake(int nSocket, int nNodeId, int nTimeOutMsg, int nMaxTorque, int nReturnPedalTorque)
+        MaxonBrake(int nSocket, int nNodeId, int nTimeOutMsg, int nMaxTorque, int nReturnPedalTorque, double nBrakeDelta )
             : MaxonMotor(nSocket, nNodeId, m_nModeOfOp, nTimeOutMsg) 
         {
             this->m_nMaxTorque = nMaxTorque;
             this->m_nReturnPedalTorque = nReturnPedalTorque;
-
+            this->m_nBrakeDelta = nBrakeDelta;
+            this->m_nPreviousTorque = nMaxTorque;
+            
             for (int i = 0; i < 10; i++)
                 this->initBrake();
         }
@@ -35,10 +38,12 @@ class MaxonBrake : public MaxonMotor
 
             fTargetTorque = (fTargetTorque * 1000.0 * 1000.0) / 928.0;
             int nTorque = std::clamp<double>(fTargetTorque, 0, this->m_nMaxTorque) * -1.0;
+            nTorque = std::clamp<double>(nTorque, this->m_nPreviousTorque + this->m_nBrakeDelta, nTorque );
             int16_t unTorque = std::clamp<int>(nTorque, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max());
-
+            this->m_nPreviousTorque = nTorque;
             /* set velocity */
             this->download<int16_t>(0x60B2, 0x00, unTorque);
+
         }
 
         void returnToZero() {

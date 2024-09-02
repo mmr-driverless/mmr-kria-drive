@@ -92,9 +92,10 @@ namespace COCKPIT {
 
     enum MMR_CAN_MSG_ID {
         MMR_MISSION_SELECTED = 0x40,
+        MMR_24V_VOLTAGE = 0x131,
     };
 
-    enum MMR_MISSION_VALUE {
+    enum class MMR_MISSION_VALUE {
         MMR_MISSION_IDLE = 0,
         MMR_MISSION_ACCELERATION,
         MMR_MISSION_SKIDPAD,
@@ -104,6 +105,18 @@ namespace COCKPIT {
         MMR_MISSION_INSPECTION,
         MMR_MISSION_MANUAL,
         MMR_MISSION_DEBUG
+    };
+
+    const inline std::unordered_map<MMR_MISSION_VALUE, std::string_view> CockpitMissionLookup {
+        { MMR_MISSION_VALUE::MMR_MISSION_IDLE, "idle" },
+        { MMR_MISSION_VALUE::MMR_MISSION_ACCELERATION, "acceleration"},
+        { MMR_MISSION_VALUE::MMR_MISSION_SKIDPAD, "skidpad" },
+        { MMR_MISSION_VALUE::MMR_MISSION_AUTOCROSS, "autocross" },
+        { MMR_MISSION_VALUE::MMR_MISSION_TRACKDRIVE, "trackdrive" },
+        { MMR_MISSION_VALUE::MMR_MISSION_EBS_TEST, "ebs_test" },
+        { MMR_MISSION_VALUE::MMR_MISSION_INSPECTION, "inspection" },
+        { MMR_MISSION_VALUE::MMR_MISSION_MANUAL, "manual" },
+        { MMR_MISSION_VALUE::MMR_MISSION_DEBUG, "debug" },
     };
 
 };
@@ -145,6 +158,16 @@ namespace MOTOR {
     enum class IDX_TOGGLE_NEW_POS {
         IDX_WRITE_ABS_POS = 0,
         IDX_WRITE_REL_POS,
+    };
+
+
+    enum class ERROR_IDX {
+
+        OK_IDX = 0,
+        FAILED_CAN = -1,
+        FAILED_MAXON_IDX = -2,
+        FAILED_MSG_TOO_LONG = -3,
+
     };
 
 };

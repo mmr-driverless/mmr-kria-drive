@@ -40,14 +40,16 @@ class CANOpenBridge : public EDFNode
         std::string m_sSteerTopic, m_sBrakeTopic, m_sClucthTopic, m_sStatusActuatorTopic, m_sEcuStatusTopic;
 
         /* Steer parameters */
-        int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer, m_nControlMode;
-        float m_fWheelRate, m_fIncPerDegree, m_fMaxTargetMaxon, m_fMaxTargetPot;
-        float m_fConvFactor, m_fMinTargetPot, m_fTargetWheelAngle;
+        int m_nSteerID, m_nVelocity, m_nTimeoutMsgSteer, m_nControlMode, m_nMaxTargetMaxon;
+        float m_fWheelRate, m_fIncPerDegree, m_fMinTargetPot;
+        float m_fMaxTargetPot, m_fTargetSteerAngle;
         std::optional<float> m_fSteerPot;
         uint32_t m_nCRCSteerOld, m_nCRCSteer;
 
         /* Brake parameters */
         int m_nBrakeId, m_nMaxTorque, m_nReturnPedalTorque, m_nTimeoutMsgBrake, m_nFreqScaleBrake, m_nCtrBrake = 1;
+        double m_nBrakeDelta;
+
 
         /* Clutch parameters */
         int m_nClutchId, m_nVelocityClutch, m_nMonitorClutch, m_nCountClutch = 1, m_nTimeoutMsgClutch;
@@ -85,21 +87,18 @@ class CANOpenBridge : public EDFNode
         void connectCANBus();
         void loadParameters();
 
-        inline int getStepToActuate(float fTargetWheelAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
+        inline int getStepToActuate(float fTargetSteerAngle, MOTOR::IDX_TOGGLE_NEW_POS mode) {
             
             int nIncToDo = 0;
-            fTargetWheelAngle = fTargetWheelAngle * 180 / M_PI;
 
             if (mode == MOTOR::IDX_TOGGLE_NEW_POS::IDX_WRITE_ABS_POS)
-                return std::round(fTargetWheelAngle * this->m_fWheelRate * this->m_fIncPerDegree);
+                return std::round(fTargetSteerAngle * this->m_fIncPerDegree);
             
             if (this->m_fSteerPot.has_value()) {
 
-                float fTargetSteerAngle = fTargetWheelAngle * m_fWheelRate;
                 fTargetSteerAngle = std::clamp<float>(fTargetSteerAngle, this->m_fMinTargetPot, this->m_fMaxTargetPot);
-
                 float fDeltaDegrees = fTargetSteerAngle - m_fSteerPot.value();
-                nIncToDo = std::round(fDeltaDegrees * m_fConvFactor);
+                nIncToDo = std::round(fDeltaDegrees * this->m_fIncPerDegree);
             }
 
             return nIncToDo;

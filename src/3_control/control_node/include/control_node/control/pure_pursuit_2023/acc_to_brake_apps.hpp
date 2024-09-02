@@ -1,3 +1,4 @@
+#include <array>
 #include <cmath>
 #include <vector>
 
@@ -12,6 +13,45 @@ struct AppsBrakePair {
   double apps;
 };
 
+
+template <typename RangeT>
+static inline double interp1d(const RangeT& y, const RangeT& x, double xq) {
+  /*
+    Evaluate f(xq) by linear interpolation, where f(x(i)) = y(i) for i=1..N
+    Extrapolation is performed by taking the nearest f(x)
+  */
+
+  int N = y.size();
+  assert((int)x.size() == N);
+
+  if (xq <= x.front())
+    return y.front();
+
+  for (int i = 0; i < N - 1; ++i) {
+    if (x[i] <= xq && xq < x[i+1]) {
+      double t = xq - x[i];
+      double m = (y[i + 1] - y[i]) / (x[i + 1] - x[i]);
+      double q = y[i];
+      return m * t + q;
+    }
+  }
+
+  return y.back();
+}
+
+
+static inline double apps_from_engine_torque(double torque_req, int rpm_act, const VehicleParameters& vp) {
+  // Compute the maximum torque of the engine from the current RPM
+  double max_torque = interp1d(vp.CDC_Nm(), vp.NMOVET_rpm(), (double)rpm_act);
+
+  // Compute the required Torque% wrt maximum torque
+  double torque_perc = torque_req / max_torque;
+
+  // Apply the Torque% -> APPS map
+  return interp1d(vp.apps_map_y(), vp.apps_map_x(), torque_perc);
+}
+
+
 static inline AppsBrakePair apps_brake_from_accel(double target_acc,
                                                   double speed, int gear,
                                                   int rpm,
@@ -21,15 +61,13 @@ static inline AppsBrakePair apps_brake_from_accel(double target_acc,
   constexpr double AIR_DENSITY = 1.225;
 
   // Drag (X) and downforce (Z)
-  double X = 0.5 * AIR_DENSITY * vp.cx() * vp.sx() * std::pow(speed, 2);
-  double Z = 0.5 * AIR_DENSITY * vp.cz() * vp.sz() * std::pow(speed, 2) * vp.cz() * vp.sz();
-
-  double M = 300.0; // vp.mass_kg()
+  double X = 0.5 * AIR_DENSITY * vp.scx() * std::pow(speed, 2);
+  double Z = 0.5 * AIR_DENSITY * vp.scz() * std::pow(speed, 2);
 
   // Required torque at the rear wheels
   double coppia_ruote =
-      (X * vp.wheel_radius_m()) + (((M * G) + Z) * vp.wheel_roll_coeff()) +
-      ((M + ((4.0 * vp.wheel_inertia()) / std::pow(vp.wheel_radius_m(), 2)))) *
+      (X * vp.wheel_radius_m()) + (((vp.mass_kg() * G) + Z) * vp.wheel_roll_coeff()) +
+      ((vp.mass_kg() + ((4.0 * vp.wheel_inertia()) / std::pow(vp.wheel_radius_m(), 2)))) *
           vp.wheel_radius_m() * target_acc;
 
   if (coppia_ruote >= 0.0) {
@@ -40,36 +78,7 @@ static inline AppsBrakePair apps_brake_from_accel(double target_acc,
     double coppia_motore =
         (double)(coppia_ruote / vp.ratio_diff() / vp.gear_ratios().at(gear));
 
-    /*
-      Find the maximum torque of the engine at the current RPM
-      by linear interpolation of the torque curve obtained at the dyno
-    */
-    int NMOTVET_SIZE = vp.NMOVET_rpm().size();
-    int RPMBOUNDINF = NMOTVET_SIZE - 1;
-    int RMPBOUNDSUP = RPMBOUNDINF;
-
-    double CDCINTERPOLATO = 0.0, m = 0.0, q = 0.0;
-
-    for (int i = 1; i < NMOTVET_SIZE; ++i) {
-      if (rpm <= vp.NMOVET_rpm().at(i)) {
-        RPMBOUNDINF = i - 1;
-        RMPBOUNDSUP = i;
-        break;
-      }
-    }
-
-    m = (double)((double)(vp.CDC_Nm().at(RMPBOUNDSUP) - vp.CDC_Nm().at(RPMBOUNDINF)) /
-                 (double)(vp.NMOVET_rpm().at(RMPBOUNDSUP) - vp.NMOVET_rpm().at(RPMBOUNDINF)));
-
-    q = (double)((double)((double)(vp.NMOVET_rpm().at(RMPBOUNDSUP) * vp.CDC_Nm().at(RPMBOUNDINF)) -
-                          (double)(vp.NMOVET_rpm().at(RPMBOUNDINF) * vp.CDC_Nm().at(RMPBOUNDSUP))) /
-                 (double)(vp.NMOVET_rpm().at(RMPBOUNDSUP) - vp.NMOVET_rpm().at(RPMBOUNDINF)));
-
-    CDCINTERPOLATO = (double)(m * static_cast<double>(rpm)) + q;
-
-    // Assume that the torque produced by the motor is directly proportional to
-    // APPS (where APPS=1 => max torque at the current RPM)
-    double APS = (double)(coppia_motore / CDCINTERPOLATO);
+    double APS = apps_from_engine_torque(coppia_motore, rpm, vp);
 
     if (std::isnan(APS) || std::isinf(APS)) {
       APS = 0.0f;
@@ -85,6 +94,9 @@ static inline AppsBrakePair apps_brake_from_accel(double target_acc,
            vp.brake_pulley_diameter_mm() / 2000) /
           vp.brake_reducer() * 1000) /
          vp.brake_reducer_efficiency());
+
+    if (T_mot_freno_perm_mNm <= vp.brake_min_torque())
+      return { .brake_torque = 0.0, .apps = 0.0 };
 
     return { .brake_torque = T_mot_freno_perm_mNm / 1000.0, .apps = 0.0};
   }
