@@ -21,7 +21,7 @@ int main(int argc, char * argv[])
     executor.add_node(node);
 
     while (true) {
-      executor.spin_all(50ms);
+      executor.spin_all(25ms);
       node->send_messages();
       sched_yield();
     }
