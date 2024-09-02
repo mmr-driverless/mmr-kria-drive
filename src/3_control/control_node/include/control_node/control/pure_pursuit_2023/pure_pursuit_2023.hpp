@@ -30,6 +30,8 @@ class PurePursuit2023 : public IController {
   bool m_simplified_longitudinal_control_enabled;
   double m_simple_long_apps_p;
   double m_simple_long_brake_p;
+  double m_acceleration_p;
+  bool m_use_old_acceleration;
 
   bool m_second_gear_on_second_lap;
   bool m_dynamic_change_gear;

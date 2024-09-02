@@ -99,6 +99,7 @@
           simplified: false
           # apps_p: 0.7
           # brake_p: 0.2
+          use_old_acceleration: true
 
         dynamicTargetSpeed:
           enabled: false # If this is false, then minSpeed is used.

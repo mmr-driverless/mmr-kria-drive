@@ -69,6 +69,10 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
     m_simple_long_brake_p = p.get<double>("low_level_longitudinal_controller.brake_p");
+  } else {
+    m_use_old_acceleration = p.get<bool>("low_level_longitudinal_controller.use_old_acceleration");
+    if (!m_use_old_acceleration)
+      m_acceleration_p = p.get<double>("low_level_longitudinal_controller.acceleration_p");
   }
 
   auto dyn_speed_p = p.subparams("dynamicTargetSpeed");
@@ -179,6 +183,8 @@ Control PurePursuit2023::control(
     }
   }
 
+  maximum_speed = std::clamp<double>(maximum_speed, m_minSpeed, m_dynamicTargetSpeed.maxSpeed);
+
   viz(targetPosition);
 
   Control u(0.0, 0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
@@ -195,7 +201,10 @@ Control PurePursuit2023::control(
       u.brake = m_simple_long_brake_p * std::max(-error, 0.0);
     } else {
       // Compute the target acceleration
-      target_acceleration = (std::pow(maximum_speed, 2) - std::pow(*state.speed(), 2)) / (2 * speed_lookforward);
+      if (m_use_old_acceleration)
+        target_acceleration = (std::pow(maximum_speed, 2) - std::pow(*state.speed(), 2)) / (2 * speed_lookforward);
+      else
+        target_acceleration = (maximum_speed - *state.speed()) * m_acceleration_p;
 
       accel_sign = sign(target_acceleration);
 
