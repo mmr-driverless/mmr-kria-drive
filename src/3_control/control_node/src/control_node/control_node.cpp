@@ -65,7 +65,7 @@ void ControlNode::tick() {
   control::Control u = m_controller->control(t, x, path, closest_point, m_event_mgr.lap());
 
   // Override the controls to perform the start and stop maneuvers.
-  u = m_event_mgr.tick(t, x, u);
+  u = m_event_mgr.tick(t, x, u, path);
 
   // Actuate the control input.
   m_actuator_mgr.actuate_all(t, u);

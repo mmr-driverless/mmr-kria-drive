@@ -14,6 +14,7 @@
 #include <control_node/control/control.hpp>
 #include <control_node/estimation/ivehicle_state.hpp>
 #include <control_node/actuation/actuator_manager.hpp>
+#include <control_node/path/reference_path.hpp>
 
 namespace control_node {
 namespace event {
@@ -30,11 +31,24 @@ class EventManager {
   std::optional<AS::STATE> m_as_state;
   std::optional<int> m_lap;
 
+  struct RequiredSignals {
+    bool speed;
+    bool position;
+    bool yaw;
+    bool trajectory;
+
+    inline bool operator==(const RequiredSignals& other) const = default;
+    bool all() const { return speed && position && yaw && trajectory; }
+  };
+
+  std::optional<RequiredSignals> m_required_signals;
+
   enum class EventState {
     Idle = 0,
     WaitingForDriving,
     WaitingForBaseState,
     WaitingForActuators,
+    WaitingForSignals,
     Launch_SetLaunchControl,
     Launch_RevBeforeEngage,
     Launch_EngageClutch,
@@ -71,7 +85,7 @@ class EventManager {
   
   bool m_self_is_disabled_but_requested_actuators_enable; // fuck me
 
-  control::Control run_fsm(std::chrono::milliseconds t, const estimation::IVehicleState& x, const control::Control& u);
+  control::Control run_fsm(std::chrono::milliseconds t, const estimation::IVehicleState& x, const control::Control& u, const path::ReferencePath& refpath);
 
 public:
   EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger, const actuation::ActuatorManager& actuators);
@@ -79,7 +93,7 @@ public:
   void as_state_cb(std::shared_ptr<const std_msgs::msg::Int8> msg) { m_as_state = (AS::STATE)msg->data; }
   void race_status_cb(std::shared_ptr<const mmr_base::msg::RaceStatus> msg) { m_lap = msg->current_lap; }
 
-  control::Control tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u);
+  control::Control tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u, const path::ReferencePath& refpath);
 
   inline int lap() const { return m_lap.value_or(0); }
 };

@@ -152,6 +152,8 @@ private:
 
 public:
 
+  bool is_valid() const { return n_waypoints() > 1; }
+
   ReferencePath(std::span<Eigen::Vector2d> waypoints, PathData data, bool is_closed)
     : m_waypoints(waypoints), m_data(data), m_is_closed(is_closed)
   {
