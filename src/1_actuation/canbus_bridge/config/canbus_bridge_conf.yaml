@@ -19,6 +19,7 @@
       outputImuTopic: "/canbus/imu/data"
       controlLogTopic: "/control/log"
       raceStatusTopic: "/planning/race_status"
+      dataLoggerTopic: "/data_logger/log" 
       imuAllData: "/canbus/imu/all_data"
     gear:
       ctrLimit: 5

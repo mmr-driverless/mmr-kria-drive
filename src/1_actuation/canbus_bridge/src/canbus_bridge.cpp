@@ -29,6 +29,8 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
         this->m_sControlLogTopic, 1, std::bind(&CANBusBridge::msgControlLogCallback, this, std::placeholders::_1));
     this->m_subRaceStatus = this->create_subscription<mmr_base::msg::RaceStatus>(
         this->m_sLapCounterTopic, 1, std::bind(&CANBusBridge::msgRaceStatusCallback, this, std::placeholders::_1));
+    this->m_subDataLogger=this->create_subscription<can_msgs::msg::Frame>(
+        this->m_sDataLoggerTopic, 3, std::bind(&CANBusBridge::msgDataLoggerCallback, this, std::placeholders::_1));
 
     this->m_msgEcuStatus.checksum_steering_angle = 0;
     this->m_pubEcuStatus = this->create_publisher<mmr_base::msg::EcuStatus>(this->m_sEcuStatusTopic, qos);
@@ -69,6 +71,7 @@ void CANBusBridge::loadParameters()
     declare_parameter("topic.outputImuTopic", "");
     declare_parameter("topic.controlLogTopic", "");
     declare_parameter("topic.raceStatusTopic", "");
+    declare_parameter("topic.dataLoggerTopic", "");
     declare_parameter("topic.imuAllData", "");
 
     declare_parameter("gear.ctrLimit", 5);
@@ -103,6 +106,7 @@ void CANBusBridge::loadParameters()
     get_parameter("topic.outputImuTopic", this->m_sOutImuDataTopic);
     get_parameter("topic.controlLogTopic", this->m_sControlLogTopic);
     get_parameter("topic.raceStatusTopic", this->m_sLapCounterTopic);
+    get_parameter("topic.dataLoggerTopic", this->m_sDataLoggerTopic);
     get_parameter("topic.imuAllData", this->m_sImuAllDataTopic);
 
     get_parameter("gear.ctrLimit", this->m_unGearCtrLimit);
@@ -119,6 +123,26 @@ void CANBusBridge::loadParameters()
 
     get_parameter("24v.freq_div", this->m_nFreqDiv24V);
 }
+
+void CANBusBridge::msgDataLoggerCallback(const can_msgs::msg::Frame::SharedPtr msg){
+    if (this->m_bDebug)
+        RCLCPP_INFO(
+            this->get_logger(),
+            "[ RECV new MSG ] -> [ ID ]: %d, [ DLC ]: %d",
+            msg->id, msg->dlc
+        );
+
+    struct can_frame frame = {
+        .can_id = msg->id,
+        .len = msg->dlc,
+    };
+
+    memcpy(frame.data, &msg->data, CAN_MAX_DLEN);
+
+    if (write(this->m_nSocket, &frame, sizeof(struct can_frame)) != sizeof(struct can_frame))
+        RCLCPP_ERROR(this->get_logger(), "Error on write data to socket");
+}
+
 
 void CANBusBridge::connectCANBus()
 {
