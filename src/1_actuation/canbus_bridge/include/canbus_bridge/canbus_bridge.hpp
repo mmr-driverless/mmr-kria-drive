@@ -18,6 +18,8 @@
 #include <mmr_base/configuration.hpp>
 #include <canbus_bridge/ecu_control.hpp>
 #include "imu_helper.hpp"
+#include <can_msgs/msg/frame.hpp>
+
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
@@ -40,7 +42,7 @@ class CANBusBridge : public EDFNode
 
         std::string m_sInterface, m_sCmdEcuTopic, m_sLapCounterTopic;
         std::string m_sEcuStatusTopic, m_sResStatusTopic, m_sMissionSelectTopic;
-        std::string m_sActuatorsStatusTopic, m_sOutImuDataTopic, m_sControlLogTopic;
+        std::string m_sActuatorsStatusTopic, m_sOutImuDataTopic, m_sControlLogTopic, m_sDataLoggerTopic;
         int m_nBitrate, m_nMaxMsgs, m_nControlFreqDiv, m_nCtrFreqControl = 1;
         bool m_bDebug;
 
@@ -57,6 +59,10 @@ class CANBusBridge : public EDFNode
         /* Subscriber for Control Log */
         rclcpp::Subscription<mmr_base::msg::ControlLog>::SharedPtr m_subControlLog;
         void msgControlLogCallback(const mmr_base::msg::ControlLog::SharedPtr msg);
+
+        /* Subscriber for Control Log */
+        rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr m_subDataLogger;
+        void msgDataLoggerCallback(const can_msgs::msg::Frame::SharedPtr msg);
 
         /* Subscriber for Lap Counter */
         rclcpp::Subscription<mmr_base::msg::RaceStatus>::SharedPtr m_subRaceStatus;

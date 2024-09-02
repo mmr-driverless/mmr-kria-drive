@@ -18,6 +18,7 @@
       outputImuTopic: "/canbus/imu/data"
       controlLogTopic: "/control/log"
       raceStatusTopic: "/planning/race_status"
+      dataLoggerTopic: "/data_logger/log" 
     gear:
       ctrLimit: 5
       changeDeltaTime: 500 #ms
