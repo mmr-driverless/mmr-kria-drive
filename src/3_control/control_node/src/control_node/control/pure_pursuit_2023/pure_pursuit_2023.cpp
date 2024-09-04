@@ -5,6 +5,7 @@
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
 #include <control_node/control/pure_pursuit_2023/acc_to_brake_apps.hpp>
 #include <algorithm>
+#include <stdexcept>
 
 namespace control_node {
 namespace control {
@@ -57,14 +58,30 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_minSpeedDistance = p.get<double>("minSpeedDistance");
   m_minSpeed = p.get<double>("minSpeed");
   m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
-  m_second_gear_on_second_lap = p.get<bool>("second_gear_on_second_lap");
-  m_dynamic_change_gear = p.get<bool>("change_gear_logic");
-  m_min_up = p.get<double>("m_min_up");
-  m_max_up = p.get<double>("m_max_up");
-  m_min_down = p.get<double>("m_min_down");
-  m_max_down = p.get<double>("m_max_down");
   m_max_accel_sq = p.get<double>("max_accel");
   m_max_accel_sq *= m_max_accel_sq;
+
+  auto gear_p = p.subparams("gear_strategy");
+  m_fixed_gear = gear_p.get_maybe<int>("fixed_gear");
+  m_second_gear_from_lap = gear_p.get_maybe<int>("second_gear_from_lap");
+  m_automatic_shifting_from_lap =  gear_p.get_maybe<int>("automatic_shifting_from_lap");
+  
+  int gear_strategy_count = 
+      (m_fixed_gear.has_value()? 1:0)
+    + (m_second_gear_from_lap.has_value()? 1:0)
+    + (m_automatic_shifting_from_lap.has_value()? 1:0);
+
+  if (gear_strategy_count != 1) {
+    RCLCPP_FATAL(logger, "One and only one of the gear strategies must be selected!");
+    throw std::invalid_argument("gear_strategy");
+  }
+
+  if (m_automatic_shifting_from_lap.has_value()) {
+    m_min_up = gear_p.get<double>("min_up");
+    m_max_up = gear_p.get<double>("max_up");
+    m_min_down = gear_p.get<double>("min_down");
+    m_max_down = gear_p.get<double>("max_down");
+  }
 
   if (m_simplified_longitudinal_control_enabled) {
     m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
@@ -245,13 +262,19 @@ Control PurePursuit2023::control(
   }
 
   // Compute target gear
-  if (lap > 1 && m_second_gear_on_second_lap) {
-    u.gear = 2;
+  if (m_second_gear_from_lap.has_value()) {
+    if (m_second_gear_from_lap.value() >= lap)
+      u.gear = 2;
   }
-  else if (m_dynamic_change_gear) {
-    u.gear = this->gear_target(accel_sign, state);
+  else if (m_automatic_shifting_from_lap.has_value()) {
+    if (m_automatic_shifting_from_lap.value() >= lap)
+      u.gear = this->gear_target(accel_sign, state);
   }
-
+  else if (m_fixed_gear.has_value()) {
+    u.gear = m_fixed_gear.value();
+  } else {
+    assert(false && "None of the gear strategies were selected");
+  }
 
   mmr_base::msg::PurePursuitLog log_msg;
   log_msg.header.frame_id = "ocropoid";

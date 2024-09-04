@@ -84,14 +84,15 @@
         min_throttle: 0.0
         min_throttle_is_clamp: true
 
-        second_gear_on_second_lap: true
-        change_gear_logic: false
+        gear_strategy:
+          second_gear_from_lap: 2
 
-        m_min_up: 4500.0
-        m_max_up: 10000.0
+          # automatic_shifting_from_lap: 2
+          # min_up: 4500.0
+          # max_up: 10000.0
 
-        m_min_down: 3500.0
-        m_max_down: 7500.0
+          # min_down: 3500.0
+          # max_down: 7500.0
         
         max_accel: 3.0 # m/s^2
 

@@ -33,8 +33,9 @@ class PurePursuit2023 : public IController {
   double m_acceleration_p;
   bool m_use_old_acceleration;
 
-  bool m_second_gear_on_second_lap;
-  bool m_dynamic_change_gear;
+  std::optional<int> m_automatic_shifting_from_lap;
+  std::optional<int> m_second_gear_from_lap;
+  std::optional<int> m_fixed_gear;
 
   double m_min_up, m_max_up;
   double m_min_down, m_max_down;
