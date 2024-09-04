@@ -263,11 +263,11 @@ Control PurePursuit2023::control(
 
   // Compute target gear
   if (m_second_gear_from_lap.has_value()) {
-    if (m_second_gear_from_lap.value() >= lap)
+    if (lap >= m_second_gear_from_lap.value())
       u.gear = 2;
   }
   else if (m_automatic_shifting_from_lap.has_value()) {
-    if (m_automatic_shifting_from_lap.value() >= lap)
+    if (lap >= m_automatic_shifting_from_lap.value())
       u.gear = this->gear_target(accel_sign, state);
   }
   else if (m_fixed_gear.has_value()) {
