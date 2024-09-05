@@ -25,6 +25,7 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_lc_duration_after_launch(std::chrono::milliseconds(p.get<int>("lc_duration_after_launch_ms"))),
     m_stop_light_brake(p.get<double>("stop_light_brake")),
     m_stop_hard_brake(p.get<double>("stop_hard_brake")),
+    m_wait_for_required_signals(p.get<bool>("wait_for_required_signals")),
     m_self_is_disabled_but_requested_actuators_enable(false)
 {
   auto dur = p.get_maybe<int>("mission_duration_ms");
@@ -86,6 +87,10 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
       );
 
     case EventState::WaitingForSignals:
+      if (!m_wait_for_required_signals) {
+        RCLCPP_INFO(m_logger, "Required signals wait is disabled from config!");
+      }
+
       {
         RequiredSignals sig;
         sig.position = x.position().has_value();
@@ -98,7 +103,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
           m_required_signals = sig;
         }
 
-        if (sig.all()) {
+        if (sig.all() || !m_wait_for_required_signals) {
           RCLCPP_INFO(m_logger, "Activating Launch Control...");
           m_event_state = EventState::Launch_SetLaunchControl;
         }

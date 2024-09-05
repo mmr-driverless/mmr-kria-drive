@@ -82,6 +82,8 @@ class EventManager {
 
   double m_stop_light_brake;
   double m_stop_hard_brake;
+
+  bool m_wait_for_required_signals;
   
   bool m_self_is_disabled_but_requested_actuators_enable; // fuck me
 
