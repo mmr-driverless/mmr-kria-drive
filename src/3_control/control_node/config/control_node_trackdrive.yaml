@@ -65,6 +65,8 @@
       stop_light_brake: 0.15
       stop_hard_brake: 0.4
       lc_duration_after_launch_ms: 1000
+
+      wait_for_required_signals: true
       
       standstill_speed_m_s: 0.3
       standstill_time_ms: 2000
