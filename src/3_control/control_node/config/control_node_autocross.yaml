@@ -91,6 +91,8 @@
         
         max_accel: 3.0 # m/s^2
 
+        keep_launch: false
+
         low_level_longitudinal_controller:
           simplified: false
           # apps_p: 0.7

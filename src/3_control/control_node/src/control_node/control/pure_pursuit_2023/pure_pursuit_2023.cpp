@@ -60,6 +60,7 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
   m_max_accel_sq = p.get<double>("max_accel");
   m_max_accel_sq *= m_max_accel_sq;
+  m_keep_launch = p.get<bool>("keep_launch");
 
   auto gear_p = p.subparams("gear_strategy");
   m_fixed_gear = gear_p.get_maybe<int>("fixed_gear");
@@ -275,6 +276,9 @@ Control PurePursuit2023::control(
   } else {
     assert(false && "None of the gear strategies were selected");
   }
+
+  if (m_keep_launch)
+    u.launch = Control::LaunchControl::Set;
 
   mmr_base::msg::PurePursuitLog log_msg;
   log_msg.header.frame_id = "ocropoid";
