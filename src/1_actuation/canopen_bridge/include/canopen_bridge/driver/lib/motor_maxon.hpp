@@ -52,7 +52,9 @@ class MaxonMotor
         void toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS nType);
 
         /* needs to restore fault error */
-        void clearFault() { this->download<uint16_t>(0x6040, 0x00, 0x0080); }
+        void clearFault() {
+            this->download<uint16_t>(0x6040, 0x00, 0x0080); 
+        }
 
     public:
 
