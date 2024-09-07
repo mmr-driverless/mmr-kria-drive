@@ -27,11 +27,20 @@ class PurePursuit2023 : public IController {
 
   double m_max_accel_sq;
 
-  bool m_simplified_longitudinal_control_enabled;
-  double m_simple_long_apps_p;
-  double m_simple_long_brake_p;
-  double m_acceleration_p;
-  bool m_use_old_acceleration;
+  struct SimplifiedLongitudinalControlParams {
+    double apps_p;
+    double brake_p;
+  };
+
+  struct NewAccelerationParams {
+    double acceleration_p;
+  };
+
+  struct DynamicTargetSpeedParams {
+    int slowLaps;
+    double maxSpeed;
+    double targetSpeedWeight;
+  };
 
   bool m_keep_launch;
 
@@ -42,12 +51,9 @@ class PurePursuit2023 : public IController {
   double m_min_up, m_max_up;
   double m_min_down, m_max_down;
 
-  struct {
-    bool enabled;
-    int slowLaps;
-    double maxSpeed;
-    double targetSpeedWeight;
-  } m_dynamicTargetSpeed;
+  std::optional<NewAccelerationParams> m_new_accel_params;
+  std::optional<SimplifiedLongitudinalControlParams> m_simple_long_params;
+  std::optional<DynamicTargetSpeedParams> m_dynamic_target_speed;
   
   typedef struct {
     double x;

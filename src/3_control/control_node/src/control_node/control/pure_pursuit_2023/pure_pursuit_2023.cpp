@@ -57,7 +57,6 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_steerGain = p.get<double>("steerGain");
   m_minSpeedDistance = p.get<double>("minSpeedDistance");
   m_minSpeed = p.get<double>("minSpeed");
-  m_simplified_longitudinal_control_enabled = p.get<bool>("low_level_longitudinal_controller.simplified");
   m_max_accel_sq = p.get<double>("max_accel");
   m_max_accel_sq *= m_max_accel_sq;
   m_keep_launch = p.get<bool>("keep_launch");
@@ -84,21 +83,26 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
     m_max_down = gear_p.get<double>("max_down");
   }
 
-  if (m_simplified_longitudinal_control_enabled) {
-    m_simple_long_apps_p = p.get<double>("low_level_longitudinal_controller.apps_p");
-    m_simple_long_brake_p = p.get<double>("low_level_longitudinal_controller.brake_p");
+  if (p.get<bool>("low_level_longitudinal_controller.simplified")) {
+    m_simple_long_params = {
+      .apps_p = p.get<double>("low_level_longitudinal_controller.apps_p"),
+      .brake_p = p.get<double>("low_level_longitudinal_controller.brake_p")
+    };
   } else {
-    m_use_old_acceleration = p.get<bool>("low_level_longitudinal_controller.use_old_acceleration");
-    if (!m_use_old_acceleration)
-      m_acceleration_p = p.get<double>("low_level_longitudinal_controller.acceleration_p");
+    if (not p.get<bool>("low_level_longitudinal_controller.use_old_acceleration")) {
+      m_new_accel_params = {
+        .acceleration_p = p.get<double>("low_level_longitudinal_controller.acceleration_p")
+      };
+    }
   }
 
   auto dyn_speed_p = p.subparams("dynamicTargetSpeed");
-  m_dynamicTargetSpeed.enabled = dyn_speed_p.get<bool>("enabled");
-  if (m_dynamicTargetSpeed.enabled) {
-    m_dynamicTargetSpeed.slowLaps = dyn_speed_p.get<int>("slowLaps");
-    m_dynamicTargetSpeed.maxSpeed = dyn_speed_p.get<double>("maxSpeed");
-    m_dynamicTargetSpeed.targetSpeedWeight = dyn_speed_p.get<double>("targetSpeedWeight");
+  if (dyn_speed_p.get<bool>("enabled")) {
+    m_dynamic_target_speed = {
+      .slowLaps = dyn_speed_p.get<int>("slowLaps"),
+      .maxSpeed = dyn_speed_p.get<double>("maxSpeed"),
+      .targetSpeedWeight = dyn_speed_p.get<double>("targetSpeedWeight")
+    };
   }
 
   m_viz_mgr = &viz_mgr;
@@ -184,7 +188,7 @@ Control PurePursuit2023::control(
 
   // Compute the maximum speed
   double maximum_speed = m_minSpeed;
-  if (m_dynamicTargetSpeed.enabled && lap > m_dynamicTargetSpeed.slowLaps) {
+  if (m_dynamic_target_speed.has_value() && lap > m_dynamic_target_speed->slowLaps) {
     // Use dynamic target speed
 
     if (!m_using_dynamic_speed) {
@@ -199,9 +203,9 @@ Control PurePursuit2023::control(
       if (auto max_speed_opt = reference_path.get_target_speed(speed_target_ref))
         maximum_speed = *max_speed_opt;
     }
-  }
 
-  maximum_speed = std::clamp<double>(maximum_speed, m_minSpeed, m_dynamicTargetSpeed.maxSpeed);
+    maximum_speed = std::clamp<double>(maximum_speed, m_minSpeed, m_dynamic_target_speed->maxSpeed);
+  }
 
   viz(targetPosition);
 
@@ -211,18 +215,18 @@ Control PurePursuit2023::control(
   int accel_sign = 0;
   double target_acceleration = NAN;
   if (state.speed().has_value()) {
-    if (m_simplified_longitudinal_control_enabled) {
+    if (m_simple_long_params.has_value()) {
       // Use a simple P control (useful for the simulator)
       double error = maximum_speed - state.speed().value();
       accel_sign = sign(error);
-      u.throttle = m_simple_long_apps_p * std::max(error, 0.0);
-      u.brake = m_simple_long_brake_p * std::max(-error, 0.0);
+      u.throttle = m_simple_long_params->apps_p * std::max(error, 0.0);
+      u.brake = m_simple_long_params->brake_p * std::max(-error, 0.0);
     } else {
       // Compute the target acceleration
-      if (m_use_old_acceleration)
-        target_acceleration = (std::pow(maximum_speed, 2) - std::pow(*state.speed(), 2)) / (2 * speed_lookforward);
+      if (m_new_accel_params.has_value())
+        target_acceleration = (maximum_speed - *state.speed()) * m_new_accel_params->acceleration_p;
       else
-        target_acceleration = (maximum_speed - *state.speed()) * m_acceleration_p;
+        target_acceleration = (std::pow(maximum_speed, 2) - std::pow(*state.speed(), 2)) / (2 * speed_lookforward);
 
       accel_sign = sign(target_acceleration);
 
