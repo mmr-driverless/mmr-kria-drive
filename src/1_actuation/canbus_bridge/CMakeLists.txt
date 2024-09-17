@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.8)
 project(canbus_bridge)
 set (CMAKE_CXX_STANDARD 20)
 
+# Whether to log the execution times to a file
+set(EDF_MEASURE_EXECUTION_TIME ON)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -29,6 +32,14 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 
 add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
+
+if (EDF_MEASURE_EXECUTION_TIME)
+  message("EDF Execution time logging ENABLED")
+  target_compile_definitions(${PROJECT_NAME}_node PUBLIC EDF_MEASURE_EXECUTION_TIME)
+else()
+  message("EDF Execution time logging DISABLED")
+endif ()
+
 
 ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp
