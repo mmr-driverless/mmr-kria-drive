@@ -43,7 +43,7 @@ class MaxonMotor
             // TODO: gestire nel caso in cui (rx->header >> (header_size - 1)) != 0
             //       è un errore -> cambiare stato del motore dello sterzo
 
-            return MOTOR::ERROR_IDX::FAILED_MAXON_IDX;
+            return MOTOR::ERROR_IDX::OK_IDX;
         }
 
         void init();
@@ -52,9 +52,7 @@ class MaxonMotor
         void toggle_new_pos(MOTOR::IDX_TOGGLE_NEW_POS nType);
 
         /* needs to restore fault error */
-        void clearFault() {
-            this->download<uint16_t>(0x6040, 0x00, 0x0080); 
-        }
+        void clearFault() { this->download<uint16_t>(0x6040, 0x00, 0x0080); }
 
     public:
 
