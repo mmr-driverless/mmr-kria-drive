@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
   try
   {
     #ifdef EDF_MEASURE_EXECUTION_TIME
-    std::ofstream porcoddio("canbus_times.txt");
+    std::ofstream porcoddio("canbus_times.csv");
     #endif
 
     rclcpp::executors::StaticSingleThreadedExecutor executor;
@@ -46,7 +46,7 @@ int main(int argc, char * argv[])
 
       #ifdef EDF_MEASURE_EXECUTION_TIME
       auto end_t = std::chrono::steady_clock::now();
-      porcoddio << std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count() << "\n";
+      porcoddio << std::chrono::duration_cast<std::chrono::nanoseconds>(start_t.time_since_epoch()).count() << "," << std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count() << "\n";
       #endif
       
       sched_yield();
