@@ -69,9 +69,9 @@ class MaxonClutch : private MaxonMotor
             return MOTOR::ACTUATOR_STATUS::ENGAGE;
         }
 
-        void restoreClutch(){
+        void restoreClutch() {
             this->clearFault();
-            this->init();
+            this->initClutch();
         }
 
         ~MaxonClutch () { this->disable(); }
