@@ -1,4 +1,7 @@
 #include <typeinfo>
+#if defined(EDF_MEASURE_EXECUTION_TIME) && defined(USE_EDF)
+#include <chrono>
+#endif
 
 #include <control_node/control_node.hpp>
 
@@ -22,6 +25,10 @@ int main(int argc, char * argv[])
   /* node initialization */
   rclcpp::init(argc, argv);
 
+  #ifdef EDF_MEASURE_EXECUTION_TIME
+  std::ofstream porcoddio("times.txt");
+  #endif
+
   try {
     rclcpp::executors::StaticSingleThreadedExecutor executor;
     auto node = std::make_shared<control_node::ControlNode>();
@@ -30,8 +37,18 @@ int main(int argc, char * argv[])
   #ifdef USE_EDF
     while (!stop)
     {
+      #ifdef EDF_MEASURE_EXECUTION_TIME
+      auto start_t = std::chrono::steady_clock::now();
+      #endif
+
       executor.spin_all(std::chrono::duration_cast<std::chrono::nanoseconds>(node->tick_interval()) / 2);
       node->tick();
+
+      #ifdef EDF_MEASURE_EXECUTION_TIME
+      auto end_t = std::chrono::steady_clock::now();
+      porcoddio << std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count() << "\n";
+      #endif
+
       sched_yield();
     }
   #else
