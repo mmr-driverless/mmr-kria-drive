@@ -1,4 +1,11 @@
+
+#ifdef EDF_MEASURE_EXECUTION_TIME
+#include <fstream>
+#include <chrono>
+#endif
+
 #include <canopen_bridge/canopen_bridge.hpp>
+
 
 void handleSignal(int signal) {
     if (signal == SIGINT) {
@@ -17,15 +24,29 @@ int main(int argc, char * argv[])
 
   try
   {
+    #ifdef EDF_MEASURE_EXECUTION_TIME
+    std::ofstream porcoddio("canopen_times.txt");
+    #endif
+
     rclcpp::executors::StaticSingleThreadedExecutor executor;
     auto node = std::make_shared<CANOpenBridge>();
     executor.add_node(node);
     
     while (true)
     {
+      #ifdef EDF_MEASURE_EXECUTION_TIME
+      auto start_t = std::chrono::steady_clock::now();
+      #endif
+
       executor.spin_all(10ms);
       node->monitorSteer();
       node->sendActuatorStatus();
+
+      #ifdef EDF_MEASURE_EXECUTION_TIME
+      auto end_t = std::chrono::steady_clock::now();
+      porcoddio << std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count() << "\n";
+      #endif
+
       sched_yield();
     }
 
