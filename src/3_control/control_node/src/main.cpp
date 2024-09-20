@@ -41,12 +41,18 @@ int main(int argc, char * argv[])
       auto start_t = std::chrono::steady_clock::now();
       #endif
 
-      executor.spin_all(std::chrono::duration_cast<std::chrono::nanoseconds>(node->tick_interval()) / 2);
+      executor.spin_all(6ms);
       node->tick();
 
       #ifdef EDF_MEASURE_EXECUTION_TIME
       auto end_t = std::chrono::steady_clock::now();
-      porcoddio << std::chrono::duration_cast<std::chrono::nanoseconds>(start_t.time_since_epoch()).count() << "," << std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count() << "\n";
+      unsigned int cpu_number;
+      getcpu(&cpu_number, NULL);
+      porcoddio
+        << std::chrono::duration_cast<std::chrono::nanoseconds>(start_t.time_since_epoch()).count()
+        << "," << std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count()
+        << "," << cpu_number
+        << "\n";
       #endif
 
       sched_yield();
