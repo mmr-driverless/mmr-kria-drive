@@ -4,7 +4,7 @@
       interface: can1
       bitrate: 1000000
       debug: false
-      WCET: 5000000 # ms
+      WCET: 4000000 # ms
       period: 10000000 # 10ms
       deadline: 10000000
     topic:
