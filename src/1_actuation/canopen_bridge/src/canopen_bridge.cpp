@@ -67,7 +67,6 @@ void CANOpenBridge::loadParameters()
     declare_parameter("brake.return_pedal_torque", -20);
     declare_parameter("brake.timeout_msgs", 5);
     declare_parameter("brake.monitor_freq", 5);
-    declare_parameter("brake.delta_max", 150);
 
     declare_parameter("clutch.node_id", 16);
     declare_parameter("clutch.velocity", 3500);
@@ -104,8 +103,6 @@ void CANOpenBridge::loadParameters()
     get_parameter("brake.return_pedal_torque", this->m_nReturnPedalTorque);
     get_parameter("brake.timeout_msgs", this->m_nTimeoutMsgBrake);
     get_parameter("brake.monitor_freq", this->m_nFreqScaleBrake);
-    get_parameter("brake.delta_max", this->m_nBrakeDelta);
-
 
     get_parameter("clutch.node_id", this->m_nClutchId);
     get_parameter("clutch.velocity", this->m_nVelocityClutch);
@@ -182,7 +179,7 @@ void CANOpenBridge::msgCmdBrakeCallback(mmr_base::msg::CmdMotor::SharedPtr msg)
         /* Enables the brake motor in CST */
         this->m_mBrake = new MaxonBrake(
             this->m_nSocket, this->m_nBrakeId, this->m_nTimeoutMsgBrake,
-            this->m_nMaxTorque, m_nReturnPedalTorque, this->m_nBrakeDelta
+            this->m_nMaxTorque, m_nReturnPedalTorque
         );
 
         uint32_t nMaxTorqueNominal = this->m_mBrake->upload<uint32_t>(0x6076, 0x00);

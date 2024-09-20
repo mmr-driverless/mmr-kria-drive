@@ -3,8 +3,8 @@
     generic:
       interface: can1
       bitrate: 1000000
-      debug: true
-      WCET: 5000000 # ms
+      debug: false
+      WCET: 4000000 # ms
       period: 10000000 # 10ms
       deadline: 10000000
     topic:
@@ -29,7 +29,6 @@
       return_pedal_torque: -20
       timeout_msgs: 2
       monitor_freq: 100
-      delta_max: 150
     clutch:
       node_id: 16
       velocity: 3500

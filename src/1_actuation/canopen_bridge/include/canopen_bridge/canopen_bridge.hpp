@@ -48,8 +48,6 @@ class CANOpenBridge : public EDFNode
 
         /* Brake parameters */
         int m_nBrakeId, m_nMaxTorque, m_nReturnPedalTorque, m_nTimeoutMsgBrake, m_nFreqScaleBrake, m_nCtrBrake = 1;
-        double m_nBrakeDelta;
-
 
         /* Clutch parameters */
         int m_nClutchId, m_nVelocityClutch, m_nMonitorClutch, m_nCountClutch = 1, m_nTimeoutMsgClutch;
