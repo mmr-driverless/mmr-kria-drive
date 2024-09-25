@@ -35,8 +35,8 @@ class MaxonClutch : private MaxonMotor
             this->m_aMotorSteps = m_aMotorSteps;
             this->m_aPotVal     = m_aPotVal;
 
-            for (int i = 0; i < 10; i++)
-                this->initClutch();
+            // for (int i = 0; i < 10; i++)
+            this->initClutch();
         }
 
         MOTOR::ACTUATOR_STATUS disengage (float fClutchPot) {
