@@ -57,6 +57,10 @@ class CANOpenBridge : public EDFNode
         std::vector<long int> m_aMotorSteps;
         std::vector<double> m_aPotVal;
 
+        // check power consuption of maxon motor
+        int m_nTimeFreq, m_nCtrFreq = 1;
+        std::string m_sPathToLog;
+
         /* Subscriber for CANOpen Command Msg */
         rclcpp::Subscription<mmr_base::msg::CmdMotor>::SharedPtr m_subCmdSteer;
         void msgCmdSteerCallback(mmr_base::msg::CmdMotor::SharedPtr msg);
@@ -114,6 +118,7 @@ class CANOpenBridge : public EDFNode
 
         void monitorSteer();
         void sendActuatorStatus();
+        void logMaxonPower();
 
         ~CANOpenBridge() { close(this->m_nSocket); };
 

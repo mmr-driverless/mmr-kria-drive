@@ -42,6 +42,10 @@ int main(int argc, char * argv[])
       node->monitorSteer();
       node->sendActuatorStatus();
 
+      #ifdef LOG_POWER_CONSUPTION_ACT
+      node->logMaxonPower();
+      #endif
+
       #ifdef EDF_MEASURE_EXECUTION_TIME
       auto end_t = std::chrono::steady_clock::now();
       unsigned int cpu_number;

@@ -3,7 +3,8 @@ project(canopen_bridge)
 set (CMAKE_CXX_STANDARD 20)
 
 # Whether to log the execution times to a file
-set(EDF_MEASURE_EXECUTION_TIME ON)
+set(EDF_MEASURE_EXECUTION_TIME OFF)
+set(LOG_POWER_CONSUPTION_ACT ON)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
