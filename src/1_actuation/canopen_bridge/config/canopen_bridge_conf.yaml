@@ -50,4 +50,4 @@
         - 2.5
     maxon_power:
       time_freq: 10
-      file: ""
+      file: "/home/root/powerconsumption.csv"

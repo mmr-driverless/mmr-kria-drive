@@ -3,6 +3,9 @@
 CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
 {
     this->loadParameters();
+    RCLCPP_INFO(this->get_logger(), "[ INFO ] FILE: %s", this->m_sPathToLog.c_str());
+    RCLCPP_INFO(this->get_logger(), "[ INFO ] freq: %d", this->m_nTimeFreq);
+    
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
     this->connectCANBus();
     
@@ -76,7 +79,7 @@ void CANOpenBridge::loadParameters()
     declare_parameter<std::vector<double>>("clutch.pot_val", std::vector<double>());
 
     declare_parameter("maxon_power.time_freq", 10);
-    declare_parameter("maxon_power.file", "/root/powerconsuption.csv");
+    declare_parameter("maxon_power.file", "");
     
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
@@ -370,6 +373,7 @@ void CANOpenBridge::logMaxonPower()
     this->m_nCtrFreq = 1;
 
     std::ofstream log(this->m_sPathToLog);
+    RCLCPP_INFO(this->get_logger(), "enter into logMaxonPower");
 
     if ((this->m_mSteer != nullptr) && (this->m_mBrake != nullptr)) {
         
@@ -378,12 +382,16 @@ void CANOpenBridge::logMaxonPower()
         uint16_t uSteerVolt = this->m_mSteer->upload<uint16_t>(0x2200, 0x01);
         float fSteerVolt = ( (float) uSteerVolt / 10);
 
+        RCLCPP_INFO(this->get_logger(), "[ STEER CURRENT ]: %d, [ STEER VOLTAGE ]: %f", nSteerCur, fSteerVolt);
+
         // Brake
         int nBrakeCur = this->m_mBrake->upload<int>(0x30D0, 0x00);
         uint16_t uBrakeVolt = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
         float fBrakeVolt = ( (float) uBrakeVolt / 10);
 
-        log << fSteerVolt << nSteerCur << fBrakeVolt << nBrakeCur;
+        RCLCPP_INFO(this->get_logger(), "[ BRAKE CURRENT ]: %d, [ BRAKE VOLTAGE ]: %f", nBrakeCur, fBrakeVolt);
+
+        log << "," << fSteerVolt << "," << nSteerCur << "," << fBrakeVolt << "," << nBrakeCur << "\n";
 
     }
 }
