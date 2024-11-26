@@ -372,20 +372,21 @@ void CANOpenBridge::logMaxonPower()
     }
     this->m_nCtrFreq = 1;
 
-    std::ofstream log(this->m_sPathToLog);
     RCLCPP_INFO(this->get_logger(), "enter into logMaxonPower");
 
     if ((this->m_mSteer != nullptr) && (this->m_mBrake != nullptr)) {
         
+        std::ofstream log(this->m_sPathToLog, std::ofstream::app);
+        
         // Steer 
-        int nSteerCur = this->m_mSteer->upload<int>(0x30D0, 0x00);
+        int nSteerCur = this->m_mSteer->upload<int>(0x30D1, 0x01);
         uint16_t uSteerVolt = this->m_mSteer->upload<uint16_t>(0x2200, 0x01);
         float fSteerVolt = ( (float) uSteerVolt / 10);
 
         RCLCPP_INFO(this->get_logger(), "[ STEER CURRENT ]: %d, [ STEER VOLTAGE ]: %f", nSteerCur, fSteerVolt);
 
         // Brake
-        int nBrakeCur = this->m_mBrake->upload<int>(0x30D0, 0x00);
+        int nBrakeCur = this->m_mBrake->upload<int>(0x30D1, 0x01);
         uint16_t uBrakeVolt = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
         float fBrakeVolt = ( (float) uBrakeVolt / 10);
 
