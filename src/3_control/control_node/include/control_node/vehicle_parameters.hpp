@@ -2,7 +2,10 @@
 #define CONTROLNODE_VEHICLEPARAMETERS_HPP
 
 #include <control_node/parameters.hpp>
+#include <rclcpp/logger.hpp>
+#include <stdexcept>
 #include <vector>
+#include <Eigen/Dense>
 
 namespace control_node {
 
@@ -30,12 +33,17 @@ class VehicleParameters {
   std::vector<double> m_gear_ratios; 
   std::vector<double> m_NMOTVET_rpm;
   std::vector<double> m_CDC_Nm;
-  std::vector<double> m_apps_map_x;
+  std::vector<double> m_apps_map_rpm;
+  Eigen::MatrixXd m_apps_map_x;
   std::vector<double> m_apps_map_y;
-  
+
+  double m_brake_potential_deceleration;
+  double m_curv_cutoff_radps;
+
+  rclcpp::Logger m_logger;
 
 public:
-  VehicleParameters(const Parameters& p)
+  VehicleParameters(const Parameters& p, rclcpp::Logger logger)
     : m_wheelbase_m(p.get<double>("wheelbase_m")),
       m_lr_m(p.get<double>("lr_m")),
       m_steering_ratio(p.get<double>("steering_ratio")),
@@ -59,9 +67,22 @@ public:
       m_gear_ratios(p.get<std::vector<double>>("gear_ratios")),
       m_NMOTVET_rpm(p.get<std::vector<double>>("nmotvet_rpm")),
       m_CDC_Nm(p.get<std::vector<double>>("cdc_Nm")),
-      m_apps_map_x(p.get<std::vector<double>>("apps_map_x")),
-      m_apps_map_y(p.get<std::vector<double>>("apps_map_y"))
-  {}
+      m_apps_map_rpm(p.get<std::vector<double>>("apps_map_rpm")),
+      m_apps_map_y(p.get<std::vector<double>>("apps_map_y")),
+      m_brake_potential_deceleration(p.get<double>("brake_potential_deceleration_m_s_2")),
+      m_curv_cutoff_radps(p.get<double>("curv_cutoff_radps")),
+      m_logger(logger)
+  {
+    auto map_x = p.get<std::vector<double>>("apps_map_x");
+    auto M = m_apps_map_rpm.size();
+    auto N = m_apps_map_y.size();
+
+    if (map_x.size() != M * N) {
+      throw std::invalid_argument("Wrong size for apps_map_x");
+    }
+
+    m_apps_map_x = Eigen::Map<Eigen::MatrixXd>(map_x.data(), N, M);
+  }
 
   double wheelbase_m() const { return m_wheelbase_m; }
   double lr_m() const { return m_lr_m; }
@@ -86,8 +107,12 @@ public:
   const std::vector<double>& gear_ratios() const { return m_gear_ratios; }
   const std::vector<double>& NMOVET_rpm() const { return m_NMOTVET_rpm; }
   const std::vector<double>& CDC_Nm() const { return m_CDC_Nm; }
-  const std::vector<double>& apps_map_x() const { return m_apps_map_x; }
+  const Eigen::MatrixXd& apps_map_x() const { return m_apps_map_x; }
   const std::vector<double>& apps_map_y() const { return m_apps_map_y; }
+  const std::vector<double>& apps_map_rpm() const { return m_apps_map_rpm; }
+
+  double brake_potential_deceleration() const { return m_brake_potential_deceleration; }
+  double curv_cutoff_radps() const { return m_curv_cutoff_radps; }
 };
 
 };

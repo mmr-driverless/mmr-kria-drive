@@ -7,6 +7,8 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 set(USE_KRIA_MSGS ON)
 # Whether to use the EDF scheduler or not
 set(USE_EDF ON)
+# Whether to log the execution times to a file (only if USE_EDF is ON)
+set(EDF_MEASURE_EXECUTION_TIME ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -37,6 +39,7 @@ add_executable(control_node
 
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
   src/control_node/control/inspection/inspection.cpp
+  src/control_node/control/long_step_response/long_step_response.cpp
   src/control_node/control/controller_factory.cpp
 
   src/control_node/event/event_manager.cpp
@@ -71,6 +74,13 @@ if (USE_EDF)
   ament_target_dependencies(control_node mmr_edf)
 else ()
   message("EDF scheduling DISABLED")
+endif ()
+
+if (EDF_MEASURE_EXECUTION_TIME)
+  message("EDF Execution time logging ENABLED")
+  target_compile_definitions(control_node PUBLIC EDF_MEASURE_EXECUTION_TIME)
+else()
+  message("EDF Execution time logging DISABLED")
 endif ()
 
 install(

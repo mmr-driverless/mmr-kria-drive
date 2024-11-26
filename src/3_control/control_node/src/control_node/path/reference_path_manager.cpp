@@ -9,11 +9,12 @@
 namespace control_node {
 namespace path {
 
-ReferencePathManager::ReferencePathManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger)
+ReferencePathManager::ReferencePathManager(rclcpp::Node* node, const Parameters& p, const VehicleParameters& vp, rclcpp::Logger logger)
   : m_max_activated_source_idx(0),
     m_changed(false),
     m_dump_paths_uid(0),
-    m_logger(logger)
+    m_logger(logger),
+    m_vp(vp)
 {
 
   m_sources = sources::get_factory().from_param_list(p, "sources", [this, &node](sources::ReferencePathSource& src, int idx, const Parameters& p_i, const std::string&) {
@@ -69,7 +70,7 @@ void ReferencePathManager::on_source_notification(int source_id, size_t path_siz
   );
   data.metadata = result.data_metadata;
   m_path = ReferencePath(m_waypoints, data, result.is_closed);
-  m_path.compute_data();
+  m_path.compute_data(m_vp);
 
   if (m_dump_paths_dir.has_value()) {
     m_path.dump(*m_dump_paths_dir / (std::to_string(m_dump_paths_uid) + "_src" + std::to_string(source_id) + ".csv"));

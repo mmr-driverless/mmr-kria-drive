@@ -25,6 +25,7 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
     m_lc_duration_after_launch(std::chrono::milliseconds(p.get<int>("lc_duration_after_launch_ms"))),
     m_stop_light_brake(p.get<double>("stop_light_brake")),
     m_stop_hard_brake(p.get<double>("stop_hard_brake")),
+    m_wait_for_required_signals(p.get<bool>("wait_for_required_signals")),
     m_self_is_disabled_but_requested_actuators_enable(false)
 {
   auto dur = p.get_maybe<int>("mission_duration_ms");
@@ -41,7 +42,7 @@ EventManager::EventManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logg
   }
 }
 
-control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estimation::IVehicleState& x, const control::Control& u) {
+control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estimation::IVehicleState& x, const control::Control& u, const path::ReferencePath& refpath) {
   switch (m_event_state) {
     case EventState::Idle:
       RCLCPP_INFO(m_logger, "Waiting for the AS State to be DRIVING.");
@@ -62,7 +63,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
       // Wait for disengaged clutch and 1st gear
       if (x.clutch_is_engaged().has_value() && !x.clutch_is_engaged().value()) {
         if (x.gear().has_value() && x.gear().value() == 1) {
-          RCLCPP_INFO(m_logger, "Enabling all actuators.");
+          RCLCPP_INFO(m_logger, "Enabling all actuators and waiting for them to be enabled...");
           m_actuators.request_enable_all();
           m_event_state = EventState::WaitingForActuators;
         }
@@ -72,8 +73,8 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
 
     case EventState::WaitingForActuators:
       if (m_actuators.all_enabled()) {
-        RCLCPP_INFO(m_logger, "Activating Launch Control...");
-        m_event_state = EventState::Launch_SetLaunchControl;
+        RCLCPP_INFO(m_logger, "Waiting for mandatory signals to be ready...");
+        m_event_state = EventState::WaitingForSignals;
       }
       // Actuators may start actuating this input at any time. We mantain the base state that we previously ensured the car was in.
       return control::Control(
@@ -84,6 +85,39 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
         1,
         control::Control::LaunchControl::Unset
       );
+
+    case EventState::WaitingForSignals:
+      if (!m_wait_for_required_signals) {
+        RCLCPP_INFO(m_logger, "Required signals wait is disabled from config!");
+      }
+
+      {
+        RequiredSignals sig;
+        sig.position = x.position().has_value();
+        sig.yaw = x.yaw().has_value();
+        sig.speed = x.speed().has_value();
+        sig.trajectory = refpath.is_valid();
+
+        if (!m_required_signals.has_value() || sig != m_required_signals.value()) {
+          RCLCPP_INFO(m_logger, "Required signals availability changed (pos: %s, yaw: %s, speed: %s, trajectory: %s).", sig.position?"T":"F", sig.yaw?"T":"F", sig.speed?"T":"F", sig.trajectory?"T":"F");
+          m_required_signals = sig;
+        }
+
+        if (sig.all() || !m_wait_for_required_signals) {
+          RCLCPP_INFO(m_logger, "Activating Launch Control...");
+          m_event_state = EventState::Launch_SetLaunchControl;
+        }
+      }
+
+      return control::Control(
+        0.0,
+        0.0,
+        m_launch_brake,
+        control::Control::Clutch::Disengaged,
+        1,
+        control::Control::LaunchControl::Unset
+      );
+
     
     case EventState::Launch_SetLaunchControl:
       if (x.lc_is_active().has_value() && x.lc_is_active().value()) {
@@ -251,7 +285,7 @@ control::Control EventManager::run_fsm(std::chrono::milliseconds t, const estima
   }
 }
 
-control::Control EventManager::tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u) {
+control::Control EventManager::tick(std::chrono::nanoseconds t, const estimation::IVehicleState& x, const control::Control& u, const path::ReferencePath& refpath) {
   // If the EventManager is not active
   if (!m_enabled) {
     // Then we should enable all actuators (once)
@@ -283,7 +317,7 @@ control::Control EventManager::tick(std::chrono::nanoseconds t, const estimation
       return ans;
     }
 
-    ans = run_fsm(std::chrono::duration_cast<std::chrono::milliseconds>(t), x, u);
+    ans = run_fsm(std::chrono::duration_cast<std::chrono::milliseconds>(t), x, u, refpath);
     ++i;
   }
 

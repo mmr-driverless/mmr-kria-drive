@@ -8,9 +8,11 @@
 #include <span>
 #include <fstream>
 
+#include <control_node/vehicle_parameters.hpp>
 #include <control_node/path/geometry_helpers.hpp>
 #include <control_node/path/non_uniform_first_order_filter.hpp>
 #include <control_node/path/max_speed_eval.hpp>
+#include <control_node/path/brake_velocity_saturation.hpp>
 
 namespace control_node {
 namespace path {
@@ -149,6 +151,8 @@ private:
   }
 
 public:
+
+  bool is_valid() const { return n_waypoints() > 1; }
 
   ReferencePath(std::span<Eigen::Vector2d> waypoints, PathData data, bool is_closed)
     : m_waypoints(waypoints), m_data(data), m_is_closed(is_closed)
@@ -419,7 +423,22 @@ public:
     return speed + (m_data.data.target_speed[succ_idx] - speed) * at.t;
   }
 
-  void compute_data() {
+  std::optional<double> get_curvature(const PointRef& at) const {
+    if (n_waypoints() <= 0 || !m_data.metadata.is_curvature_valid)
+      return std::nullopt;
+
+    assert(is_valid_reference(at) && "at must be a valid reference.");
+
+    double k = m_data.data.curvature[at.prev_waypoint_idx];
+
+    int succ_idx = compute_index(at.prev_waypoint_idx, 1);
+    if (succ_idx < 0)
+      return k;
+
+    return k + (m_data.data.curvature[succ_idx] - k) * at.t;
+  }
+
+  void compute_data(const VehicleParameters& vp) {
     if (!m_data.metadata.is_dist_to_next_valid) {
       // Compute, for each waypoint, the length of the segment that connects it to the next waypoint
       for (int i = 0; i < n_waypoints(); ++i) {
@@ -454,7 +473,7 @@ public:
       Due to the non-uniform sampling we use a standard causal continuous IIR filter with a bilinear approximation
       (see the NonUniformBilinearApproxIIRFilter class). This is kind of expensive, but it's hard to get wrong.
 
-      Obviously, being a causal filter it does not have a non-zero phase, 
+      Obviously, being a causal filter it does not have zero phase, 
       so we perform one forward pass and a backwards one, just like "filtfilt" from MATLAB.
 
       As a filter, we chose a Butterworth filter. 3rd is the highest order that takes a reasonable computational time (see the NonUniformBi... whatever).
@@ -463,20 +482,21 @@ public:
       Achieving a similar result with a single 4th order filter takes double the time (ouch)!
 
       The filter state-space matrices were obtained with:
-      [A,B,C,D] = butter(3, 0.7, 's')
+      [A,B,C,D] = butter(3, 0.6, 's')
 
       Please note that you need to design a CONTINUOUS time (ANALOG) filter!
       */
 
+      const double Wn = vp.curv_cutoff_radps();
       const NonUniformBilinearApproxIIRFilter<3> FILTER_PROTOTYPE(
         0, Eigen::Matrix<double, 3, 1>::Zero(), // We assume that the start and end are straights!!
         Eigen::Matrix<double, 3, 3> {
-          { -0.7, 0, 0 },
-          { 0.7, -0.7, -0.7 },
-          { 0, 0.7, 0 }
+          { -Wn, 0, 0 },
+          { Wn, -Wn, -Wn },
+          { 0, Wn, 0 }
         },
         Eigen::Matrix<double, 3, 1> {
-          { 0.7 },
+          { Wn },
           { 0 },
           { 0 }
         },
@@ -508,9 +528,13 @@ public:
     }
 
     if (!m_data.metadata.is_target_speed_valid) {
+      // Compute the maximum pure-cornering velocity given the curvature
       for (int i = 0; i < n_waypoints(); ++i)
         m_data.data.target_speed[i] = speed::evaluateMaxSpeed(m_data.data.curvature[i]);
-
+      
+      // Saturate with brake potential
+      braking::saturate_velocity_with_brake_potential(m_data.data.dist_to_next, m_data.data.target_speed, vp.brake_potential_deceleration(), m_is_closed);
+      
       m_data.metadata.is_target_speed_valid = true;
     }
   }
