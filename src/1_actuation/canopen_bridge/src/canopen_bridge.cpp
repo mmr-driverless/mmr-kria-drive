@@ -2,10 +2,7 @@
 
 CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
 {
-    this->loadParameters();
-    RCLCPP_INFO(this->get_logger(), "[ INFO ] FILE: %s", this->m_sPathToLog.c_str());
-    RCLCPP_INFO(this->get_logger(), "[ INFO ] freq: %d", this->m_nTimeFreq);
-    
+    this->loadParameters();    
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
     this->connectCANBus();
     
@@ -372,27 +369,25 @@ void CANOpenBridge::logMaxonPower()
     }
     this->m_nCtrFreq = 1;
 
-    RCLCPP_INFO(this->get_logger(), "enter into logMaxonPower");
-
     if ((this->m_mSteer != nullptr) && (this->m_mBrake != nullptr)) {
         
         std::ofstream log(this->m_sPathToLog, std::ofstream::app);
         
         // Steer 
-        int nSteerCur = this->m_mSteer->upload<int>(0x30D1, 0x01);
+        int32_t nSteerCur = this->m_mSteer->upload<int32_t>(0x30D0, 0x00);
         uint16_t uSteerVolt = this->m_mSteer->upload<uint16_t>(0x2200, 0x01);
         float fSteerVolt = ( (float) uSteerVolt / 10);
 
         RCLCPP_INFO(this->get_logger(), "[ STEER CURRENT ]: %d, [ STEER VOLTAGE ]: %f", nSteerCur, fSteerVolt);
 
         // Brake
-        int nBrakeCur = this->m_mBrake->upload<int>(0x30D1, 0x01);
+        int32_t nBrakeCur = this->m_mBrake->upload<int32_t>(0x30D0, 0x00);
         uint16_t uBrakeVolt = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
         float fBrakeVolt = ( (float) uBrakeVolt / 10);
 
         RCLCPP_INFO(this->get_logger(), "[ BRAKE CURRENT ]: %d, [ BRAKE VOLTAGE ]: %f", nBrakeCur, fBrakeVolt);
 
-        log << "," << fSteerVolt << "," << nSteerCur << "," << fBrakeVolt << "," << nBrakeCur << "\n";
+        log << fSteerVolt << "," << nSteerCur << "," << fBrakeVolt << "," << nBrakeCur << "\n";
 
     }
 }
