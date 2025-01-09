@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <chrono>
 
 class MaxonMotor
 {
@@ -16,11 +17,12 @@ class MaxonMotor
 
         const int FAULT_MASK = 128;
         int socket, node_id, timeout_msg_count, mode_of_op;
-        int send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_frame* rcv, int len);
+        std::chrono::milliseconds deadline_msg;
+        int send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_frame *rcv, int len);
 
     protected:
 
-        MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count=5);
+        MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count=5, std::chrono::milliseconds deadline_msg = 100);
         ~MaxonMotor() {};
 
         template<typename T>

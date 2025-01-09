@@ -1,12 +1,14 @@
 #include <canopen_bridge/driver/lib/motor_maxon.hpp>
+#include <chrono>
 
-MaxonMotor::MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count)
+MaxonMotor::MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count, std::chrono::milliseconds deadline_msg)
 {
     this->socket = socket;
     this->node_id = node_id;
     this->mode_of_op = mode_of_op;
 
     this->timeout_msg_count = timeout_msg_count;
+    this->deadline_msg = deadline_msg;
 }
 
 void MaxonMotor::init()
@@ -26,7 +28,9 @@ int MaxonMotor::send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_
     if (write(this->socket, &tx, sizeof(struct can_frame)) != sizeof(struct can_frame))
         return -1;
 
-    while (msg_read_count++ < this->timeout_msg_count) {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    while ((std::chrono::high_resolution_clock::now() - start) < this->deadline_msg) {
         
         if (read(this->socket, &rx, sizeof(struct can_frame)) < 0)
             return -1;

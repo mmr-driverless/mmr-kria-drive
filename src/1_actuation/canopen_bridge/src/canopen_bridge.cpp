@@ -61,6 +61,7 @@ void CANOpenBridge::loadParameters()
     declare_parameter("steer.velocity", 2750);
     declare_parameter("steer.timeout_msgs", 5);
     declare_parameter("steer.control_mode", 0);
+    declare_parameter("steer.deadline_msg", 100);
 
     declare_parameter("brake.node_id", 18);
     declare_parameter("brake.max_torque", 1500);
@@ -100,6 +101,7 @@ void CANOpenBridge::loadParameters()
     get_parameter("steer.velocity", this->m_nVelocity);
     get_parameter("steer.timeout_msgs", this->m_nTimeoutMsgSteer);
     get_parameter("steer.control_mode", this->m_nControlMode);
+    get_parameter("steer.deadline_msg", this->deadline_msg);
 
     get_parameter("brake.node_id", this->m_nBrakeId);
     get_parameter("brake.max_torque", this->m_nMaxTorque);
