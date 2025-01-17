@@ -28,6 +28,7 @@
 #include <vector>
 #include <optional>
 #include <algorithm>
+#include <chrono>
 
 class CANOpenBridge : public EDFNode
 {
@@ -36,6 +37,7 @@ class CANOpenBridge : public EDFNode
         std::string m_sInterface;
         int m_nBitrate;
         bool m_bDebug;
+        std::chrono::milliseconds deadline_msg;
 
         std::string m_sSteerTopic, m_sBrakeTopic, m_sClucthTopic, m_sStatusActuatorTopic, m_sEcuStatusTopic;
 
