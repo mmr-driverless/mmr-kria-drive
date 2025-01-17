@@ -13,6 +13,7 @@ sudo apt install ros-dev-tools ament-cmake ros-humble-rclcpp ros-humble-ackerman
 Then, you need to compile `mmr_base` package first, so run:
 
 ```bash
+source install/setup.bash
 ./compile_packages.sh mmr_base
 ```
 
