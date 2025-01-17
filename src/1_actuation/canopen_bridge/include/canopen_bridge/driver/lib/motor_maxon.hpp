@@ -22,7 +22,7 @@ class MaxonMotor
 
     protected:
 
-        MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count = 5, std::chrono::milliseconds deadline_msg = 1);
+        MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count = 5, std::chrono::milliseconds deadline_msg = 1ms);
         ~MaxonMotor() {};
 
         template<typename T>
