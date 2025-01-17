@@ -7,7 +7,7 @@ Before compiling using automated scripts, you have to install dependencies on yo
 To do this, run in the shell:
 
 ```bash
-sudo apt install ros-dev-tools ament-cmake rclcpp ros-humble-rclcpp ros-humble-ackermann-msgs ros-humble-can-msgs
+sudo apt install ros-dev-tools ament-cmake ros-humble-rclcpp ros-humble-ackermann-msgs ros-humble-can-msgs
 ```
 
 Then, you need to compile `mmr_base` package first, so run:
