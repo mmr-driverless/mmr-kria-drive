@@ -11,4 +11,3 @@ do
     rm -rf build/$package install/$package log/
     colcon build --packages-up-to $package --continue-on-error --symlink-install
 done
-
