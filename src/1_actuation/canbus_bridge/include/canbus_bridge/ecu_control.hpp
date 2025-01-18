@@ -39,9 +39,9 @@ class EcuControl
             sched_attr attr = {
                 .size = sizeof(attr),
                 .sched_policy = SCHED_DEADLINE,
-                .sched_runtime = (static_cast<float>(this->m_nDelay) / 2.0) * 1000 * 1000,
-                .sched_deadline = this->m_nDelay * 1000 * 1000,
-                .sched_period = this->m_nDelay * 1000 * 1000,
+                .sched_runtime = static_cast<uint64_t>((static_cast<float>(this->m_nDelay) / 2.0) * 1000 * 1000),
+                .sched_deadline = static_cast<uint64_t>(this->m_nDelay * 1000 * 1000),
+                .sched_period = static_cast<uint64_t>(this->m_nDelay * 1000 * 1000),
             };
 
             if (syscall(SYS_sched_setattr, gettid(), &attr, 0) != 0) return;
