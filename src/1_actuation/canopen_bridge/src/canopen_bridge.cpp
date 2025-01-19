@@ -142,6 +142,9 @@ void CANOpenBridge::connectCANBus()
     can_frame frame = {
         .can_id = 0x00,
         .can_dlc = 2,
+        .__pad = 0,
+        .__res0 = 0,
+        .len8_dlc = 0,
         .data = {0x01, 0x12}
     };
 
