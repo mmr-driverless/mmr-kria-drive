@@ -71,7 +71,7 @@ class MaxonMotor
             // TODO: gestire nel caso in cui (rx->header >> (header_size - 1)) != 0
             //       è un errore -> cambiare stato del motore dello sterzo
 
-            if (sizeof(T) != (CANOpen::max_data_len - (rx.header >> 2) & 3)) return -1;
+            if (sizeof(T) != ((CANOpen::max_data_len - (rx.header >> 2)) & 3)) return -1;
             memcpy(&res, rx.data, sizeof(T));
             return res;
         }
