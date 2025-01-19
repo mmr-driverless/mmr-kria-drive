@@ -24,7 +24,7 @@ class MaxonSteer : public MaxonMotor
     public:
 
         MaxonSteer(int nSocket, int nNodeId, int nTimeOutMsg, int nMaxTargetMaxon, int nVelocity) 
-            : MaxonMotor(nSocket, nNodeId, m_nModeOfOp, nTimeOutMsg) 
+            : MaxonMotor(nSocket, nNodeId, MOTOR::PPM, nTimeOutMsg) 
         {
             this->m_nVelocity = nVelocity;
             this->m_nMaxTargetMaxon = nMaxTargetMaxon;

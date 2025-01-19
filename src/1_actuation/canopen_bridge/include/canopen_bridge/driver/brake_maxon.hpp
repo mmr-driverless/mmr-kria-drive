@@ -20,7 +20,7 @@ class MaxonBrake : public MaxonMotor
     public:
 
         MaxonBrake(int nSocket, int nNodeId, int nTimeOutMsg, int nMaxTorque, int nReturnPedalTorque)
-            : MaxonMotor(nSocket, nNodeId, m_nModeOfOp, nTimeOutMsg) 
+            : MaxonMotor(nSocket, nNodeId, MOTOR::CST, nTimeOutMsg) 
         {
             this->m_nMaxTorque = nMaxTorque;
             this->m_nReturnPedalTorque = nReturnPedalTorque;

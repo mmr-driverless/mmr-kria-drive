@@ -29,7 +29,7 @@ class MaxonClutch : private MaxonMotor
 
         MaxonClutch (int nSocket, int nNodeId, int nTimeOutMsg, int nVelocity, 
                 std::vector<long int> m_aMotorSteps, std::vector<double> m_aPotVal)
-            : MaxonMotor(nSocket, nNodeId, m_nModeOfOp, nTimeOutMsg) 
+            : MaxonMotor(nSocket, nNodeId, MOTOR::PPM, nTimeOutMsg) 
         {
             this->m_nVelocity   = nVelocity;
             this->m_aMotorSteps = m_aMotorSteps;
