@@ -18,7 +18,7 @@ void MaxonMotor::init()
     this->download<uint16_t>(0x6040, 0x00, 0x000F);
 }
 
-int MaxonMotor::send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_frame* rcv, int len)
+int MaxonMotor::send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_frame* rcv)
 {
     can_frame tx = cof.copy(), rx;
     int msg_read_count = 0;
