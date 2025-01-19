@@ -20,7 +20,7 @@ void MaxonMotor::init()
 
 int MaxonMotor::send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_frame* rcv, int len)
 {
-    can_frame tx = cof.copy(len), rx;
+    can_frame tx = cof.copy(), rx;
     int msg_read_count = 0;
 
     if (write(this->socket, &tx, sizeof(struct can_frame)) != sizeof(struct can_frame))

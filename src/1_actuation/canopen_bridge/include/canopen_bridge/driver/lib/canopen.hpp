@@ -46,7 +46,7 @@ namespace CANOpen {
             return *this;
         }
 
-        can_frame copy(int len) {
+        can_frame copy() {
             can_frame frame;
 
             frame.can_id = this->id;
