@@ -6,9 +6,11 @@ void EDFNode::configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uin
       .size = sizeof(attr),
       .sched_policy = SCHED_DEADLINE,
       .sched_flags = SCHED_FLAG_RESET_ON_FORK,
+      .sched_nice = 0,
+      .sched_priority = 0,
       .sched_runtime = runtime_ns,
       .sched_deadline = deadline_ns,
-      .sched_period = period_ns,
+      .sched_period = period_ns
     };
 
     this->setCPU(0);
