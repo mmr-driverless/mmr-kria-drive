@@ -62,6 +62,9 @@ namespace CANOpen {
             return frame;
         }
 
+        canopen_frame(const canopen_frame&) = default;
+        canopen_frame() = default;
+        ~canopen_frame() = default;
     };
 
     static uint8_t create_sdo_download_header(int payload_len) {
