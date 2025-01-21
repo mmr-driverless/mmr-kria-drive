@@ -23,7 +23,7 @@
       velocity: 3500
       timeout_msgs: 5
       control_mode: 1 # if you want relative: 1, absolute: 0
-      deadline_msg: 1 # ms
+      deadline_msg: 1000 # ms
     brake:
       node_id: 17
       max_torque: 1500

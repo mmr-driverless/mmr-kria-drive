@@ -1,7 +1,7 @@
 #include <canopen_bridge/driver/lib/motor_maxon.hpp>
 #include <chrono>
 
-MaxonMotor::MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count, std::chrono::milliseconds deadline_msg)
+MaxonMotor::MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count, int deadline_msg)
 {
     this->socket = socket;
     this->node_id = node_id;
@@ -30,7 +30,7 @@ int MaxonMotor::send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    while ((std::chrono::high_resolution_clock::now() - start) < this->deadline_msg) {
+    while ((std::chrono::high_resolution_clock::now() - start).count() < this->deadline_msg) {
         
         if (read(this->socket, &rx, sizeof(struct can_frame)) < 0)
             return -1;
@@ -40,6 +40,8 @@ int MaxonMotor::send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_
         if ((cof.index == rcv->index) && (cof.subindex == rcv->subindex)) return 0;
 
     }
+
+    std::cout << "time elapsed: " + (std::chrono::high_resolution_clock::now() - start).count();
 
     return -1;
 }

@@ -17,12 +17,12 @@ class MaxonMotor
 
         const int FAULT_MASK = 128;
         int socket, node_id, timeout_msg_count, mode_of_op;
-        std::chrono::milliseconds deadline_msg;
+        int deadline_msg;
         int send_msg_on_canbus(CANOpen::canopen_frame cof, CANOpen::canopen_frame *rcv, int len);
 
     protected:
 
-        MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count = 5, std::chrono::milliseconds deadline_msg = std::chrono::milliseconds(1));
+        MaxonMotor(int socket, int node_id, int mode_of_op, int timeout_msg_count = 5, int deadline_msg = 1000);
         ~MaxonMotor() {};
 
         template<typename T>
