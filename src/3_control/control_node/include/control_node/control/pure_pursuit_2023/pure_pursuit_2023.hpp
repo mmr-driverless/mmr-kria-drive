@@ -21,37 +21,65 @@ class PurePursuit2023 : public IController {
   double m_steerGain;
 
   double m_minSpeedDistance;
+  double m_speed_lookforward_gain;
+  
   double m_minSpeed;
 
-  double m_min_throttle;
-  bool m_min_throttle_is_clamp;
+  double m_max_accel_sq;
 
-  bool m_simplified_longitudinal_control_enabled;
-  double m_simple_long_apps_p;
-  double m_simple_long_brake_p;
-  double m_ll_accel_lookforward;
-  double m_ll_accel_k_smooth;
+  struct SimplifiedLongitudinalControlParams {
+    double apps_p;
+    double brake_p;
+  };
 
-  bool m_second_gear_on_second_lap;
+  struct NewAccelerationParams {
+    double acceleration_p;
+  };
 
-  struct {
-    bool enabled;
+  struct DynamicTargetSpeedParams {
     int slowLaps;
-    double k_smooth;
     double maxSpeed;
     double targetSpeedWeight;
-  } m_dynamicTargetSpeed;
+  };
+
+  bool m_keep_launch;
+
+  std::optional<int> m_automatic_shifting_from_lap;
+  std::optional<int> m_second_gear_from_lap;
+  std::optional<int> m_fixed_gear;
+
+  double m_min_up, m_max_up;
+  double m_min_down, m_max_down;
+
+  std::optional<NewAccelerationParams> m_new_accel_params;
+  std::optional<SimplifiedLongitudinalControlParams> m_simple_long_params;
+  std::optional<DynamicTargetSpeedParams> m_dynamic_target_speed;
   
+  typedef struct {
+    double x;
+    double y;
+  } mmr_point_double;
 
   bool m_using_dynamic_speed = false;
-  double m_smoothedSpeed = 0;
-  double m_smoothedAccel = 0;
 
   viz::VizManager* m_viz_mgr;
   float m_viz_lookforward_alpha;
   int m_viz_lookforward;
 
   void viz(std::optional<Eigen::Vector2d> target);
+  int gear_target(int acceleration_sign, const estimation::IVehicleState& state);
+
+  static inline double lerp2(const double x, mmr_point_double start, mmr_point_double end) {
+    const double M = end.y - start.y;
+    const double X = (x - start.x) / (end.x - start.x);
+    const double Q = start.y;
+
+    return M * X + Q;
+  }
+
+  static inline double lerp3(const double x, mmr_point_double start, mmr_point_double p1, mmr_point_double end) {
+    return x < p1.x? lerp2(x, start, p1) : lerp2(x, p1, end);
+  }
 
 public:
 

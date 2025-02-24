@@ -32,9 +32,11 @@ class ReferencePathManager {
 
   rclcpp::Logger m_logger;
 
+  const VehicleParameters& m_vp;
+
   void on_source_notification(int source_id, size_t sz, const sources::ReferencePathSource::UpdateFn& ufn);
 public:
-  ReferencePathManager(rclcpp::Node* node, const Parameters& p, rclcpp::Logger logger);
+  ReferencePathManager(rclcpp::Node* node, const Parameters& p, const VehicleParameters& vp, rclcpp::Logger logger);
 
   bool changed();
   const ReferencePath& get() const;

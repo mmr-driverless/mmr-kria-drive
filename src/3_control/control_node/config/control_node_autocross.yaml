@@ -65,12 +65,12 @@
       stop_light_brake: 0.15
       stop_hard_brake: 0.4
       lc_duration_after_launch_ms: 1000
-
-      wait_for_required_signals: true
       
+      wait_for_required_signals: true
+
       standstill_speed_m_s: 0.3
       standstill_time_ms: 2000
-      lap_to_stop: 11 # Stop when lap counter publishes this lap
+      lap_to_stop: 2 # Stop when lap counter publishes this lap
 
     control:
       type: PurePursuit2023
@@ -86,19 +86,12 @@
         min_throttle: 0.0
         min_throttle_is_clamp: true
 
-        keep_launch: false
-
         gear_strategy:
-          second_gear_from_lap: 2
-
-          # automatic_shifting_from_lap: 2
-          # min_up: 4500.0
-          # max_up: 10000.0
-
-          # min_down: 3500.0
-          # max_down: 7500.0
+          fixed_gear: 2
         
         max_accel: 3.0 # m/s^2
+
+        keep_launch: false
 
         low_level_longitudinal_controller:
           simplified: false
@@ -109,8 +102,8 @@
           # acceleration_p: 0.2
 
         dynamicTargetSpeed:
-          enabled: true # If this is false, then minSpeed is used.
-          slowLaps: 1
+          enabled: false # If this is false, then minSpeed is used.
+          slowLaps: 0
           maxSpeed: 15.0
           targetSpeedWeight: 1.0
 

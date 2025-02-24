@@ -65,7 +65,7 @@ void ControlNode::tick() {
   control::Control u = m_controller->control(t, x, path, closest_point, m_event_mgr.lap());
 
   // Override the controls to perform the start and stop maneuvers.
-  u = m_event_mgr.tick(t, x, u);
+  u = m_event_mgr.tick(t, x, u, path);
 
   // Actuate the control input.
   m_actuator_mgr.actuate_all(t, u);
@@ -88,10 +88,10 @@ inline static std::array<double, 3> flat_scale(double scale) {
 
 ControlNode::ControlNode() : NodeBase("control_node"),
   m_tick_interval(std::chrono::milliseconds(Parameters(this).get<int>("tick_interval"))),
-  m_vp(VehicleParameters(Parameters(this, "vehicle_parameters"))),
+  m_vp(Parameters(this, "vehicle_parameters"), this->get_logger().get_child("VehicleParameters")),
   m_actuator_mgr(this, Parameters(this, "actuation"), this->get_logger().get_child("ActuatorMgr")),
   m_event_mgr(this, Parameters(this, "event_manager"), this->get_logger().get_child("EventMgr"), m_actuator_mgr),
-  m_refpath_mgr(this, Parameters(this, "reference_path_manager"), this->get_logger().get_child("RefPathMgr")),
+  m_refpath_mgr(this, Parameters(this, "reference_path_manager"), m_vp, this->get_logger().get_child("RefPathMgr")),
   m_viz_mgr(this, Parameters(this, "viz"), this->get_logger().get_child("VizMgr")) 
 {
   #ifdef USE_EDF
