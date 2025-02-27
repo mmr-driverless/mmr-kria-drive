@@ -14,8 +14,8 @@ struct AppsBrakePair {
 };
 
 
-template <typename RangeT>
-static inline double interp1d(const RangeT& y, const RangeT& x, double xq) {
+template <typename RangeTY, typename RangeTX>
+static inline double interp1d(const RangeTY& y, const RangeTX& x, double xq) {
   /*
     Evaluate f(xq) by linear interpolation, where f(x(i)) = y(i) for i=1..N
     Extrapolation is performed by taking the nearest f(x)
@@ -24,8 +24,8 @@ static inline double interp1d(const RangeT& y, const RangeT& x, double xq) {
   int N = y.size();
   assert((int)x.size() == N);
 
-  if (xq <= x.front())
-    return y.front();
+  if (xq <= x[0])
+    return y[0];
 
   for (int i = 0; i < N - 1; ++i) {
     if (x[i] <= xq && xq < x[i+1]) {
@@ -36,7 +36,21 @@ static inline double interp1d(const RangeT& y, const RangeT& x, double xq) {
     }
   }
 
-  return y.back();
+  return y[N-1];
+}
+
+static inline auto apps_map_x_from_rpm(int rpm_act, const VehicleParameters& vp) {
+  int N = vp.apps_map_rpm().size();
+
+  if (rpm_act <= vp.apps_map_rpm()[0])
+    return vp.apps_map_x().col(0);
+
+  for (int i = 0; i < N - 1; ++i) {
+    if (rpm_act >= vp.apps_map_rpm()[i] && rpm_act < vp.apps_map_rpm()[i + 1])
+      return vp.apps_map_x().col(i);
+  }
+
+  return vp.apps_map_x().col(N-1);
 }
 
 
@@ -47,8 +61,10 @@ static inline double apps_from_engine_torque(double torque_req, int rpm_act, con
   // Compute the required Torque% wrt maximum torque
   double torque_perc = torque_req / max_torque;
 
+  auto apps_map_x = apps_map_x_from_rpm(rpm_act, vp);
+
   // Apply the Torque% -> APPS map
-  return interp1d(vp.apps_map_y(), vp.apps_map_x(), torque_perc);
+  return interp1d(vp.apps_map_y(), apps_map_x, torque_perc);
 }
 
 
