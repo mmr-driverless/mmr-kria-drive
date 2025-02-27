@@ -37,6 +37,8 @@ class CANOpenBridge : public EDFNode
         int m_nBitrate;
         bool m_bDebug;
 
+        int m_nCPUAffinity;
+
         std::string m_sSteerTopic, m_sBrakeTopic, m_sClucthTopic, m_sStatusActuatorTopic, m_sEcuStatusTopic;
 
         /* Steer parameters */

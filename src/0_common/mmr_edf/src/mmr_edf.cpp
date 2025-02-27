@@ -11,8 +11,6 @@ void EDFNode::configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uin
       .sched_period = period_ns,
     };
 
-    this->setCPU(0);
-
     if (syscall(SYS_sched_setattr, gettid(), &attr, 0) != 0) {
       RCLCPP_ERROR(this->get_logger(), "[ FAILED to SET SCHED_DEADLINE ]: %s", strerror(errno));
       throw std::runtime_error("Wrong parameters for EDF scheduler");
@@ -21,6 +19,8 @@ void EDFNode::configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uin
 
 void EDFNode::setCPU(uint8_t nCPU) 
 {
+    if (nCPU < 0) return;
+    
     cpu_set_t set;
 	CPU_ZERO(&set);
 	CPU_SET(nCPU, &set);

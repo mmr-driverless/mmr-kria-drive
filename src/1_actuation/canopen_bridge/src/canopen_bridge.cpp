@@ -4,6 +4,8 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
 {
     this->loadParameters();
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
+    this->setCPU(this->m_nCPUAffinity);
+
     this->connectCANBus();
     
     if (this->m_bDebug) {
@@ -11,6 +13,7 @@ CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CAN BITRATE: %d", this->m_nBitrate);
         RCLCPP_INFO(this->get_logger(), "[ INFO ] MONITOR FREQUENCY CLUTCH: %d", this->m_nMonitorClutch);
         RCLCPP_INFO(this->get_logger(), "[ INFO ] CONVERSION FACTOR STEER: %f", this->m_fIncPerDegree);
+        RCLCPP_INFO(this->get_logger(), "[ INFO ] CPU AFFINITY: %d", this->m_nCPUAffinity);
     }
 
     this->m_subCmdSteer = this->create_subscription<mmr_base::msg::CmdMotor>(
@@ -45,6 +48,7 @@ void CANOpenBridge::loadParameters()
 	declare_parameter("generic.period", 10000000);
 	declare_parameter("generic.deadline", 10000000);
     declare_parameter("generic.debug", false);
+    declare_parameter("generic.cpu_affinity", false);
 
     declare_parameter("topic.steerTopic", "");
     declare_parameter("topic.brakeTopic", "");
@@ -81,6 +85,7 @@ void CANOpenBridge::loadParameters()
 	get_parameter("generic.period", this->m_nPeriod);
 	get_parameter("generic.deadline", this->m_nDeadline);
     get_parameter("generic.debug", this->m_bDebug);
+    get_parameter("generic.cpu_affinity", this->m_nCPUAffinity);
 
     get_parameter("topic.steerTopic", this->m_sSteerTopic);
     get_parameter("topic.brakeTopic", this->m_sBrakeTopic);

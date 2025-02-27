@@ -10,6 +10,7 @@
       max_msgs: 25
       control_freq_div: 1
       ecu_command_enable: true
+      cpu_affinity: -1
     topic:
       cmdEcuTopic: "/command/ecu"
       ecuStatusTopic: "/status/ecu"

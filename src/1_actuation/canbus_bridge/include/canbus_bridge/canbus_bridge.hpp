@@ -48,6 +48,8 @@ class CANBusBridge : public EDFNode
         int m_nFreqDiv24V, m_nCtr24V = 1;
         bool m_bDebug, m_bEcuCmdEnable;
 
+        int m_nCPUAffinity;
+
         void loadParameters();
 
         /* Subscriber for target ECU status */

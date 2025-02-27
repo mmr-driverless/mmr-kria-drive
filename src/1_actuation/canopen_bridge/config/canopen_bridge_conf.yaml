@@ -7,6 +7,7 @@
       WCET: 4000000 # ms
       period: 10000000 # 10ms
       deadline: 10000000
+      cpu_affinity: -1
     topic:
       steerTopic: "/command/steer"
       brakeTopic: "/command/brake"

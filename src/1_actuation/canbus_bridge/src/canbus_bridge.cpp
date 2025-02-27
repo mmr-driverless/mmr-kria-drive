@@ -4,11 +4,12 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
 {
     this->loadParameters();
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
+    this->setCPU(this->m_nCPUAffinity);
     
     RCLCPP_INFO(
         this->get_logger(),
-        "[ INTERFACE ]: %s, [ BITRATE ]: %d, [ DEBUG ]: %d",
-        this->m_sInterface.c_str(), this->m_nBitrate, this->m_bDebug
+        "[ INTERFACE ]: %s, [ BITRATE ]: %d, [ DEBUG ]: %d, [ CPU AFFINITY ]: %d",
+        this->m_sInterface.c_str(), this->m_nBitrate, this->m_bDebug, this->m_nCPUAffinity
     );
 
     if (this->m_bDebug)
@@ -21,7 +22,6 @@ CANBusBridge::CANBusBridge() : EDFNode("canbus_bridge_node")
     this->connectCANBus();
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
-
 
     this->m_subActuatorsStatus = this->create_subscription<mmr_base::msg::ActuatorStatus>(
         this->m_sActuatorsStatusTopic, 1, std::bind(&CANBusBridge::msgActuatorsStatusCallback, this, std::placeholders::_1));
@@ -62,6 +62,7 @@ void CANBusBridge::loadParameters()
     declare_parameter("generic.max_msgs", 5);
     declare_parameter("generic.control_freq_div", 5);
     declare_parameter("generic.ecu_command_enable", true);
+    declare_parameter("generic.cpu_affinity", -1);
 
     declare_parameter("topic.cmdEcuTopic", "");
     declare_parameter("topic.ecuStatusTopic", "");
@@ -97,6 +98,7 @@ void CANBusBridge::loadParameters()
     get_parameter("generic.max_msgs", this->m_nMaxMsgs);
     get_parameter("generic.control_freq_div", this->m_nControlFreqDiv);
     get_parameter("generic.ecu_command_enable", this->m_bEcuCmdEnable);
+    get_parameter("generic.cpu_affinity", this->m_nCPUAffinity);
 
     get_parameter("topic.cmdEcuTopic", this->m_sCmdEcuTopic);
     get_parameter("topic.ecuStatusTopic", this->m_sEcuStatusTopic);
