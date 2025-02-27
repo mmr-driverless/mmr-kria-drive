@@ -2,6 +2,7 @@
   ros__parameters:
     tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
     wcet_ns: 6000000 # 5ms
+    cpu_affinity: -1
 
     estimation:
       type: Inspection

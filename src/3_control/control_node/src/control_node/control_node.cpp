@@ -94,12 +94,14 @@ ControlNode::ControlNode() : NodeBase("control_node"),
   m_refpath_mgr(this, Parameters(this, "reference_path_manager"), m_vp, this->get_logger().get_child("RefPathMgr")),
   m_viz_mgr(this, Parameters(this, "viz"), this->get_logger().get_child("VizMgr")) 
 {
+  int m_cpu_affinity = Parameters(this).get<int>("cpu_affinity");
   #ifdef USE_EDF
   this->configureEDFScheduler(
     std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count(),
     this->declare_parameter("wcet_ns", rclcpp::PARAMETER_INTEGER).get<int>(),
     std::chrono::duration_cast<std::chrono::nanoseconds>(tick_interval()).count()
   );
+  this->setCPU(m_cpu_affinity);
   #endif
 
   auto tracking_p = Parameters(this, "tracking");
