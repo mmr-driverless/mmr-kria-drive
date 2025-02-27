@@ -11,7 +11,7 @@ void EDFNode::configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uin
       .sched_period = period_ns,
     };
 
-    this->setCPU(0);
+    // this->setCPU(0);
 
     if (syscall(SYS_sched_setattr, gettid(), &attr, 0) != 0) {
       RCLCPP_ERROR(this->get_logger(), "[ FAILED to SET SCHED_DEADLINE ]: %s", strerror(errno));
