@@ -17,9 +17,10 @@ void EDFNode::configureEDFScheduler(uint64_t period_ns, uint64_t runtime_ns, uin
     }
 }
 
-void EDFNode::setCPU(uint8_t nCPU) 
+void EDFNode::setCPU(int8_t nCPU) 
 {
     if (nCPU < 0) return;
+    RCLCPP_WARN(this->get_logger(), "[ set CPU AFFINITY ]: %d", nCPU);
     
     cpu_set_t set;
 	CPU_ZERO(&set);
