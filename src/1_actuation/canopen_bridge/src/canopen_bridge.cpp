@@ -48,7 +48,7 @@ void CANOpenBridge::loadParameters()
 	declare_parameter("generic.period", 10000000);
 	declare_parameter("generic.deadline", 10000000);
     declare_parameter("generic.debug", false);
-    declare_parameter("generic.cpu_affinity", false);
+    declare_parameter("generic.cpu_affinity", -1);
 
     declare_parameter("topic.steerTopic", "");
     declare_parameter("topic.brakeTopic", "");
