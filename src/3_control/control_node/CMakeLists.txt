@@ -35,6 +35,7 @@ add_executable(control_node
 
   src/control_node/path/sources/ros/sources_factory.cpp
   src/control_node/path/sources/ros/path_from_marker_msg.cpp
+  src/control_node/path/sources/ros/path_from_global_planner.cpp
   src/control_node/path/reference_path_manager.cpp
 
   src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp

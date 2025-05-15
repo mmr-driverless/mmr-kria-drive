@@ -197,8 +197,17 @@
             qos_override:
               durability: transient_local
               reliability: reliable
+
+        2:
+          enabled: true
+          type: "ROS_GlobalPlanner"
+          params:
+            topic: "/planning/raceline"
+            qos_override:
+              durability: transient_local
+              reliability: reliable
       # Uncomment this to dump paths to file
-      # dump_paths_dir: '/home/simonebondi/Desktop/dump_dir'
+      dump_paths_dir: '~/Documents/dump_path'
 
     vehicle_parameters:
       wheelbase_m: 1.541 # distance between front and rear axle [m]
