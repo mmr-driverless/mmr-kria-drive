@@ -4,14 +4,14 @@
 #include <control_node/actuation/iactuator.hpp>
 #include <control_node/parameters.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <ackermann_msgs/msg/ackermann_drive.hpp>
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 
 namespace control_node {
 namespace actuation {
 namespace sim {
 
 class Sim : public IActuator {
-  rclcpp::Publisher<ackermann_msgs::msg::AckermannDrive>::SharedPtr m_pub;
+  rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr m_pub;
   bool m_enabled;
 
 public:

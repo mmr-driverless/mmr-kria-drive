@@ -61,6 +61,15 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_max_accel_sq *= m_max_accel_sq;
   m_keep_launch = p.get<bool>("keep_launch");
 
+  if(p.get<bool>("use_simulator_steering")) // optional parameter
+  {
+    m_use_simulator_steering = true;
+  }
+  else 
+  {
+    m_use_simulator_steering = false;
+  }
+
   auto gear_p = p.subparams("gear_strategy");
   m_fixed_gear = gear_p.get_maybe<int>("fixed_gear");
   m_second_gear_from_lap = gear_p.get_maybe<int>("second_gear_from_lap");
@@ -264,6 +273,11 @@ Control PurePursuit2023::control(
     double wheel_angle_deg = wheel_angle_rad * (180 / std::numbers::pi);
     double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
     u.steer = steering_wheel_angle_deg;
+
+    if(m_use_simulator_steering) // override u.steer
+    {
+      u.steer = wheel_angle_rad; // input straight to the wheels in radiants
+    }
   }
 
   // Compute target gear

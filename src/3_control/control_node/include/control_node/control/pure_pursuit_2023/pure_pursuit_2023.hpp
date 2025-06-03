@@ -27,6 +27,8 @@ class PurePursuit2023 : public IController {
 
   double m_max_accel_sq;
 
+  std::optional<bool>m_use_simulator_steering;
+
   struct SimplifiedLongitudinalControlParams {
     double apps_p;
     double brake_p;

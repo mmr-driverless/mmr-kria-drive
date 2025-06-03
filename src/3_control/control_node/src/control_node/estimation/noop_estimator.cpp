@@ -26,6 +26,11 @@ void NoopEstimator::ecu_status_cb(std::shared_ptr<const mmr_base::msg::EcuStatus
   m_state.m_throttle = msg->throttle;
 }
 
+static inline double yaw_from_quaternion(const Eigen::Quaterniond& q)
+{
+  return std::atan2(2.0 * (q.z() * q.w() + q.x() * q.y()) , -1.0 + 2.0 * (q.w() * q.w() + q.x() * q.x()));
+}
+
 void NoopEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) {
   m_state.m_position = Eigen::Vector2d(msg->pose.pose.position.x, msg->pose.pose.position.y);
   Eigen::Quaterniond q(
@@ -33,9 +38,12 @@ void NoopEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) 
     msg->pose.pose.orientation.x,
     msg->pose.pose.orientation.y,
     msg->pose.pose.orientation.z
-  );
-  auto rpy = q.toRotationMatrix().eulerAngles(0,1,2);
-  m_state.m_yaw = rpy.z();
+  ); 
+
+  m_state.m_speed = msg->twist.twist.linear.x;
+  auto rpy = yaw_from_quaternion(q);
+
+  m_state.m_yaw = rpy;
 }
 
 void NoopEstimator::res_status_cb(std::shared_ptr<const mmr_base::msg::ResStatus> msg) {
