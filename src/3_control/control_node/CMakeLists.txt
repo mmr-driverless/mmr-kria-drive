@@ -4,11 +4,11 @@ project(control_node)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Whether to use the custom visualization msgs or the standard ones
-set(USE_KRIA_MSGS ON)
+set(USE_KRIA_MSGS OFF)
 # Whether to use the EDF scheduler or not
-set(USE_EDF ON)
+set(USE_EDF OFF)
 # Whether to log the execution times to a file (only if USE_EDF is ON)
-set(EDF_MEASURE_EXECUTION_TIME ON)
+set(EDF_MEASURE_EXECUTION_TIME OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

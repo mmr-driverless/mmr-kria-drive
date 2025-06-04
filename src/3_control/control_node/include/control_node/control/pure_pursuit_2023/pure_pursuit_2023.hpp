@@ -5,6 +5,9 @@
 #include <control_node/vehicle_parameters.hpp>
 
 #include <mmr_base/msg/pure_pursuit_log.hpp>
+#include <std_msgs/msg/detail/float64__struct.hpp>
+#include "std_msgs/msg/float64.hpp"
+
 
 namespace control_node {
 namespace control {
@@ -14,6 +17,8 @@ class PurePursuit2023 : public IController {
   std::optional<rclcpp::Logger> m_logger;
 
   rclcpp::Publisher<mmr_base::msg::PurePursuitLog>::SharedPtr m_log_pub;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_lateral_deviation_pub;
+
 
   const VehicleParameters* m_vp;
   double m_minLookForward;

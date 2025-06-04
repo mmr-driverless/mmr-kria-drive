@@ -5,6 +5,7 @@
 #include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
 #include <control_node/control/pure_pursuit_2023/acc_to_brake_apps.hpp>
 #include <algorithm>
+#include <std_msgs/msg/detail/float32__struct.hpp>
 #include <stdexcept>
 
 namespace control_node {
@@ -48,7 +49,8 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
 void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) {
   m_vp = &vp;
 
-  m_log_pub = node.create_publisher<mmr_base::msg::PurePursuitLog>(p.get<std::string>("log.topic"), p.parse_qos("log.qos_override"));
+  m_log_pub = node.create_publisher<mmr_base::msg::PurePursuitLog>(p.get<std::string>("log.pp_log.topic"), p.parse_qos("log.pp_log.qos_override"));
+  m_lateral_deviation_pub = node.create_publisher<std_msgs::msg::Float64>(p.get<std::string>("log.lateral_deviation.topic"), 10);
 
   m_logger = logger;
   m_minLookForward = p.get<double>("minLookForward");
@@ -218,6 +220,18 @@ Control PurePursuit2023::control(
 
   viz(targetPosition);
 
+  // compute lateral_deviation for benchmarking purposes
+  std::optional<std_msgs::msg::Float64> lateral_deviation;
+
+  if(vehicle_path_projection.has_value())
+  {
+    std::optional<Eigen::Vector2d> projection_point = reference_path.get_position(*vehicle_path_projection);
+    
+    if(projection_point.has_value())
+      lateral_deviation->data = std::hypot(projection_point->x() - state.position()->x(), projection_point->y() - state.position()->y());
+  }
+  //
+
   Control u(0.0, 0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);
 
   // Longitudinal control
@@ -312,6 +326,8 @@ Control PurePursuit2023::control(
   log_msg.smoothed_target_acceleration_m_s_2 = NAN;
 
   m_log_pub->publish(log_msg);
+
+  m_lateral_deviation_pub->publish(*lateral_deviation);
 
   return u;
 }
