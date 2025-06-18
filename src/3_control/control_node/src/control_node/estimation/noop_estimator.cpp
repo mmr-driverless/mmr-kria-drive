@@ -36,6 +36,8 @@ void NoopEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) 
   );
   auto rpy = q.toRotationMatrix().eulerAngles(0,1,2);
   m_state.m_yaw = rpy.z();
+
+  m_state.m_yaw_rate = msg->twist.twist.angular.z;
 }
 
 void NoopEstimator::res_status_cb(std::shared_ptr<const mmr_base::msg::ResStatus> msg) {

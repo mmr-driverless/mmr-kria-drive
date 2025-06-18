@@ -40,6 +40,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImuCanData.msg"
   "msg/SpeedProfilePoint.msg"
   "msg/SpeedProfilePoints.msg"
+  "msg/TrajectoryPoint.msg"
+  "msg/TrajectoryPoints.msg"
   # Add custom msg dependecies to standard ROS2 msgs
   DEPENDENCIES 
   std_msgs 

@@ -61,9 +61,10 @@ void ReferencePathManager::on_source_notification(int source_id, size_t path_siz
   m_data_curvature.resize(path_size);
   m_data_dist_to_next.resize(path_size);
   m_data_target_speed.resize(path_size);
+  m_data_track_yaw.resize(path_size);
 
   // Update the path
-  auto data = ReferencePath::PathData(m_data_dist_to_next, m_data_curvature, m_data_target_speed);
+  auto data = ReferencePath::PathData(m_data_dist_to_next, m_data_curvature, m_data_target_speed, m_data_track_yaw);
   auto result = ufn.get()(
     m_waypoints,
     data.data

@@ -30,6 +30,7 @@ public:
   class VehicleState : public IVehicleState {
     std::optional<Eigen::Vector2d> m_position;
     std::optional<double> m_yaw;
+    std::optional<double> m_yaw_rate;
     std::optional<bool> m_clutch_is_engaged;
     std::optional<int> m_gear;
     std::optional<double> m_speed;
@@ -44,6 +45,7 @@ public:
     friend NoopEstimator;
     virtual std::optional<Eigen::Vector2d> position() const override { return m_position; }
     virtual std::optional<double> yaw() const override { return m_yaw; }
+    virtual std::optional<double> yaw_rate() const override {return m_yaw_rate;}
     virtual std::optional<int> rpm() const override { return m_rpm; }
     virtual std::optional<double> speed() const override { return m_speed; }
     virtual std::optional<bool> lc_is_active() const override { return m_lc_is_active; }

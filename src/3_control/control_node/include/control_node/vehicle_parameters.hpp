@@ -15,6 +15,8 @@ class VehicleParameters {
   double m_steering_ratio; // Ratio between steering wheel and wheel angle (bicycle model) [1]
   double m_scx;
   double m_scz;
+  double m_C_alpha_front;
+  double m_C_alpha_rear;
   double m_wheel_radius_m; // Wheel radius
   double m_wheel_roll_coeff; // Rolling resistance coefficient
   double m_wheel_inertia; // Inertia of a single wheel
@@ -49,6 +51,8 @@ public:
       m_steering_ratio(p.get<double>("steering_ratio")),
       m_scx(p.get<double>("scx")),
       m_scz(p.get<double>("scz")),
+      m_C_alpha_front(p.get<double>("C_alpha_front")),
+      m_C_alpha_rear(p.get<double>("C_alpha_rear")),
       m_wheel_radius_m(p.get<double>("wheel_radius_m")),
       m_wheel_roll_coeff(p.get<double>("wheel_roll_coeff")),
       m_wheel_inertia(p.get<double>("wheel_inertia")),

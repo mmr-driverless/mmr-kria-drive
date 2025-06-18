@@ -38,19 +38,22 @@ public:
       bool is_target_speed_valid = false;
       bool is_curvature_valid = false;
       bool is_dist_to_next_valid = false;
+      bool is_track_yaw_valid = false;
     };
     struct Data {
       std::span<double> dist_to_next;
       std::span<double> curvature;
       std::span<double> target_speed;
+      std::span<double> track_yaw;
 
       Data() = default;
 
       Data(
         std::span<double> dist_to_next,
         std::span<double> curvature,
-        std::span<double> target_speed)
-          : dist_to_next(dist_to_next), curvature(curvature), target_speed(target_speed)
+        std::span<double> target_speed,
+        std::span<double> track_yaw)
+          : dist_to_next(dist_to_next), curvature(curvature), target_speed(target_speed), track_yaw(track_yaw)
       {}
     };
 
@@ -62,6 +65,7 @@ public:
       assert(
         n == data.curvature.size() && 
         n == data.target_speed.size() &&
+        n == data.track_yaw.size() &&
         "All data fields must have the same size."
       );
       return n;
@@ -79,9 +83,9 @@ public:
 
     PathData() {}
 
-    PathData(std::span<double> dist_to_next, std::span<double> curvature, std::span<double> max_speed)
-      : data(dist_to_next, curvature, max_speed)
-    {}
+    PathData(std::span<double> dist_to_next, std::span<double> curvature, std::span<double> max_speed, std::span<double> track_yaw)
+      : data(dist_to_next, curvature, max_speed, track_yaw)
+    {}  
   };
 
 private:
@@ -430,6 +434,21 @@ public:
     assert(is_valid_reference(at) && "at must be a valid reference.");
 
     double k = m_data.data.curvature[at.prev_waypoint_idx];
+
+    int succ_idx = compute_index(at.prev_waypoint_idx, 1);
+    if (succ_idx < 0)
+      return k;
+
+    return k + (m_data.data.curvature[succ_idx] - k) * at.t;
+  }
+
+  std::optional<double> get_track_yaw(const PointRef& at) const{
+    if (n_waypoints() <= 0 || !m_data.metadata.is_track_yaw_valid)
+      return std::nullopt;
+     
+    assert(is_valid_reference(at) && "at must be a valid reference.");
+
+    double k = m_data.data.track_yaw[at.prev_waypoint_idx];
 
     int succ_idx = compute_index(at.prev_waypoint_idx, 1);
     if (succ_idx < 0)

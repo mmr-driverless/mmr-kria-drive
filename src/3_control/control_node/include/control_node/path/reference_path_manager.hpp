@@ -19,6 +19,7 @@ class ReferencePathManager {
   std::vector<double> m_data_dist_to_next;
   std::vector<double> m_data_curvature;
   std::vector<double> m_data_target_speed;
+  std::vector<double> m_data_track_yaw;
 
   std::vector<std::pair<int, std::unique_ptr<sources::ReferencePathSource>>> m_sources;
   int m_max_activated_source_idx;
