@@ -88,6 +88,29 @@ double get_feedforward_term(const double K_3, const double mass, const double lo
     return df_c1*df_c2+df_c3-df_c4;
 }
 
+Eigen::Vector4f LQR::find_optimal_control_vector(double speed_in_module)
+{
+    Eigen::Vector4f optimal_control_vector;
+
+    int closest_velocity_index = 0;
+    double smallest_velocity_gap = 10e4;
+
+    for (size_t i = 0; i < m_k_pair.size(); i++) 
+        {
+            // calculate the difference between speed_in_module and the velocity associated to the current control vector
+            double velocity_gap = std::abs(speed_in_module - m_k_pair[i].first);
+            if (velocity_gap < smallest_velocity_gap) 
+            {
+                closest_velocity_index = i;
+                smallest_velocity_gap = velocity_gap;
+            }
+        }
+
+    std::vector<double> v = m_k_pair[closest_velocity_index].second;
+    optimal_control_vector << v[0], v[1], v[2], v[3];
+    return optimal_control_vector;
+}
+
 LateralControl LQR::control(
 std::chrono::nanoseconds t,
 const estimation::IVehicleState& state,
