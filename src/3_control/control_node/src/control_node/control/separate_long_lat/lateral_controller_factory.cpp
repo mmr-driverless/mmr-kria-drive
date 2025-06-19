@@ -16,7 +16,7 @@ static constexpr std::initializer_list<std::pair<const char*, std::unique_ptr<IL
 };
 
 static constexpr ComponentFactory<ILateralController> FACTORY(CONTROLLERS);
-const ComponentFactory<ILateralController>& get_factory() { return FACTORY; }
+const ComponentFactory<ILateralController>& get_lateral_controller_factory() { return FACTORY; }
 
 }; // namespace separate_long_lat
 }; // namespace control
