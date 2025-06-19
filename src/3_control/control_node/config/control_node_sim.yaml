@@ -1,0 +1,251 @@
+/control_node:
+  ros__parameters:
+    tick_interval: 50 # Milliseconds. (Estimation -> control -> actuation) loop interval
+    wcet_ns: 6000000 # 5ms
+
+    tracking:
+      threshold: 8.0 # Meters. If the path doesn't pass through a circle of this radius centered on the vehicle, the tracking problem is restarted (which is a problem ONLY in Skidpad) and takes longer to execute
+      projection_marker:
+        diameter: 1.0
+        color:
+          r: 1.0
+          g: 0.0
+          b: 0.0
+          a: 1.0
+      threshold_marker:
+        color:
+          r: 1.0
+          g: 1.0
+          b: 1.0
+          a: 0.3
+      search_start_marker:
+        length: 0.7
+        color:
+          r: 0.0
+          g: 1.0
+          b: 0.0
+          a: 0.8
+      search_end_marker:
+        length: 0.7
+        color:
+          r: 1.0
+          g: 0.0
+          b: 0.0
+          a: 0.8
+
+    estimation:
+      type: Sim
+      params:
+        odometry_topic: "/Odometry"
+
+    event_manager:
+      enabled: false # Disable this on the sim or when you're using the HUMAN POWERTRAIN
+      as_state:
+        topic: "/as/status"
+        qos:
+          durability: transient_local
+      race_status:
+        topic: "/planning/race_status"
+      stop:
+        topic: "/mission/stop"
+      
+      rev_duration_before_engage_ms: 250
+      launch_throttle: 0.5
+      launch_brake: 0.15
+      rev_duration_after_engage_ms: 500
+      stop_light_brake: 0.15
+      stop_hard_brake: 0.4
+      lc_duration_after_launch_ms: 1000
+
+      wait_for_required_signals: true
+      
+      standstill_speed_m_s: 0.3
+      standstill_time_ms: 2000
+      lap_to_stop: 11 # Stop when lap counter publishes this lap
+
+      
+    control:
+      type: SeparateLongitudinalLateral
+      params:
+        convert_to_steering_wheel_degrees: false # set this to false when using sim
+
+        switch:
+          on_lap: 10000
+          longitudinal_before: 0
+          longitudinal_after: 0
+          lateral_before: 0
+          lateral_after: 0
+
+        lateral:
+          0:
+            type: "PurePursuit"
+            enabled: true
+            params:
+              minLookForward: 1.757
+              minLookForwardGain: 0.474 # 0.4 before 
+              steerGain: 1.0
+              target_marker:
+                diameter: 1.0
+                color:
+                  r: 0.0
+                  g: 1.0
+                  b: 0.0
+                  a: 1.0
+              log:
+                topic: "/control/pp_log"
+                qos_override:
+                  depth: 50
+
+          1:
+            type: "LQR"
+            enabled: false
+            params:
+              control_vectors:
+                - "5.00    1.6906    0.1111    1.8677    0.0944"
+                - "10.0    1.6906    0.1111    1.8677    0.0944"
+                - "15.0    1.6906    0.1111    1.8677    0.0944"
+                - "20.0    1.6906    0.1111    1.8677    0.0944"
+
+        longitudinal:
+          0:
+            type: "OldLongitudinal"
+            enabled: true
+            params:
+              minSpeed: 7.0
+
+              minSpeedDistance: 2.504
+              speed_lookforward_gain: 0.4
+              
+              min_throttle: 0.0
+              min_throttle_is_clamp: true
+
+              keep_launch: false
+
+              gear_strategy:
+                second_gear_from_lap: 2
+
+                # automatic_shifting_from_lap: 2
+                # min_up: 4500.0
+                # max_up: 10000.0
+
+                # min_down: 3500.0
+                # max_down: 7500.0
+              
+              max_accel: 3.0 # m/s^2
+
+              low_level_longitudinal_controller:
+                simplified: true
+                apps_p: 1.0
+                brake_p: 1.0
+
+                use_old_acceleration: true
+                # acceleration_p: 0.2
+
+              dynamicTargetSpeed:
+                enabled: true # If this is false, then minSpeed is used.
+                slowLaps: 1
+                maxSpeed: 15.0
+                targetSpeedWeight: 1.0
+
+    # Actuation settings
+    actuation:
+      actuators:
+        0:
+          enabled: true
+          type: Sim
+          params:
+            topic: "/sim/drive_parameters"
+
+        1:
+          enabled: true
+          type: Logger
+          params:
+            topic: "/control/log"
+
+        2:
+          enabled: true
+          type: FileLogger
+          params:
+            directory: "./control_log/actuator"
+
+
+    # Reference path settings
+    reference_path_manager:
+      # Reference path sources in order of priority, 0 is lowest
+      # Whenever a path from a higher priority source is received, any lower priority source is destroyed
+      sources:
+        0:
+          enabled: true
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line"
+            is_closed: false
+            
+        1:
+          enabled: true
+          type: "ROS_Marker"
+          params:
+            topic: "/planning/center_line_completed"
+            is_closed: true
+            qos_override:
+              durability: transient_local
+              reliability: reliable
+
+        2:
+          enabled: true
+          type: "ROS_GlobalPlanner"
+          params:
+            topic: "/planning/raceline"
+            qos_override:
+              durability: transient_local
+              reliability: reliable
+      # Uncomment this to dump paths to file
+      dump_paths_dir: './control_log/path_dumps'
+
+    vehicle_parameters:
+      wheelbase_m: 1.541 # distance between front and rear axle [m]
+      steering_ratio: 6.87 # Ratio between steering wheel and wheel angle (bicycle model) [1]
+      lr_m: 0.7094 # distance between CoM and rear axle [m]
+      scx: 1.1 # 0.99 * 1.1
+      scz: 5.5 # 2.2 * 2.5
+      wheel_radius_m: 0.23
+      mass_kg: 260.0
+      wheel_roll_coeff: 0.013
+      wheel_inertia: 0.0895 # 0.0735 + 0.016
+      curv_cutoff_radps: 0.65
+      brake_potential_deceleration_m_s_2: 4.0
+      brake_tilton_diameter_mm: 15.88
+      brake_mu: 0.35 # coef attrito pastiglia-disco [adim]
+      brake_disc_radius_mm: 81.50
+      brake_piston_diameter_mm: 25.0
+      brake_pedal_down_distance_mm: 46.0 # Distanza perno pedale-tilton
+      brake_pedal_up_distance_mm: 175.0 # Distanza perno pedale-ebs
+      brake_pulley_diameter_mm: 37.0
+      brake_reducer: 15.58
+      brake_reducer_efficiency: 0.90
+      brake_min_torque: 100.0 # Any braking command under this threshold is ignored [mNm]
+      differential_ratio: 3.38
+      nmotvet_rpm: [ 10.0, 2500.0, 3500.0, 4500.0, 5500.0, 6500.0, 7500.0, 8500.0, 9500.0, 10500.0, 11500.0, 18000.0 ]
+      cdc_Nm: [ 23.0, 23.0, 36.0, 40.0, 38.0, 44.0, 46.0, 52.0, 56.0, 51.0, 47.0, 47.0 ]
+      gear_ratios: [
+        +inf,
+        5.5, # 77/14,
+        4.052631578947368, # 77/19
+        3.3846153846153846, # 77*36/39/21
+        2.9615384615384617 # 77*36/39/24
+      ]
+      apps_map_rpm: [0.0, 7000.0, 9000.0]
+      apps_map_x: [
+        0.0, 0.005, 0.85, 1.0, # <7000 rpm
+        0.0, 0.005, 0.75, 1.0, # 7000-9000 rpm
+        0.0, 0.005, 0.70, 1.0, # >9000 rpm
+      ] # % of maximum torque
+      apps_map_y: [ 0.0, 0.15, 0.75, 1.0 ] # APPS
+      C_alpha_front: 1.0
+      C_alpha_rear: 1.0
+
+    
+    viz:
+      enabled: true
+      topic: "/control/viz"
+      min_interval_ms: 100
