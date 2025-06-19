@@ -37,8 +37,14 @@ class Parameters {
     if constexpr (std::is_same_v<T, std::string>)
       repr = val;
     else if constexpr (is_std_vector<T>::value) {
-      for (auto& v : val)
-        repr += std::to_string(v) + " ";
+      for (auto& v : val) {
+        std::string v_str;
+        if constexpr (std::is_same_v<typename T::value_type, std::string>)
+          v_str = v;
+        else
+          v_str = std::to_string(v);
+        repr += v_str + " ";
+      }
     }
     else
       repr = std::to_string(val);
