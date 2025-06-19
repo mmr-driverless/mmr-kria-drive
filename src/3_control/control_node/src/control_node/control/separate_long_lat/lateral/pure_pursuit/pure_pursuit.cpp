@@ -113,9 +113,7 @@ LateralControl PurePursuit::control(
       m_vp->wheelbase_m()
     );
 
-    double wheel_angle_deg = wheel_angle_rad * (180 / std::numbers::pi);
-    double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
-    u.steer = steering_wheel_angle_deg;
+    u.steer = wheel_angle_rad;
   }
 
   mmr_base::msg::PurePursuitLog log_msg;

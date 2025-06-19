@@ -15,6 +15,8 @@ static inline int assert_valid_index(int idx, int n, rclcpp::Logger logger) {
 }
 
 void SeparateLongitudinalLateralController::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) {
+  m_vp = &vp;
+
   m_longitudinal_controllers = get_longitudinal_controller_factory().from_param_list(p, "longitudinal", [&](ILongitudinalController& ctrl, int idx, const Parameters& p_i, const std::string& name) {
     (void)name;
     (void)idx;
@@ -26,6 +28,8 @@ void SeparateLongitudinalLateralController::init(rclcpp::Node& node, const Param
     (void)idx;
     ctrl.init(node, p_i, vp, viz_mgr, logger);
   }, logger.get_child("ComponentFactory"));
+
+  m_convert_to_steering_wheel_degrees = p.get<bool>("convert_to_steering_wheel_degrees");
 
   Parameters switch_p = p.subparams("switch");
   m_switch_lap = switch_p.get<int>("on_lap");
@@ -55,6 +59,14 @@ Control SeparateLongitudinalLateralController::control(
 
   LateralControl lat_ctrl = m_lateral_controllers[lat_idx].second->control(t, state, reference_path, vehicle_path_projection, lap);
   LongitudinalControl long_ctrl = m_longitudinal_controllers[long_idx].second->control(t, state, reference_path, vehicle_path_projection, lap);
+
+  // Convert wheel angle to steering wheel angle
+  if (m_convert_to_steering_wheel_degrees) {
+    double wheel_angle_deg = lat_ctrl.steer * (180 / std::numbers::pi);
+    double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
+
+    lat_ctrl.steer = steering_wheel_angle_deg;
+  } 
 
   return Control (
     lat_ctrl.steer,

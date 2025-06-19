@@ -17,6 +17,10 @@ class SeparateLongitudinalLateralController : public IController {
   std::pair<int, int> m_longitudinal_controller_idx;
   std::pair<int, int> m_lateral_controller_idx;
 
+  bool m_convert_to_steering_wheel_degrees;
+
+  const VehicleParameters* m_vp;
+
 public:
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) override;
 

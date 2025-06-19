@@ -75,6 +75,8 @@
     control:
       type: SeparateLongitudinalLateral
       params:
+        convert_to_steering_wheel_degrees: true # set this to false when using sim
+
         switch:
           on_lap: 10000
           longitudinal_before: 0
