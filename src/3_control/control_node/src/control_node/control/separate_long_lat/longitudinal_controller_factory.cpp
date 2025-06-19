@@ -9,7 +9,7 @@ template <typename T>
 static std::unique_ptr<ILongitudinalController> create_controller() { return std::make_unique<T>(); }
 
 static constexpr std::initializer_list<std::pair<const char*, std::unique_ptr<ILongitudinalController>(*)()>> CONTROLLERS = {
-    std::make_pair("LQR", create_controller<longitudinal::old_longitudinal::OldLongitudinal>)
+    std::make_pair("OldLongitudinal", create_controller<longitudinal::old_longitudinal::OldLongitudinal>)
 
 };
 

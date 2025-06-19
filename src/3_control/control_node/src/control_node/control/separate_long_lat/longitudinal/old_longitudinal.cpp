@@ -127,7 +127,6 @@ void OldLongitudinal::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   m_logger = logger;
 
   m_speed_lookforward_gain = p.get<double>("speed_lookforward_gain");
-  m_steerGain = p.get<double>("steerGain");
   m_minSpeedDistance = p.get<double>("minSpeedDistance");
   m_minSpeed = p.get<double>("minSpeed");
   m_max_accel_sq = p.get<double>("max_accel");

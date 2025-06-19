@@ -48,8 +48,8 @@ public:
       std::string type = p_i.get<std::string>("type");
       std::unique_ptr<T> component = this->get(type);
       if (component == nullptr) {
-        RCLCPP_ERROR(logger, "Entry %d IGNORED (UNKNOWN type '%s')", idx, type.c_str());
-        return;
+        RCLCPP_ERROR(logger, "Entry %d has UNKNOWN type '%s')", idx, type.c_str());
+        throw std::invalid_argument("Unknown type for component.");
       }
 
       // Store the component in the result

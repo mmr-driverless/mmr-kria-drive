@@ -16,9 +16,6 @@ class OldLongitudinal : public ILongitudinalController
   std::optional<rclcpp::Logger> m_logger;
 
   const VehicleParameters* m_vp;
-  double m_minLookForward;
-  double m_minLookForwardGain;
-  double m_steerGain;
 
   double m_minSpeedDistance;
   double m_speed_lookforward_gain;

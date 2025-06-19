@@ -73,60 +73,75 @@
       lap_to_stop: 11 # Stop when lap counter publishes this lap
 
     control:
-      type: PurePursuit2023
+      type: SeparateLongitudinalLateral
       params:
-        minLookForward: 1.757
-        minLookForwardGain: 0.474 # 0.4 before 
-        steerGain: 1.0
-        minSpeed: 7.0
+        switch:
+          on_lap: 10000
+          longitudinal_before: 0
+          longitudinal_after: 0
+          lateral_before: 0
+          lateral_after: 0
 
-        minSpeedDistance: 2.504
-        speed_lookforward_gain: 0.4
-        
-        min_throttle: 0.0
-        min_throttle_is_clamp: true
+        lateral:
+          0:
+            type: "PurePursuit"
+            enabled: true
+            params:
+              minLookForward: 1.757
+              minLookForwardGain: 0.474 # 0.4 before 
+              steerGain: 1.0
+              target_marker:
+                diameter: 1.0
+                color:
+                  r: 0.0
+                  g: 1.0
+                  b: 0.0
+                  a: 1.0
+              log:
+                topic: "/control/pp_log"
+                qos_override:
+                  depth: 50
 
-        keep_launch: false
+        longitudinal:
+          0:
+            type: "OldLongitudinal"
+            enabled: true
+            params:
+              minSpeed: 7.0
 
-        gear_strategy:
-          second_gear_from_lap: 2
+              minSpeedDistance: 2.504
+              speed_lookforward_gain: 0.4
+              
+              min_throttle: 0.0
+              min_throttle_is_clamp: true
 
-          # automatic_shifting_from_lap: 2
-          # min_up: 4500.0
-          # max_up: 10000.0
+              keep_launch: false
 
-          # min_down: 3500.0
-          # max_down: 7500.0
-        
-        max_accel: 3.0 # m/s^2
+              gear_strategy:
+                second_gear_from_lap: 2
 
-        low_level_longitudinal_controller:
-          simplified: false
-          # apps_p: 0.7
-          # brake_p: 0.2
+                # automatic_shifting_from_lap: 2
+                # min_up: 4500.0
+                # max_up: 10000.0
 
-          use_old_acceleration: true
-          # acceleration_p: 0.2
+                # min_down: 3500.0
+                # max_down: 7500.0
+              
+              max_accel: 3.0 # m/s^2
 
-        dynamicTargetSpeed:
-          enabled: true # If this is false, then minSpeed is used.
-          slowLaps: 1
-          maxSpeed: 15.0
-          targetSpeedWeight: 1.0
+              low_level_longitudinal_controller:
+                simplified: false
+                # apps_p: 0.7
+                # brake_p: 0.2
 
-        target_marker:
-          diameter: 1.0
-          color:
-            r: 0.0
-            g: 1.0
-            b: 0.0
-            a: 1.0
-        
-        log:
-          topic: "/control/pp_log"
-          qos_override:
-            depth: 50
+                use_old_acceleration: true
+                # acceleration_p: 0.2
 
+              dynamicTargetSpeed:
+                enabled: true # If this is false, then minSpeed is used.
+                slowLaps: 1
+                maxSpeed: 15.0
+                targetSpeedWeight: 1.0
 
     # Actuation settings
     actuation:
@@ -248,6 +263,8 @@
         0.0, 0.005, 0.70, 1.0, # >9000 rpm
       ] # % of maximum torque
       apps_map_y: [ 0.0, 0.15, 0.75, 1.0 ] # APPS
+      C_alpha_front: 1.0
+      C_alpha_rear: 1.0
 
     
     viz:
