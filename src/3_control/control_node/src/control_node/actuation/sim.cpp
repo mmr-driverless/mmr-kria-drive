@@ -5,7 +5,7 @@ namespace actuation {
 namespace sim {
 
 void Sim::init(rclcpp::Node& node, const Parameters& p, rclcpp::Logger) {
-  m_pub = node.create_publisher<ackermann_msgs::msg::AckermannDrive>(p.get<std::string>("topic"), p.parse_qos("qos"));
+  m_pub = node.create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(p.get<std::string>("topic"), p.parse_qos("qos"));
 }
 
 void Sim::actuate(std::chrono::nanoseconds, const control::Control& u) {
@@ -17,7 +17,10 @@ void Sim::actuate(std::chrono::nanoseconds, const control::Control& u) {
     } else {
       msg.speed = u.throttle;
     }
-    m_pub->publish(msg);
+
+    ackermann_msgs::msg::AckermannDriveStamped msg_stamped;
+    msg_stamped.drive = msg;
+    m_pub->publish(msg_stamped);
   }
 }
 
