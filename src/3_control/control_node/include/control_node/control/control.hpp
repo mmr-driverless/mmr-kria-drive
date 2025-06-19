@@ -4,8 +4,7 @@
 namespace control_node {
 namespace control {
 
-class Control {
-public:
+struct Control {
   enum class LaunchControl {
     Set,
     Unset
