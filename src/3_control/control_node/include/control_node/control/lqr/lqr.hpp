@@ -10,13 +10,23 @@ namespace lqr{
 
 class LQR : public IController{
 
-    const VehicleParameters* m_vp;
+  const VehicleParameters* m_vp;
+  std::vector<std::string> m_raw_vectors_k;
+  std::vector<std::pair<double, std::vector<double>>> m_k_pair;
 
-    std::vector<std::string> m_raw_vectors_k;
-    std::vector<std::pair<double, std::vector<double>>> m_k_pair;
+  // Longitudinal control is copy-paste from PurePursuit2023
+  double m_minLookForward;
+  double m_minLookForwardGain;
+  double m_steerGain;
 
-    // Longitudinal control is copy-paste from PurePursuit2023
-    struct SimplifiedLongitudinalControlParams {
+  double m_minSpeedDistance;
+  double m_speed_lookforward_gain;
+  
+  double m_minSpeed;
+
+  double m_max_accel_sq;
+
+  struct SimplifiedLongitudinalControlParams {
     double apps_p;
     double brake_p;
   };
@@ -57,19 +67,21 @@ class LQR : public IController{
 
   void viz(std::optional<Eigen::Vector2d> target);
   int gear_target(int acceleration_sign, const estimation::IVehicleState& state);
-  Eigen::Vector4f find_optimal_control_vector(double speed_in_module);
 
   static inline double lerp2(const double x, mmr_point_double start, mmr_point_double end) {
     const double M = end.y - start.y;
     const double X = (x - start.x) / (end.x - start.x);
     const double Q = start.y;
-
+  
     return M * X + Q;
   }
 
   static inline double lerp3(const double x, mmr_point_double start, mmr_point_double p1, mmr_point_double end) {
     return x < p1.x? lerp2(x, start, p1) : lerp2(x, p1, end);
   }
+
+  Eigen::Vector4f find_optimal_control_vector(double speed_in_module);
+
 
 public:
 

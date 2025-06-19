@@ -73,11 +73,8 @@
       lap_to_stop: 11 # Stop when lap counter publishes this lap
 
     control:
-      type: PurePursuit2023
+      type: LQR
       params:
-        minLookForward: 1.757
-        minLookForwardGain: 0.474 # 0.4 before 
-        steerGain: 1.0
         minSpeed: 7.0
 
         minSpeedDistance: 2.504
@@ -127,11 +124,11 @@
           qos_override:
             depth: 50
             
-    vectors_k:
-      - "5.00    1.6906    0.1111    1.8677    0.0944"
-      - "10.0    1.6906    0.1111    1.8677    0.0944"
-      - "15.0    1.6906    0.1111    1.8677    0.0944"
-      - "20.0    1.6906    0.1111    1.8677    0.0944"
+        vectors_k:
+          - "5.00    1.6906    0.1111    1.8677    0.0944"
+          - "10.0    1.6906    0.1111    1.8677    0.0944"
+          - "15.0    1.6906    0.1111    1.8677    0.0944"
+          - "20.0    1.6906    0.1111    1.8677    0.0944"
 
 
 

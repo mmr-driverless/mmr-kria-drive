@@ -93,6 +93,8 @@ public:
   double steering_ratio() const { return m_steering_ratio; }
   double scx() const { return m_scx; }
   double scz() const { return m_scz; }
+  double C_alpha_front() const { return m_C_alpha_front; }
+  double C_alpha_rear() const { return m_C_alpha_rear; }
   double wheel_radius_m() const { return m_wheel_radius_m; }
   double wheel_roll_coeff() const { return m_wheel_roll_coeff; }
   double wheel_inertia() const { return m_wheel_inertia; }

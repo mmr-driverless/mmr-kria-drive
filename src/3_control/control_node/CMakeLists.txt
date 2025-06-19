@@ -10,8 +10,6 @@ set(USE_EDF OFF)
 # Whether to log the execution times to a file (only if USE_EDF is ON)
 set(EDF_MEASURE_EXECUTION_TIME OFF)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
-
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(rclcpp REQUIRED)
