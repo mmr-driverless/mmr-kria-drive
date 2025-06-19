@@ -102,6 +102,16 @@
                 qos_override:
                   depth: 50
 
+          1:
+            type: "LQR"
+            enabled: false
+            params:
+              control_vectors:
+                - "5.00    1.6906    0.1111    1.8677    0.0944"
+                - "10.0    1.6906    0.1111    1.8677    0.0944"
+                - "15.0    1.6906    0.1111    1.8677    0.0944"
+                - "20.0    1.6906    0.1111    1.8677    0.0944"
+
         longitudinal:
           0:
             type: "OldLongitudinal"
