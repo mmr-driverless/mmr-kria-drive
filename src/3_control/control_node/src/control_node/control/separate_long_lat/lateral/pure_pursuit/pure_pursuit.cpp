@@ -13,7 +13,7 @@ static inline double normalizeAngle(double angle){
   return angle;
 }
 
-void PurePursuit2023::viz(std::optional<Eigen::Vector2d> target) {
+void PurePursuit::viz(std::optional<Eigen::Vector2d> target) {
   if (m_viz_lookforward < 0)
     return;
 
@@ -50,7 +50,7 @@ static inline double calculateSteeringTarget(Eigen::Vector2d target, Eigen::Vect
   return wheelRotation;
 }
 
-void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) 
+void PurePursuit::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) 
 {
   m_vp = &vp;
 
@@ -72,7 +72,7 @@ void PurePursuit2023::init(rclcpp::Node& node, const Parameters& p, const Vehicl
   );
 }
 
-LateralControl PurePursuit2023::control(
+LateralControl PurePursuit::control(
   std::chrono::nanoseconds t,
   const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,

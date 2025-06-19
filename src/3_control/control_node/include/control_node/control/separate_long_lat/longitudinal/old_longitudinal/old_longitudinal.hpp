@@ -11,7 +11,7 @@ namespace separate_long_lat {
 namespace longitudinal {
 namespace old_longitudinal {
 
-class OldLongitudinal : ILongitudinalController
+class OldLongitudinal : public ILongitudinalController
 {
   std::optional<rclcpp::Logger> m_logger;
 

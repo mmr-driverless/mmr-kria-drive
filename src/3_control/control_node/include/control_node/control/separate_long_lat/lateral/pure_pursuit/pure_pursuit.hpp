@@ -11,7 +11,7 @@ namespace separate_long_lat {
 namespace lateral{
 namespace pure_pursuit{
 
-class PurePursuit2023 : public ILateralController {
+class PurePursuit : public ILateralController {
 
   std::optional<rclcpp::Logger> m_logger;
 
