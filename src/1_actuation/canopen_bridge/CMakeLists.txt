@@ -3,7 +3,8 @@ project(canopen_bridge)
 set (CMAKE_CXX_STANDARD 20)
 
 # Whether to log the execution times to a file
-set(EDF_MEASURE_EXECUTION_TIME ON)
+set(EDF_MEASURE_EXECUTION_TIME OFF)
+set(LOG_POWER_CONSUPTION_ACT ON)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -44,6 +45,13 @@ if (EDF_MEASURE_EXECUTION_TIME)
 else()
   message("EDF Execution time logging DISABLED")
 endif ()
+
+if (LOG_POWER_CONSUPTION_ACT)
+  message("Check power consuption of Maxon motor")
+  target_compile_definitions(${PROJECT_NAME}_node PUBLIC LOG_POWER_CONSUPTION_ACT)
+else()
+  message("not read power consuption")
+endif()
 
 target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}

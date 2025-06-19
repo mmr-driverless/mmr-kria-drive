@@ -2,7 +2,7 @@
 
 CANOpenBridge::CANOpenBridge() : EDFNode("canopen_bridge_node")
 {
-    this->loadParameters();
+    this->loadParameters();    
     this->configureEDFScheduler(this->m_nPeriod, this->m_nWCET, this->m_nDeadline);
     this->setCPU(this->m_nCPUAffinity);
 
@@ -78,6 +78,9 @@ void CANOpenBridge::loadParameters()
     declare_parameter("clutch.timeout_msgs", 2);
     declare_parameter<std::vector<long int>>("clutch.step_maxon", std::vector<long int>());
     declare_parameter<std::vector<double>>("clutch.pot_val", std::vector<double>());
+
+    declare_parameter("maxon_power.time_freq", 10);
+    declare_parameter("maxon_power.file", "");
     
     get_parameter("generic.interface", this->m_sInterface);
     get_parameter("generic.bitrate", this->m_nBitrate);
@@ -115,6 +118,9 @@ void CANOpenBridge::loadParameters()
     get_parameter("clutch.step_maxon", this->m_aMotorSteps);
     get_parameter("clutch.pot_val", this->m_aPotVal);
     get_parameter("clutch.timeout_msgs", this->m_nTimeoutMsgClutch);
+
+    get_parameter("maxon_power.time_freq", this->m_nTimeFreq);
+    get_parameter("maxon_power.file", this->m_sPathToLog);
 }
 
 void CANOpenBridge::connectCANBus()
@@ -357,4 +363,36 @@ void CANOpenBridge::uploadVoltage()
 {
     uint16_t m_uVoltage = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
     this->m_msgActuatorStatus.voltage = ( (float) m_uVoltage / 10);
+}
+
+void CANOpenBridge::logMaxonPower()
+{
+
+    if ((this->m_nCtrFreq % this->m_nTimeFreq) != 0) {
+        this->m_nCtrFreq ++;
+        return;
+    }
+    this->m_nCtrFreq = 1;
+
+    if ((this->m_mSteer != nullptr) && (this->m_mBrake != nullptr)) {
+        
+        std::ofstream log(this->m_sPathToLog, std::ofstream::app);
+        
+        // Steer 
+        int32_t nSteerCur = this->m_mSteer->upload<int32_t>(0x30D0, 0x00);
+        uint16_t uSteerVolt = this->m_mSteer->upload<uint16_t>(0x2200, 0x01);
+        float fSteerVolt = ( (float) uSteerVolt / 10);
+
+        RCLCPP_INFO(this->get_logger(), "[ STEER CURRENT ]: %d, [ STEER VOLTAGE ]: %f", nSteerCur, fSteerVolt);
+
+        // Brake
+        int32_t nBrakeCur = this->m_mBrake->upload<int32_t>(0x30D0, 0x00);
+        uint16_t uBrakeVolt = this->m_mBrake->upload<uint16_t>(0x2200, 0x01);
+        float fBrakeVolt = ( (float) uBrakeVolt / 10);
+
+        RCLCPP_INFO(this->get_logger(), "[ BRAKE CURRENT ]: %d, [ BRAKE VOLTAGE ]: %f", nBrakeCur, fBrakeVolt);
+
+        log << fSteerVolt << "," << nSteerCur << "," << fBrakeVolt << "," << nBrakeCur << "\n";
+
+    }
 }
