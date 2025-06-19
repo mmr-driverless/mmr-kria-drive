@@ -238,7 +238,7 @@ LongitudinalControl OldLongitudinal::control(
       auto speed_target_ref = reference_path.advance_point(*vehicle_path_projection, speed_lookforward);
 
       if (auto max_speed_opt = reference_path.get_target_speed(speed_target_ref))
-        maximum_speed = *max_speed_opt;
+        maximum_speed = *max_speed_opt * m_dynamic_target_speed->targetSpeedWeight;
     }
 
     maximum_speed = std::clamp<double>(maximum_speed, m_minSpeed, m_dynamic_target_speed->maxSpeed);

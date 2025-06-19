@@ -154,7 +154,7 @@
           enabled: true
           type: Sim
           params:
-            topic: "/sim/drive_parameters"
+            topic: "/drive_parameters"
 
         1:
           enabled: true

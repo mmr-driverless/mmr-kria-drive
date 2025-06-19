@@ -27,23 +27,25 @@ public:
     std::optional<double> m_yaw;
     std::optional<double> m_speed;
     std::optional<double> m_yaw_rate;
+    std::optional<double> m_vy;
     
   public:
     friend SimEstimator;
     virtual std::optional<Eigen::Vector2d> position() const override { return m_position; }
     virtual std::optional<double> yaw() const override { return m_yaw; }
     virtual std::optional<double> speed() const override { return m_speed; }
+    virtual std::optional<double> vy() const override { return m_vy; }
     virtual std::optional<double> yaw_rate() const override { return m_yaw_rate; }
     
     // don't need these but forced to implement them
-    virtual std::optional<int> rpm() const override { return 0; }
-    virtual std::optional<bool> lc_is_active() const override { return false; }
-    virtual std::optional<bool> clutch_is_engaged() const override { return false; }
-    virtual std::optional<int> gear() const override { return 0; }
-    virtual std::optional<bool> res_go() const override { return false; }
-    virtual std::optional<bool> res_bag() const override { return false; }
-    virtual std::optional<double> actual_steer() const override { return 0.0; }
-    virtual std::optional<double> throttle() const override { return 0.0; }
+    virtual std::optional<int> rpm() const override { return std::nullopt;}
+    virtual std::optional<bool> lc_is_active() const override { return std::nullopt; }
+    virtual std::optional<bool> clutch_is_engaged() const override { return std::nullopt; }
+    virtual std::optional<int> gear() const override { return std::nullopt;}
+    virtual std::optional<bool> res_go() const override { return std::nullopt; }
+    virtual std::optional<bool> res_bag() const override { return std::nullopt; }
+    virtual std::optional<double> actual_steer() const override { return std::nullopt; }
+    virtual std::optional<double> throttle() const override { return std::nullopt; }
   } m_state;
 
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp) override;

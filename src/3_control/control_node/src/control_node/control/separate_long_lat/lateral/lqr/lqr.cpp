@@ -143,37 +143,37 @@ int lap
       {
           lateral_deviation_module = std::hypot(projection_point->x() - state.position()->x(), projection_point->y() - state.position()->y());
       }    
-  }
-
-  double closest_point_curvature = reference_path.get_curvature(vehicle_path_projection.value()).value();
-  double closest_point_curvature_radius = 1.0 / closest_point_curvature;
-  double car_yaw = state.yaw().value();
-  double closest_point_tangent = reference_path.get_track_yaw(vehicle_path_projection.value()).value();
-  double lateral_deviation_sign = get_sign(projection_point->x(), projection_point->y(), state.position()->x(), state.position()->y(), closest_point_tangent);
-  double lateral_deviation = lateral_deviation_module * lateral_deviation_sign;
-
-  double angular_deviation = get_angular_deviation(closest_point_tangent, car_yaw);
-
-  double velocity_x = state.speed().value();
-  double velocity_y = 0.0; // TODO: get this value from FAST-LIO (or FAST-LIMO) -> state.speed_x().value(), state.speed_y().value()
-  auto [lateral_deviation_speed, v_ld] = get_lateral_deviation_components(angular_deviation, closest_point_tangent, velocity_x, velocity_y);
-  
-  double angular_deviation_speed = state.yaw_rate().value();
-
-  Eigen::Vector4f state_vector;
-  state_vector << lateral_deviation, lateral_deviation_speed, angular_deviation, angular_deviation_speed;
-  
-  Eigen::Vector4f optimal_control_vector = find_optimal_control_vector(velocity_x);
-
-  double K_3 = optimal_control_vector[2];
-
-  double steering = -optimal_control_vector.dot(state_vector); 
-
-  double delta_f = get_feedforward_term(K_3, m_vp->mass_kg(), velocity_x, closest_point_curvature_radius, m_vp->lr_m(), m_vp->lr_m(), m_vp->C_alpha_front(), m_vp->C_alpha_rear());
-  
-  steering = steering + delta_f;
-
-  u.steer = steering;
+      
+      double closest_point_curvature = reference_path.get_curvature(vehicle_path_projection.value()).value();
+      double closest_point_curvature_radius = 1.0 / closest_point_curvature;
+      double car_yaw = state.yaw().value();
+      double closest_point_tangent = reference_path.get_track_yaw(vehicle_path_projection.value()).value();
+      double lateral_deviation_sign = get_sign(projection_point->x(), projection_point->y(), state.position()->x(), state.position()->y(), closest_point_tangent);
+      double lateral_deviation = lateral_deviation_module * lateral_deviation_sign;
+      
+      double angular_deviation = get_angular_deviation(closest_point_tangent, car_yaw);
+      
+      double velocity_x = state.speed().value();
+      double velocity_y = state.vy().value();
+      auto [lateral_deviation_speed, v_ld] = get_lateral_deviation_components(angular_deviation, closest_point_tangent, velocity_x, velocity_y);
+      
+      double angular_deviation_speed = state.yaw_rate().value();
+      
+      Eigen::Vector4f state_vector;
+      state_vector << lateral_deviation, lateral_deviation_speed, angular_deviation, angular_deviation_speed;
+      
+      Eigen::Vector4f optimal_control_vector = find_optimal_control_vector(velocity_x);
+      
+      double K_3 = optimal_control_vector[2];
+      
+      double steering = -optimal_control_vector.dot(state_vector); 
+      
+      double delta_f = get_feedforward_term(K_3, m_vp->mass_kg(), velocity_x, closest_point_curvature_radius, m_vp->lr_m(), m_vp->lr_m(), m_vp->C_alpha_front(), m_vp->C_alpha_rear());
+      
+      steering = steering + delta_f;
+      
+      u.steer = steering;
+  } 
   
   return u;
 }

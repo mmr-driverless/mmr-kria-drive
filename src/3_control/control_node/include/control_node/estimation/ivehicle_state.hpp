@@ -12,6 +12,7 @@ struct IVehicleState {
   virtual std::optional<double> yaw() const = 0;
   virtual std::optional<double> yaw_rate() const = 0;
   virtual std::optional<double> speed() const = 0;
+  virtual std::optional<double> vy() const = 0;
   virtual std::optional<int> rpm() const = 0;
   virtual std::optional<bool> lc_is_active() const = 0;
   virtual std::optional<bool> clutch_is_engaged() const = 0;

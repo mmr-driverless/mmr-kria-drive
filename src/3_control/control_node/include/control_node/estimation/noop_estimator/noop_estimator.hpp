@@ -48,6 +48,7 @@ public:
     virtual std::optional<double> yaw_rate() const override {return m_yaw_rate;}
     virtual std::optional<int> rpm() const override { return m_rpm; }
     virtual std::optional<double> speed() const override { return m_speed; }
+    virtual std::optional<double> vy() const override { return std::nullopt; }
     virtual std::optional<bool> lc_is_active() const override { return m_lc_is_active; }
     virtual std::optional<bool> clutch_is_engaged() const override { return m_clutch_is_engaged; }
     virtual std::optional<int> gear() const override { return m_gear; }

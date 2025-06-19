@@ -30,6 +30,7 @@ void SimEstimator::odom_cb(std::shared_ptr<const nav_msgs::msg::Odometry> msg) {
   m_state.m_yaw_rate = msg->twist.twist.angular.z;
   auto rpy = yaw_from_quaternion(q);
   m_state.m_yaw = rpy;
+  m_state.m_vy = msg->twist.twist.linear.y; 
 }
 
 }; // namespace noop

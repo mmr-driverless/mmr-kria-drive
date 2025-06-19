@@ -34,6 +34,7 @@ public:
     virtual std::optional<Eigen::Vector2d> position() const override { return std::nullopt; }
     virtual std::optional<double> yaw() const override { return std::nullopt; }
     virtual std::optional<double> yaw_rate() const override { return std::nullopt; }
+    virtual std::optional<double> vy() const override { return std::nullopt; }
     virtual std::optional<int> rpm() const override { return m_rpm; }
     virtual std::optional<double> speed() const override { return m_speed; }
     virtual std::optional<bool> lc_is_active() const override { return m_lc_is_active; }

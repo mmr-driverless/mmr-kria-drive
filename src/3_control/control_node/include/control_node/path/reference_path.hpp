@@ -73,12 +73,12 @@ public:
 
     template <typename StreamT>
     static void csv_header(StreamT& o) {
-      o << "dist_to_next, k, max_speed";
+      o << "dist_to_next, k, max_speed, track_yaw";
     }
 
     template <typename StreamT>
     void to_csv(StreamT& o, int i) {
-      o << data.dist_to_next[i] << ", " << data.curvature[i] << ", " << data.target_speed[i];
+      o << data.dist_to_next[i] << ", " << data.curvature[i] << ", " << data.target_speed[i] << ", " << data.track_yaw[i];
     }
 
     PathData() {}
@@ -448,13 +448,13 @@ public:
      
     assert(is_valid_reference(at) && "at must be a valid reference.");
 
-    double k = m_data.data.track_yaw[at.prev_waypoint_idx];
+    double yaw = m_data.data.track_yaw[at.prev_waypoint_idx];
 
     int succ_idx = compute_index(at.prev_waypoint_idx, 1);
     if (succ_idx < 0)
-      return k;
+      return yaw;
 
-    return k + (m_data.data.curvature[succ_idx] - k) * at.t;
+    return yaw + (m_data.data.track_yaw[succ_idx] - yaw) * at.t;
   }
 
   void compute_data(const VehicleParameters& vp) {
