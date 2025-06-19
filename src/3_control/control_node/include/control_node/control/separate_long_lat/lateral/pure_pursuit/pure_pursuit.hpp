@@ -8,7 +8,8 @@
 namespace control_node {
 namespace control {
 namespace separate_long_lat {
-namespace pure_pursuit_{
+namespace lateral{
+namespace pure_pursuit{
 
 class PurePursuit2023 : public ILateralController {
 
@@ -58,6 +59,7 @@ public:
 };
 
 }// namespace pure_pursuit
+}// namespace lateral
 }// namespace separate_long_lat
 }// namespace control
 }// namespace control_node

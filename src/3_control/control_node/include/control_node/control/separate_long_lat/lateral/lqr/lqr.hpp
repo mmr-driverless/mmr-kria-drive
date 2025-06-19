@@ -1,5 +1,5 @@
-#ifndef CONTROLNODE_CONTROL_SEPARATELONGLAT_LQR_LQR_HPP
-#define CONTROLNODE_CONTROL_SEPARATELONGLAT_LQR_LQR_HPP
+#ifndef CONTROLNODE_CONTROL_SEPARATELONGLAT_LATERAL_LQR_LQR_HPP
+#define CONTROLNODE_CONTROL_SEPARATELONGLAT_LATERAL_LQR_LQR_HPP
 
 #include "control_node/control/separate_long_lat/lateral_control.hpp"
 #include <control_node/control/separate_long_lat/ilateral_controller.hpp>
@@ -7,6 +7,7 @@
 namespace control_node{
 namespace control {
 namespace separate_long_lat{
+namespace lateral{
 namespace lqr{
 
 class LQR : public ILateralController{
@@ -29,12 +30,12 @@ class LQR : public ILateralController{
     const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
     int lap
   ) override;
-
 };
 
 }// namespace lqr
+}// namespace lateral
 }// namespace separate_long_lat
 }// namespace control
 }// namespace control_node
 
-#endif
+#endif // ! CONTROLNODE_CONTROL_SEPARATELONGLAT_LATERAL_LQR_LQR_HPP

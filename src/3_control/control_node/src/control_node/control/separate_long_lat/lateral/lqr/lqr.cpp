@@ -3,6 +3,7 @@
 namespace control_node{
 namespace control {
 namespace separate_long_lat{
+namespace lateral{
 namespace lqr{
 
 void LQR::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger)
@@ -155,6 +156,7 @@ int lap
 }
 
 }// namespace lqr
+}// namespace lateral
 }// namespace separate_long_lat
 }// namespace control
 }// namespace control_node

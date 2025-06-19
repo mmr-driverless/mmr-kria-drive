@@ -4,7 +4,8 @@
 namespace control_node {
 namespace control {
 namespace separate_long_lat {
-namespace pure_pursuit_{
+namespace lateral{
+namespace pure_pursuit{
 
 static inline double normalizeAngle(double angle){
   while(angle > M_PI) angle -= (2 * M_PI);
@@ -133,6 +134,7 @@ LateralControl PurePursuit2023::control(
 
 
 }// namespace pure_pursuit
+}// namespace lateral
 }// namespace separate_long_lat
 }// namespace control
 }// namespace control_node
