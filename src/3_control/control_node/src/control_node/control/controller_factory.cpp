@@ -1,8 +1,7 @@
 #include <control_node/control/icontroller.hpp>
 #include <control_node/control/controller_factory.hpp>
 
-#include <control_node/control/pure_pursuit_2023/pure_pursuit_2023.hpp>
-#include <control_node/control/lqr/lqr.hpp>
+#include <control_node/control/separate_long_lat/separate_long_lat.hpp>
 #include <control_node/control/inspection/inspection.hpp>
 #include <control_node/control/long_step_response/long_step_response.hpp>
 
@@ -13,8 +12,7 @@ template <typename T>
 static std::unique_ptr<IController> create_controller() { return std::make_unique<T>(); }
 
 static constexpr std::initializer_list<std::pair<const char*, std::unique_ptr<IController>(*)()>> CONTROLLERS = {
-  std::make_pair("PurePursuit2023", create_controller<pure_pursuit_2023::PurePursuit2023>),
-  std::make_pair("LQR", create_controller<lqr::LQR>),
+  std::make_pair("SeparateLongitudinalLateral", create_controller<separate_long_lat::SeparateLongitudinalLateralController>),
   std::make_pair("Inspection", create_controller<inspection::Inspection>),
   std::make_pair("LongStepResponse", create_controller<long_step_response::LongStepResponse>)
 };
