@@ -36,11 +36,15 @@ add_executable(control_node
   src/control_node/path/sources/ros/path_from_global_planner.cpp
   src/control_node/path/reference_path_manager.cpp
 
-  src/control_node/control/pure_pursuit_2023/pure_pursuit_2023.cpp
   src/control_node/control/inspection/inspection.cpp
   src/control_node/control/long_step_response/long_step_response.cpp
-  src/control_node/control/lqr/lqr.cpp
   src/control_node/control/controller_factory.cpp
+  src/control_node/control/separate_long_lat/separate_long_lat.cpp
+  src/control_node/control/separate_long_lat/lateral/lqr/lqr.cpp
+  src/control_node/control/separate_long_lat/lateral/pure_pursuit/pure_pursuit.cpp
+  src/control_node/control/separate_long_lat/longitudinal/old_longitudinal.cpp
+  src/control_node/control/separate_long_lat/lateral_controller_factory.cpp
+  src/control_node/control/separate_long_lat/longitudinal_controller_factory.cpp
 
   src/control_node/event/event_manager.cpp
   
