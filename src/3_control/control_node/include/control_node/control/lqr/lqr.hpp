@@ -2,7 +2,6 @@
 #define CONTROLNODE_CONTROL_LQR_LQR_HPP
 
 #include <control_node/control/icontroller.hpp>
-#include <control_node/vehicle_parameters.hpp>
 
 namespace control_node{
 namespace control {
@@ -97,8 +96,8 @@ public:
 
 };
 
-};// namespace lqr
-};// namespace control
-};// namespace control_node
+}// namespace lqr
+}// namespace control
+}// namespace control_node
 
 #endif // !CONTROLNODE_CONTROL_LQR_LQR_HPP
