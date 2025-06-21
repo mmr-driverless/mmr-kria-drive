@@ -24,9 +24,6 @@ void LQR::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters&
             m_k_pair.emplace_back(first_value, values);
         }
     }
-
-    RCLCPP_INFO(logger, "LQR CONTROLLER INITIALIZED SUCCESSFULLY");
-
 }
 
 Eigen::Vector3f crossProduct(const Eigen::Vector3f& A, const Eigen::Vector3f& B) {
@@ -111,7 +108,7 @@ Eigen::Vector4f LQR::find_optimal_control_vector(double speed_in_module)
     return optimal_control_vector;
 }
 
-LateralControl LQR::control(
+std::optional<LateralControl> LQR::control(
 std::chrono::nanoseconds t,
 const estimation::IVehicleState& state,
 const path::ReferencePath& reference_path,
@@ -131,6 +128,7 @@ int lap
   */
   
   LateralControl u(0.0);
+  std::optional<LateralControl> u_opt(u);
 
   double lateral_deviation_module = 0.0;
   std::optional<Eigen::Vector2d> projection_point;
@@ -172,10 +170,13 @@ int lap
       
       steering = steering + delta_f;
       
-      u.steer = steering;
-  } 
-  
-  return u;
+      u_opt.value().steer = steering;
+
+  } else { // if we were not able to compute a valid steering value we return a null optional
+    u_opt = std::nullopt;
+  }
+
+  return u_opt;
 }
 
 }// namespace lqr

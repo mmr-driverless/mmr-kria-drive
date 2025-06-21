@@ -39,6 +39,7 @@ public:
       bool is_curvature_valid = false;
       bool is_dist_to_next_valid = false;
       bool is_track_yaw_valid = false;
+      bool is_from_global_planner = false;
     };
     struct Data {
       std::span<double> dist_to_next;
@@ -574,6 +575,7 @@ public:
   }
 
   bool is_closed() const { return m_is_closed; } 
+  bool is_from_global_planner() const { return m_data.metadata.is_from_global_planner; }
 };
 
 }; // namespace path

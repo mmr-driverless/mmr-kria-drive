@@ -212,7 +212,8 @@ LongitudinalControl OldLongitudinal::control(
   const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,
   const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
-  int lap
+  int lap,
+  std::optional<LateralControl> lat_ctrl
 ) {
   // Compute the speed lookforward.
   double speed_lookforward = m_minSpeedDistance;
@@ -242,6 +243,12 @@ LongitudinalControl OldLongitudinal::control(
     }
 
     maximum_speed = std::clamp<double>(maximum_speed, m_minSpeed, m_dynamic_target_speed->maxSpeed);
+  }
+
+  if(!lat_ctrl.has_value()) // the lateral controller was not able to find a valid steering value
+  {
+    // stop the car
+    maximum_speed = 0.0;
   }
 
   LongitudinalControl u(0.0, 0.0, Control::Clutch::Engaged, 1, Control::LaunchControl::Unset);

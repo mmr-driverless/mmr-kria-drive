@@ -72,7 +72,7 @@ void PurePursuit::init(rclcpp::Node& node, const Parameters& p, const VehiclePar
   );
 }
 
-LateralControl PurePursuit::control(
+std::optional<LateralControl> PurePursuit::control(
   std::chrono::nanoseconds t,
   const estimation::IVehicleState& state,
   const path::ReferencePath& reference_path,
@@ -101,6 +101,7 @@ LateralControl PurePursuit::control(
   viz(targetPosition);
 
   LateralControl u(0.0);
+  std::optional<LateralControl> u_opt(u);
 
   // Compute steer
   if (state.position().has_value() && state.yaw().has_value() && targetPosition.has_value()) {
@@ -113,7 +114,10 @@ LateralControl PurePursuit::control(
       m_vp->wheelbase_m()
     );
 
-    u.steer = wheel_angle_rad;
+    u_opt.value().steer = wheel_angle_rad;
+  }
+  else { // if we were not able to compute a valid steering angle we return a null optional value
+    u_opt = std::nullopt;
   }
 
   mmr_base::msg::PurePursuitLog log_msg;
@@ -127,7 +131,7 @@ LateralControl PurePursuit::control(
 
   m_log_pub->publish(log_msg);
 
-  return u;
+  return u_opt;
 }
 
 

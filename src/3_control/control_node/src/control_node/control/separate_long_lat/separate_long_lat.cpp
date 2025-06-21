@@ -6,13 +6,6 @@ namespace control_node {
 namespace control {
 namespace separate_long_lat {
 
-static inline int assert_valid_index(int idx, int n, rclcpp::Logger logger) {
-  if (idx >= 0 && idx < n)
-    return idx;
-
-  RCLCPP_ERROR(logger, "Bad controller indices for longitudinal/lateral switch logic!");
-  throw std::invalid_argument("Bad controller indices for longitudinal/lateral switch logic!");
-}
 
 void SeparateLongitudinalLateralController::init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) {
   m_vp = &vp;
@@ -31,12 +24,18 @@ void SeparateLongitudinalLateralController::init(rclcpp::Node& node, const Param
 
   m_convert_to_steering_wheel_degrees = p.get<bool>("convert_to_steering_wheel_degrees");
 
-  Parameters switch_p = p.subparams("switch");
-  m_switch_lap = switch_p.get<int>("on_lap");
-  m_lateral_controller_idx.first = assert_valid_index(switch_p.get<int>("lateral_before"), m_lateral_controllers.size(), logger);
-  m_lateral_controller_idx.second = assert_valid_index(switch_p.get<int>("lateral_after"), m_lateral_controllers.size(), logger);
-  m_longitudinal_controller_idx.first = assert_valid_index(switch_p.get<int>("longitudinal_before"), m_longitudinal_controllers.size(), logger);
-  m_longitudinal_controller_idx.second = assert_valid_index(switch_p.get<int>("longitudinal_after"), m_longitudinal_controllers.size(), logger);
+  if(m_lateral_controllers.size() == 0 || m_longitudinal_controllers.size() == 0)
+  {
+    throw std::runtime_error("Must define at least one lateral controller and one longitudinal controller");
+  }
+  if(m_lateral_controllers.size() > 2)
+  {
+    throw std::runtime_error("Lateral controllers must at most be 2");
+  }
+  if(m_longitudinal_controllers.size() > 1)
+  {
+    throw std::runtime_error("Longitudinal controllers must be exactly 1");
+  }
 }
 
 Control SeparateLongitudinalLateralController::control(
@@ -46,30 +45,39 @@ Control SeparateLongitudinalLateralController::control(
   const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
   int lap
 ) {
-  int long_idx;
-  int lat_idx;
 
-  if (lap < m_switch_lap) {
-    lat_idx = m_lateral_controller_idx.first;
-    long_idx = m_longitudinal_controller_idx.first;
-  } else {
-    lat_idx = m_lateral_controller_idx.second;
-    long_idx = m_longitudinal_controller_idx.second;
+  // std::cerr << "reference_path.is_from_global_planner(): " << reference_path.is_from_global_planner() << ", m_lateral_controllers.size(): " << m_lateral_controllers.size() << std::endl; 
+
+  if (reference_path.is_from_global_planner() && (m_lateral_controllers.size() == 2)) // if we have recieved the path from the global planner and the second lateral controller exists we can switch to it
+  {
+    m_lat_idx = 1;
   }
 
-  LateralControl lat_ctrl = m_lateral_controllers[lat_idx].second->control(t, state, reference_path, vehicle_path_projection, lap);
-  LongitudinalControl long_ctrl = m_longitudinal_controllers[long_idx].second->control(t, state, reference_path, vehicle_path_projection, lap);
+  std::optional<LateralControl> lat_ctrl= m_lateral_controllers[m_lat_idx].second->control(t, state, reference_path, vehicle_path_projection, lap);
+  LongitudinalControl long_ctrl = m_longitudinal_controllers[m_long_idx].second->control(t, state, reference_path, vehicle_path_projection, lap, lat_ctrl);
 
   // Convert wheel angle to steering wheel angle
-  if (m_convert_to_steering_wheel_degrees) {
-    double wheel_angle_deg = lat_ctrl.steer * (180 / std::numbers::pi);
+  if (m_convert_to_steering_wheel_degrees && lat_ctrl.has_value()) {
+    double wheel_angle_deg = lat_ctrl.value().steer * (180 / std::numbers::pi);
     double steering_wheel_angle_deg = wheel_angle_deg * m_vp->steering_ratio();
 
-    lat_ctrl.steer = steering_wheel_angle_deg;
+    lat_ctrl.value().steer = steering_wheel_angle_deg;
   } 
 
+  if(lat_ctrl.has_value())
+  {
+    return Control (
+      lat_ctrl.value().steer,
+      long_ctrl.throttle,
+      long_ctrl.brake,
+      long_ctrl.clutch,
+      long_ctrl.gear,
+      long_ctrl.launch
+  );
+  }
+
   return Control (
-    lat_ctrl.steer,
+    0.0,
     long_ctrl.throttle,
     long_ctrl.brake,
     long_ctrl.clutch,

@@ -23,7 +23,7 @@ class LQR : public ILateralController{
 
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) override;
 
-  virtual LateralControl control(
+  virtual std::optional<LateralControl> control(
     std::chrono::nanoseconds t,
     const estimation::IVehicleState& state,
     const path::ReferencePath& reference_path,

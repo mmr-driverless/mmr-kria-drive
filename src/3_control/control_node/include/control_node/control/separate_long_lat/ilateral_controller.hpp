@@ -18,7 +18,7 @@ namespace separate_long_lat {
 struct ILateralController {
   virtual ~ILateralController() = default;
   virtual void init(rclcpp::Node& node, const Parameters& p, const VehicleParameters& vp, viz::VizManager& viz_mgr, rclcpp::Logger logger) = 0;
-  virtual LateralControl control(
+  virtual std::optional<LateralControl> control(
     std::chrono::nanoseconds t,
     const estimation::IVehicleState& state,
     const path::ReferencePath& reference_path,

@@ -13,11 +13,9 @@ class SeparateLongitudinalLateralController : public IController {
   std::vector<std::pair<int, std::unique_ptr<ILongitudinalController>>> m_longitudinal_controllers;
   std::vector<std::pair<int, std::unique_ptr<ILateralController>>> m_lateral_controllers;
 
-  int m_switch_lap;
-  std::pair<int, int> m_longitudinal_controller_idx;
-  std::pair<int, int> m_lateral_controller_idx;
-
   bool m_convert_to_steering_wheel_degrees;
+  int m_long_idx = 0;
+  int m_lat_idx = 0;
 
   const VehicleParameters* m_vp;
 

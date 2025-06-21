@@ -10,6 +10,7 @@
 #include <control_node/vehicle_parameters.hpp>
 
 #include <control_node/control/separate_long_lat/longitudinal_control.hpp>
+#include <control_node/control/separate_long_lat/lateral_control.hpp>
 
 namespace control_node {
 namespace control {
@@ -23,7 +24,8 @@ struct ILongitudinalController {
     const estimation::IVehicleState& state,
     const path::ReferencePath& reference_path,
     const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
-    int lap
+    int lap,
+    std::optional<LateralControl> lat_ctrl
   ) = 0;
 };
 

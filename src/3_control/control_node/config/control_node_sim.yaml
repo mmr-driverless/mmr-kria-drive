@@ -69,43 +69,35 @@
       params:
         convert_to_steering_wheel_degrees: false # set this to false when using sim
 
-        switch:
-          on_lap: 10000
-          longitudinal_before: 0
-          longitudinal_after: 0
-          lateral_before: 0
-          lateral_after: 0
-
         lateral:
           0:
-            type: "PurePursuit"
-            enabled: true
-            params:
-              minLookForward: 1.757
-              minLookForwardGain: 0.474 # 0.4 before 
-              steerGain: 1.0
-              target_marker:
-                diameter: 1.0
-                color:
-                  r: 0.0
-                  g: 1.0
-                  b: 0.0
-                  a: 1.0
-              log:
-                topic: "/control/pp_log"
-                qos_override:
-                  depth: 50
-
+              type: "PurePursuit"
+              enabled: true
+              params:
+                minLookForward: 1.757
+                minLookForwardGain: 0.474 # 0.4 before 
+                steerGain: 1.0
+                target_marker:
+                  diameter: 1.0
+                  color:
+                    r: 0.0
+                    g: 1.0
+                    b: 0.0
+                    a: 1.0
+                log:
+                  topic: "/control/pp_log"
+                  qos_override:
+                    depth: 50
           1:
-            type: "LQR"
-            enabled: false
-            params:
-              control_vectors:
-                - "5.00    1.6906    0.1111    1.8677    0.0944"
-                - "10.0    1.6906    0.1111    1.8677    0.0944"
-                - "15.0    1.6906    0.1111    1.8677    0.0944"
-                - "20.0    1.6906    0.1111    1.8677    0.0944"
-
+              type: "LQR"
+              enabled: true # if this is enabled the control node will automatically switch from PurePursuit to LQR as soon as it gets the global planner trajectory
+              params:
+                control_vectors: # TODO: make a vector for each speed at 2 m/s steps
+                  - "5.00    1.6906    0.1111    1.8677    0.0944"
+                  - "10.0    1.6906    0.1111    1.8677    0.0944"
+                  - "15.0    1.6906    0.1111    1.8677    0.0944"
+                  - "20.0    1.6906    0.1111    1.8677    0.0944"
+  
         longitudinal:
           0:
             type: "OldLongitudinal"
@@ -135,16 +127,16 @@
 
               low_level_longitudinal_controller:
                 simplified: true
-                apps_p: 1.0
-                brake_p: 1.0
+                apps_p: 20.0
+                brake_p: 20.0
 
-                use_old_acceleration: true
+                use_old_acceleration: false
                 # acceleration_p: 0.2
 
               dynamicTargetSpeed:
                 enabled: true # If this is false, then minSpeed is used.
                 slowLaps: 1
-                maxSpeed: 15.0
+                maxSpeed: 10.0
                 targetSpeedWeight: 1.0
 
     # Actuation settings
@@ -196,9 +188,7 @@
           type: "ROS_GlobalPlanner"
           params:
             topic: "/planning/raceline"
-            qos_override:
-              durability: transient_local
-              reliability: reliable
+
       # Uncomment this to dump paths to file
       dump_paths_dir: './control_log/path_dumps'
 
@@ -241,8 +231,8 @@
         0.0, 0.005, 0.70, 1.0, # >9000 rpm
       ] # % of maximum torque
       apps_map_y: [ 0.0, 0.15, 0.75, 1.0 ] # APPS
-      C_alpha_front: 1.0
-      C_alpha_rear: 1.0
+      C_alpha_front: 1e4
+      C_alpha_rear: 1e4
 
     
     viz:

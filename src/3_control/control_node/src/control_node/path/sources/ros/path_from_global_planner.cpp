@@ -18,6 +18,7 @@ void PathFromGlobalPlanner::msg_cb(std::shared_ptr<const mmr_base::msg::Trajecto
 
     ReferencePath::PathData::Metadata meta;
     meta.is_track_yaw_valid = true;
+    meta.is_from_global_planner = true;
     return UpdateFnResultT(true, meta);
   }));
 }

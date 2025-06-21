@@ -84,7 +84,8 @@ public:
     const estimation::IVehicleState& state,
     const path::ReferencePath& reference_path,
     const std::optional<path::ReferencePath::PointRef>& vehicle_path_projection,
-    int lap
+    int lap,
+    std::optional<LateralControl> lat_ctrl
   ) override;
 };
 
