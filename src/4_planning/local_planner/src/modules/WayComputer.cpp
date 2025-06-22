@@ -397,6 +397,7 @@ mmr_base::msg::Marker WayComputer::getPathCenterLine() const {
 
   // Get the centerline path as a vector of Points.
   std::vector<Point> path = this->wayToPublish_.getPath();
+  std::vector<double> point_dist_from_borders = this->wayToPublish_.getPointDistanceFromBorders();
 
   // Set up header information.
   marker.header.frame_id = "track";
@@ -424,9 +425,13 @@ mmr_base::msg::Marker WayComputer::getPathCenterLine() const {
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
 
+  int index = 0;
   // Add each point in the path to the marker's points vector.
   for (const Point &p : path) {
-    marker.points.push_back(p.gmPoint());
+    geometry_msgs::msg::Point point = p.gmPoint();
+    point.z = point_dist_from_borders[index];
+    marker.points.push_back(point);
+    index++;
   }
 
   return marker;

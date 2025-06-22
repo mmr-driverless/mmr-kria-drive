@@ -4,24 +4,24 @@
 LocalPlannerNode::LocalPlannerNode() : NodeBase("local_planner")
 {
 	RCLCPP_INFO(this->get_logger(), "LOCAL PLANNER NODE CREATED");
+
+	#ifdef USE_EDF
+		this->declare_parameter<int>("edf/WCET", 500000);
+		this->declare_parameter<int>("edf/period", 1000000);
+		this->declare_parameter<int>("edf/deadline", 1000000);
+		this->configureEDFScheduler(
+			this->get_parameter("edf/period").get_value<int>(),
+			this->get_parameter("edf/WCET").get_value<int>(),
+			this->get_parameter("edf/deadline").get_value<int>()
+		);
+  	#endif
+
 	this->initialization();
-	
 }
 
 /// @brief loads the class parameters from the .yaml file
 void LocalPlannerNode::loadParameters()
 {
-	#ifdef USE_EDF
-		this->declare_parameter<uint64_t>("edf/WCET", 500000);
-		this->declare_parameter<uint64_t>("edf/period", 1000000);
-		this->declare_parameter<uint64_t>("edf/deadline", 1000000);
-		this->configureEDFScheduler(
-			this->get_parameter("edf/period").get_value<uint64_t>(),
-			this->get_parameter("edf/WCET").get_value<uint64_t>(),
-			this->get_parameter("edf/deadline").get_value<uint64_t>()
-		);
-  	#endif
-
 	this->declare_parameter<std::string>("node/eventType", "");
 	this->param_eventType = this->get_parameter("node/eventType").get_value<std::string>();
 
@@ -55,6 +55,7 @@ void LocalPlannerNode::initialization()
 	if (this->param_eventType.empty())
 	{
 		RCLCPP_INFO(this->get_logger(), "NO EVENT TYPE SELECTED");
+
 		rclcpp::shutdown();
 	}
 
@@ -103,9 +104,6 @@ void LocalPlannerNode::initialization()
 	else
 	{
 		RCLCPP_INFO(this->get_logger(), "INVALID EVENT TYPE SELECTED");
-
-		this->timer->cancel();
-
 		rclcpp::shutdown();
 	}
 }
@@ -113,10 +111,21 @@ void LocalPlannerNode::initialization()
 int main(int argc, char **argv)
 {
 	rclcpp::init(argc, argv);
-
 	auto localPlannerNode = std::make_shared<LocalPlannerNode>();
 
-	rclcpp::spin(localPlannerNode);
-
+	try {
+		#ifdef USE_EDF
+			rclcpp::executors::StaticSingleThreadedExecutor executor;
+			executor.add_node(localPlannerNode);
+			executor.spin_all(50ms); // Spin for 50 milliseconds to allow EDF scheduling
+			sched_yield(); // Yield to allow EDF to schedule tasks
+		#else
+			rclcpp::spin(localPlannerNode);
+		#endif
+	} catch (const std::exception &e) {
+		RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Exception thrown: %s", e.what());
+		rclcpp::shutdown();
+		throw;
+	}
 	return 0;
 }

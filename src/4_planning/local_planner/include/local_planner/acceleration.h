@@ -6,6 +6,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <mmr_base/msg/marker_array.hpp>
+#include <mmr_base/msg/marker.hpp>
 #include "mmr_base/msg/race_status.hpp"
 #include <unistd.h>
 

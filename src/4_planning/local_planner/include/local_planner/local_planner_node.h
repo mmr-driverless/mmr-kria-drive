@@ -28,8 +28,6 @@ class LocalPlannerNode : public NodeBase
 		void initialization();
 
 	private:
-		rclcpp::TimerBase::SharedPtr timer;
-
 		rclcpp::Publisher<mmr_base::msg::MarkerArray>::SharedPtr  bordersPub;
 		rclcpp::Publisher<mmr_base::msg::Marker>::SharedPtr  centerLinePub;
 		rclcpp::Publisher<mmr_base::msg::MarkerArray>::SharedPtr  bordersCompletedPub;

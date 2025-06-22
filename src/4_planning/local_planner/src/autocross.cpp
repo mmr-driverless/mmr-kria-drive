@@ -40,7 +40,7 @@ void AutocrossPlanner::slamConesCallback(mmr_base::msg::Marker::SharedPtr slamCo
 
   if(this->idle)
   {
-    // RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] idle");
+    RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] idle");
     return;
   }
 
@@ -88,23 +88,23 @@ void AutocrossPlanner::slamConesCallback(mmr_base::msg::Marker::SharedPtr slamCo
   // Publish full trajectory and become idle
  if (this->currentLap > 1)
 	{
+		
 		this->idle = true;
-    for (int i = 0; i < 5; i ++)
-		{
-			this->centerLineCompletedPub->publish(this->wayComputer->getPathCenterLine()); // trancientlocal topic
-    }
+		this->centerLineCompletedPub->publish(this->wayComputer->getPathCenterLine()); // trancientlocal topic
     return;
 	}
-  // Publish partial
+
+  // Publish partial centerline only if it is not empty
   else
   {
-    if (this->wayComputer->getPathCenterLine().points.size() > 0)
+    mmr_base::msg::Marker current_centerline = this->wayComputer->getPathCenterLine();
+    if(current_centerline.points.size() > 0)
     {
-      this->centerLinePub->publish(this->wayComputer->getPathCenterLine());
-    } 
+      this->centerLinePub->publish(current_centerline);
+    }
     else
     {
-      RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] Empty centerline. Not publishing.");
+      RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] current centerline is empty");
     }
   }
 

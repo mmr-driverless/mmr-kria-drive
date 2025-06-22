@@ -7,18 +7,16 @@
   <maintainer email="filippogib@gmail.com">Filippo Gibertini</maintainer>
   <license>License declaration</license>
 
-  <!-- Build tool dependency -->
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Package dependencies (build and run) -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>mmr_base</depend>
-  <depend>mmr_edf</depend>
-  <depend>tf2_eigen</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>Eigen3</depend>
+  <!-- <depend>rospy</depend> -->
+  <depend>eigen</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

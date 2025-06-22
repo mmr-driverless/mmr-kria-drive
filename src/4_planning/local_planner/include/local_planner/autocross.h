@@ -5,13 +5,14 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
-#include <mmr_base/msg/marker_array.hpp>
-#include "mmr_base/msg/race_status.hpp"
 #include "utils/Params.hpp"
 #include "modules/WayComputer.hpp"
 #include "modules/Visualization.hpp"
 #include "modules/DelaunayTri.hpp"
 #include "utils/Time.hpp"
+#include "mmr_base/msg/marker.hpp"
+#include "mmr_base/msg/marker_array.hpp"
+#include "mmr_base/msg/race_status.hpp"
 #include <unistd.h>
 
 // #define DEBUG 1
