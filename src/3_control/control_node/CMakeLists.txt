@@ -38,7 +38,6 @@ add_executable(control_node
   src/control_node/path/reference_path_manager.cpp
 
   src/control_node/control/inspection/inspection.cpp
-  src/control_node/control/long_step_response/long_step_response.cpp
   src/control_node/control/controller_factory.cpp
   src/control_node/control/separate_long_lat/separate_long_lat.cpp
   src/control_node/control/separate_long_lat/lateral/lqr/lqr.cpp

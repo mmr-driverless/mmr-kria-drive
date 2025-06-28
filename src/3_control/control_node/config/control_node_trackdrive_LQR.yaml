@@ -99,7 +99,7 @@
 
           1:
             type: "LQR"
-            enabled: false
+            enabled: true
             params:
               control_vectors:
                 - "2.00    1.7151    0.0421    1.5436    0.0393"

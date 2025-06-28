@@ -71,32 +71,38 @@
 
         lateral:
           0:
-              type: "PurePursuit"
-              enabled: true
-              params:
-                minLookForward: 1.757
-                minLookForwardGain: 0.474 # 0.4 before 
-                steerGain: 1.0
-                target_marker:
-                  diameter: 1.0
-                  color:
-                    r: 0.0
-                    g: 1.0
-                    b: 0.0
-                    a: 1.0
-                log:
-                  topic: "/control/pp_log"
-                  qos_override:
-                    depth: 50
+            type: "PurePursuit"
+            enabled: true
+            params:
+              minLookForward: 1.757
+              minLookForwardGain: 0.474 # 0.4 before 
+              steerGain: 1.0
+              target_marker:
+                diameter: 1.0
+                color:
+                  r: 0.0
+                  g: 1.0
+                  b: 0.0
+                  a: 1.0
+              log:
+                topic: "/control/pp_log"
+                qos_override:
+                  depth: 50
           1:
-              type: "LQR"
-              enabled: true # if this is enabled the control node will automatically switch from PurePursuit to LQR as soon as it gets the global planner trajectory
-              params:
-                control_vectors: # TODO: make a vector for each speed at 2 m/s steps
-                  - "5.00    1.6906    0.1111    1.8677    0.0944"
-                  - "10.0    1.6906    0.1111    1.8677    0.0944"
-                  - "15.0    1.6906    0.1111    1.8677    0.0944"
-                  - "20.0    1.6906    0.1111    1.8677    0.0944"
+            type: "LQR"
+            enabled: true # if this is enabled the control node will automatically switch from PurePursuit to LQR as soon as it gets the global planner trajectory
+            params:
+              control_vectors: # TODO: make a vector for each speed at 2 m/s steps
+                - "2.00    1.7151    0.0421    1.5436    0.0393"
+                - "4.00    1.7011    0.0804    1.6893    0.0717"
+                - "6.00    1.6906    0.1111    1.8677    0.0944"
+                - "8.00    1.6828    0.1358    2.0477    0.1096"
+                - "10.0    1.6768    0.1562    2.2173    0.1197"
+                - "12.0    1.6722    0.1734    2.3729    0.1266"
+                - "14.0    1.6685    0.1881    2.5139    0.1312"
+                - "16.0    1.6654    0.2010    2.6411    0.1343"
+                - "18.0    1.6629    0.2123    2.7557    0.1363"
+                - "20.0    1.6607    0.2224    2.8590    0.1376"
   
         longitudinal:
           0:
