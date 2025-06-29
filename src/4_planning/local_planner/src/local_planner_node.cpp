@@ -14,9 +14,9 @@ LocalPlannerNode::LocalPlannerNode() : NodeBase("local_planner")
 			this->get_parameter("edf/WCET").get_value<int>(),
 			this->get_parameter("edf/deadline").get_value<int>()
 		);
-  	#endif
+	#endif
 
-	this->initialization();
+	// Do not call initialization() here, call it after construction
 }
 
 /// @brief loads the class parameters from the .yaml file
@@ -112,13 +112,16 @@ int main(int argc, char **argv)
 {
 	rclcpp::init(argc, argv);
 	auto localPlannerNode = std::make_shared<LocalPlannerNode>();
+	localPlannerNode->initialization(); // Call initialization after shared_ptr is created
 
 	try {
 		#ifdef USE_EDF
+		while(1) {
 			rclcpp::executors::StaticSingleThreadedExecutor executor;
 			executor.add_node(localPlannerNode);
 			executor.spin_all(50ms); // Spin for 50 milliseconds to allow EDF scheduling
 			sched_yield(); // Yield to allow EDF to schedule tasks
+		}
 		#else
 			rclcpp::spin(localPlannerNode);
 		#endif
